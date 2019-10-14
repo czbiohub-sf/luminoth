@@ -5,7 +5,12 @@ python:
   - '3.4'
   - '3.5'
   - '3.6'
-install: pip install tox-travis
+install: 
+  - echo $PYPI_TEST_USERNAME
+  - echo $PYPI_USERNAME
+  - echo $PYPI_PASSWORD
+  - echo $PYPI_TEST_PASSWORD
+  - pip install tox-travis
 script: tox
 
 deploy:
