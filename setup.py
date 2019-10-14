@@ -35,7 +35,7 @@ CLASSIFIERS = [
 ]
 
 INSTALL_REQUIRES = [
-    'Pillow==6.0.0',
+    'pillow',
     'lxml==4.4.1',
     'numpy==1.16.4',
     'requests==2.22.0',
