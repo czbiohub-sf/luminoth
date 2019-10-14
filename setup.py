@@ -37,9 +37,9 @@ CLASSIFIERS = [
 INSTALL_REQUIRES = [
     'pillow',
     'lxml==4.4.1',
-    'numpy==1.16.4',
-    'requests==2.22.0',
-    'scikit-video==1.1.11',
+    'numpy',
+    'requests',
+    'scikit-video',
     'Flask>=0.12',
     'PyYAML>=3.12,<4',
     'click>=6.7,<7',
