@@ -36,7 +36,7 @@ CLASSIFIERS = [
 
 INSTALL_REQUIRES = [
     'pillow',
-    'lxml==4.4.1',
+    'lxml==4.3.5',
     'numpy',
     'requests',
     'scikit-video',
