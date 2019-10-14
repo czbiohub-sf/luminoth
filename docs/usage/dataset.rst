@@ -106,6 +106,15 @@ our up-and-coming self-driving car), we could use the following command::
           --split train --split val
           --only-classes=car,truck,bus,motorcycle,bicycle,person
 
+If you wanted to use your own dataset create a folder here ``lumi_csv`` with ``train`` and ``val`` containing raw images, ``train.csv`` and ``val.csv`` containing ``image_id,xmin,ymin,xmax,ymax,label`` and  use the following command to convert them to tf records. Go to ``luminoth/luminoth/tools/dataset/readers/object_detection/csv_reader.py`` for more info on the csv and folder structure::
+
+  $ lumi dataset transform \
+          --type csv \
+          --data-dir /lumi_csv/ \
+          --output-dir /tfdata/ \
+          --split train --split val 
+          --only-classes=table
+
 .. _custom-conversion:
 
 Supporting your own dataset format
