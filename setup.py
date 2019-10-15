@@ -35,12 +35,12 @@ CLASSIFIERS = [
 ]
 
 INSTALL_REQUIRES = [
-    'pillow',
+    'pillow==5.1.0',
     'lxml==4.3.5',
-    'numpy',
-    'requests',
-    'pandas',
-    'scikit-video',
+    'requests==2.18.4',
+    'pandas==0.19.2',
+    'numpy==1.14.5 ',
+    'scikit-video==1.1.10',
     'Flask>=0.12',
     'PyYAML>=3.12,<4',
     'click>=6.7,<7',
