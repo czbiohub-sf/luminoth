@@ -1,5 +1,5 @@
 import click
-import json
+import pandas as pd
 import numpy as np
 import os
 import skvideo.io
@@ -15,6 +15,7 @@ from luminoth.vis import build_colormap, vis_objects
 
 IMAGE_FORMATS = ['jpg', 'jpeg', 'png']
 VIDEO_FORMATS = ['mov', 'mp4', 'avi']  # TODO: check if more formats work
+LUMI_CSV_COLUMNS = ['image_id', 'xmin', 'xmax', 'ymin', 'ymax', 'label']
 
 
 def get_file_type(filename):
@@ -176,7 +177,9 @@ def predict_video(network, path, only_classes=None, ignore_classes=None,
 @click.option('config_files', '--config', '-c', multiple=True, help='Config to use.')  # noqa
 @click.option('--checkpoint', help='Checkpoint to use.')
 @click.option('override_params', '--override', '-o', multiple=True, help='Override model config params.')  # noqa
-@click.option('output_path', '--output', '-f', default='-', help='Output file with the predictions (for example, JSON bounding boxes).')  # noqa
+@click.option('output_path',
+ '--output', '-f', default='-',
+ help='Output file with the predictions (for example, csv bounding boxes) containing image_id,xmin,ymin,xmax,ymax,label')  # noqa
 @click.option('--save-media-to', '-d', help='Directory to store media to.')
 @click.option('--min-prob', default=0.5, type=float, help='When drawing, only draw bounding boxes with probability larger than.')  # noqa
 @click.option('--max-detections', default=100, type=int, help='Maximum number of detections per image.')  # noqa
@@ -218,13 +221,6 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
     else:
         click.echo('Found {} files to predict.'.format(len(files)))
 
-    # Build the `Formatter` based on the outputs, which automatically writes
-    # the formatted output to all the requested output files.
-    if output_path == '-':
-        output = sys.stdout
-    else:
-        output = open(output_path, 'w')
-
     # Create `save_media_to` if specified and it doesn't exist.
     if save_media_to:
         tf.gfile.MakeDirs(save_media_to)
@@ -262,6 +258,7 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
     network = PredictorNetwork(config)
 
     # Iterate over files and run the model on each.
+    df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
     for file in files:
 
         # Get the media output path, if media storage is requested.
@@ -279,13 +276,24 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
             save_path=save_path,
         )
 
-        # TODO: Not writing jsons for video files for now.
+        # TODO: Not writing csv for video files for now.
         if objects is not None and file_type == 'image':
-            output.write(
-                json.dumps({
-                    'file': file,
-                    'objects': objects,
-                }) + '\n'
-            )
+            for obj in objects:
+                label_name = obj['label']
+                df = df.append({'image_id': file,
+                                'xmin': obj[0],
+                                'xmax': obj[2],
+                                'ymin': obj[1],
+                                'ymax': obj[3],
+                                'label': label_name},
+                               ignore_index=True)
 
-    output.close()
+    # Build the `Formatter` based on the outputs, which automatically writes
+    # the formatted output to all the requested output files.
+    if output_path == '-':
+        output = sys.stdout
+        output.write(df.to_string())
+        output.close()
+    else:
+        df.to_csv(output_path)
+
