@@ -296,4 +296,3 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
         output.close()
     else:
         df.to_csv(output_path)
-
