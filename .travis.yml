@@ -8,28 +8,3 @@ python:
 install: 
   - pip install tox-travis
 script: tox
-
-# deploy:
-#   # Test PyPI in every change to master
-#   - provider: pypi
-#     server: https://test.pypi.org/legacy/
-#     distributions: sdist bdist_wheel
-#     user: $PYPI_TEST_USERNAME
-#     password: $PYPI_TEST_PASSWORD
-#     skip_existing: true
-#     on:
-#       branch: master
-#       tags: false
-#       repo: pranathivemuri/luminoth
-#       python: 3.6
-
-#   Real PyPI in tags (ie. GitHub releases)
-#   - provider: pypi
-#     distributions: sdist bdist_wheel
-#     user: $PYPI_USERNAME
-#     password: $PYPI_PASSWORD
-#     on:
-#       branch: master
-#       tags: true
-#       repo: pranathivemuri/luminoth
-#       python: 3.6
