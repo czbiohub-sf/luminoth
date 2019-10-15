@@ -85,7 +85,7 @@ With these commands we can output everything to a ``preds`` directory:
 .. code-block:: text
 
    mkdir preds
-   lumi predict bicycling-1160860_1280.jpg -f preds/objects.json -d preds/
+   lumi predict bicycling-1160860_1280.jpg -f preds/objects.csv -d preds/
 
 If you fetch the resulting image, it should look like this:
 
@@ -161,7 +161,7 @@ example, ``fast``) you can do so by using the ``--checkpoint`` parameter:
 
 .. code-block:: text
 
-   lumi predict bicycling-1160860_1280.jpg --checkpoint fast -f preds/objects.json -d preds/
+   lumi predict bicycling-1160860_1280.jpg --checkpoint fast -f preds/objects.csv -d preds/
 
 Inspecting the image, you'll see that it doesn't work as nicely as the ``accurate``
 checkpoint.

@@ -54,7 +54,7 @@ The ``lumi eval`` command
 
 In Luminoth, ``lumi eval`` will make a run through your chosen dataset split (ie.
 ``validation`` or ``test``), and run the model through every image, and then compute metrics
-like loss and mAP.
+like loss, mAP, and confusion matrix.
 
 This command works equivalenty to ``lumi train``, so it will occupy your GPU and output
 summaries for TensorBoard.

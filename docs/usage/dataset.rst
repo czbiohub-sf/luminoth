@@ -131,7 +131,8 @@ Merge tool
 Sometimes you don't have a dataset for your model, but are able to leverage data
 from several open datasets. Luminoth provides a dataset merging tool for this
 purpose, allowing you to combine several TFrecords files (i.e. already converted
-into Luminoth's expected format) into a single one.
+into Luminoth's expected format) into a single one or several csv files into a single one,
+``--type`` is by default ``tf``.
 
 This tool is provided through the ``lumi dataset merge`` command, which receives
 a list of TFrecords files and outputs it to the file indicated by the last
@@ -142,3 +143,14 @@ argument. For example::
           datasets/pascal/tf/2012/only-traffic/train.tfrecords \
           datasets/coco/tf/only-traffic/train.tfrecords \
           datasets/tf/train.tfrecords
+
+This tool is provided through the ``lumi dataset merge --type csv`` command, which receives
+a list of csv files and outputs it to the file indicated by the last
+argument. For example::
+
+  $ lumi dataset merge \
+          --type csv \
+          datasets/pascal/lumi/2007/only-traffic/train.csv \
+          datasets/pascal/lumi/2012/only-traffic/train.csv \
+          datasets/coco/lumi/only-traffic/train.csv \
+          datasets/lumi/train.csv

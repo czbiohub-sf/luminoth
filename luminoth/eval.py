@@ -20,8 +20,10 @@ from luminoth.utils.image_vis import image_vis_summaries
 @click.option('override_params', '--override', '-o', multiple=True, help='Override model config params.')  # noqa
 @click.option('--files-per-class', type=int, default=10, help='How many files per class display in every epoch.')  # noqa
 @click.option('--max-detections', type=int, default=100, help='Max detections to consider.')  # noqa
+@click.option('--iou-threshold', type=float, default=0.5, help='IOU threshold below which the bounding box is invalid')  # noqa
+@click.option('--confidence-threshold', type=float, default=0.9, help='Confidence score threshold below which bounding box detection is invalid')  # noqa
 def eval(dataset_split, config_files, watch, from_global_step, override_params,
-         files_per_class, max_detections):
+         files_per_class, max_detections, iou_threshold, confidence_threshold):
     """Evaluate models using dataset."""
 
     # If the config file is empty, our config will be the base_config for the
@@ -197,6 +199,8 @@ def eval(dataset_split, config_files, watch, from_global_step, override_params,
                     image_vis=config.eval.image_vis,
                     files_per_class=files_per_class,
                     files_to_visualize=files_to_visualize,
+                    iou_threshold=iou_threshold,
+                    confidence_threshold=confidence_threshold
                 )
                 last_global_step = checkpoint['global_step']
                 tf.logging.info('Evaluated in {:.2f}s'.format(
@@ -281,7 +285,8 @@ def get_checkpoints(run_dir, from_global_step=None, last_only=False):
 
 def evaluate_once(config, writer, saver, ops, checkpoint,
                   class_labels, metrics_scope='metrics', image_vis=None,
-                  files_per_class=None, files_to_visualize=None):
+                  files_per_class=None, files_to_visualize=None,
+                  iou_threshold=None, confidence_threshold=None):
     """Run the evaluation once.
 
     Create a new session with the previously-built graph, run it through the
@@ -401,6 +406,11 @@ def evaluate_once(config, writer, saver, ops, checkpoint,
             ap_per_class, ar_per_class = calculate_metrics(
                 output_per_batch, config.model.network.num_classes
             )
+
+            confusion_matrix = calculate_confusion_matrix(
+                output_per_batch, config.model.network.num_classes, iou_threshold=iou_threshold)
+
+            display_confusion_matrix(confusion_matrix, class_labels, confidence_threshold=confidence_threshold)
 
             map_at_50 = np.mean(ap_per_class[:, 0])
             map_at_75 = np.mean(ap_per_class[:, 5])
@@ -539,6 +549,7 @@ def calculate_metrics(output_per_batch, num_classes):
 
     # For each image, order predictions by score and classify each as a true
     # positive or a false positive.
+    print(output_per_batch)
     num_batches = len(output_per_batch['bboxes'])
     for idx in range(num_batches):
 
@@ -631,8 +642,8 @@ def calculate_metrics(output_per_batch, num_classes):
 
             # Interpolate the precision. (Make it monotonically-increasing.)
             for i in range(len(p) - 1, 0, -1):
-                if p[i] > p[i-1]:
-                    p[i-1] = p[i]
+                if p[i] > p[i - 1]:
+                    p[i - 1] = p[i]
 
             ap = 0
             inds = np.searchsorted(r, rec_thresholds)
@@ -651,6 +662,105 @@ def calculate_metrics(output_per_batch, num_classes):
                 ar_per_class[cls, iou_idx] = 0
 
     return ap_per_class, ar_per_class
+
+
+def calculate_confusion_matrix(output_per_batch, num_classes, iou_threshold):
+    """
+    Returns confusion matrix of shape (num_classes, num_classes)
+
+    Args:
+        output_per_batch (dict): Output of the detector to calculate mAP.
+            Expects the following keys: ``bboxes``, ``classes``, ``scores``,
+            ``gt_bboxes``, ``gt_classes``. Under each key, there should be a
+            list of the results per batch as returned by the detector.
+        num_classes (int): Number of classes on the dataset.
+        iou_threshold (float): IOU Overlap threshold to consider two bounding boxes as a match
+
+    Returns:
+        confusion_matrix numpy array of (num_classes, num_classes) shape
+    """
+    matches = []
+    groundtruth_boxes = []
+    detection_boxes = []
+    groundtruth_classes = []
+    detection_classes = []
+    confusion_matrix = np.zeros((num_classes, num_classes))
+    num_batches = len(output_per_batch['bboxes'])
+    for idx in range(num_batches):
+        groundtruth_boxes.append(output_per_batch['gt_bboxes'][idx])
+        groundtruth_classes.append(output_per_batch['gt_classes'][idx])
+
+        detection_boxes.append(output_per_batch['bboxes'][idx])
+        detection_classes.append(output_per_batch['classes'][idx])
+
+    for i in range(len(groundtruth_boxes)):
+        for j in range(len(detection_boxes)):
+            iou = bbox_overlap(groundtruth_boxes[i], detection_boxes[j])
+            if iou > iou_threshold:
+                matches.append([i, j, iou])
+
+    matches = np.array(matches)
+    if matches.shape[0] > 0:
+        # Sort list of matches by descending IOU so we can remove duplicate detections
+        # while keeping the highest IOU entry.
+        matches = matches[matches[:, 2].argsort()[::-1][:len(matches)]]
+        # Remove duplicate detections from the list.
+        matches = matches[np.unique(matches[:, 1], return_index=True)[1]]
+
+        # Sort the list again by descending IOU. Removing duplicates doesn't preserve
+        # our previous sort.
+        matches = matches[matches[:, 2].argsort()[::-1][:len(matches)]]
+
+        # Remove duplicate ground truths from the list.
+        matches = matches[np.unique(matches[:, 0], return_index=True)[1]]
+
+    for i in range(len(groundtruth_boxes)):
+        if matches.shape[0] > 0 and matches[matches[:, 0] == i].shape[0] == 1:
+            confusion_matrix[groundtruth_classes[i]][detection_classes[int(matches[matches[:, 0] == i, 1][0])]] += 1
+        else:
+            confusion_matrix[groundtruth_classes[i]][confusion_matrix.shape[1] - 1] += 1
+
+    for i in range(len(detection_boxes)):
+        if matches.shape[0] > 0 and matches[matches[:, 1] == i].shape[0] == 0:
+            confusion_matrix[confusion_matrix.shape[0] - 1][detection_classes[i]] += 1
+
+    return confusion_matrix
+
+
+def display_confusion_matrix(confusion_matrix, classes, confidence_threshold):
+    """
+    Prints confusion matrix of shape (num_classes, num_classes)
+
+    Args:
+        confusion_matrix numpy array of (num_classes, num_classes) shape
+        classes (list): List of classes in the dataset.
+        confidence_threshold (float): Confidence threshold at which a box was marked in prediction
+
+    Returns:
+        Displays confusion_matrix numpy array of (num_classes, num_classes) shape
+    """
+    # printing the headers with class names and parameters used
+    number_classes = len(classes)
+    length_name = max([len(str(s)) for s in classes] + [5])
+    spacing = "- " * max((int(7 + ((length_name + 3) * (number_classes + 3)) / 2)),
+                         length_name + 33)
+    tf.logging.info(spacing + "\nConfusion Matrix\n" + spacing)
+    tf.logging.info(("thresh_confidence: %f" % confidence_threshold).rstrip("0"))
+    confusion_matrix = np.uint32(confusion_matrix)
+    confusion_matrix = confusion_matrix / confusion_matrix.astype(np.float).sum(axis=1, keepdims=True)
+    content = " " * (length_name + 3 + 12)
+    for j in range(number_classes):
+        content += "[%*s] " % (length_name, classes[j])
+    tf.logging.info("%*sPrediction" % (12 + (len(content) - 10) // 2, ""))
+    tf.logging.info(content)
+
+    # printing the normalized confusion matrix elements
+    for i in range(number_classes):
+        content = "Groundtruth " if i == int((number_classes) / 2) else " " * 12
+        content += "[%*s] " % (length_name, classes[i])
+        for j in range(number_classes):
+            content += "%*f " % (length_name + 2, confusion_matrix[i, j])
+        tf.logging.info(content)
 
 
 if __name__ == '__main__':
