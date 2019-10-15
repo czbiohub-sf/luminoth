@@ -39,6 +39,7 @@ INSTALL_REQUIRES = [
     'lxml==4.3.5',
     'numpy',
     'requests',
+    'pandas',
     'scikit-video',
     'Flask>=0.12',
     'PyYAML>=3.12,<4',
