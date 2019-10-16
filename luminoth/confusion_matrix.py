@@ -52,17 +52,14 @@ def get_confusion_matrix(
     and several rows corresponding to the predicted bounding box objects
     :param list categories: list of names of the objects detected
     :param iou_threshold IOU threshold below which the bounding box is invalid
-    :param confidence_threshold
+    :param confidence_threshold Confidence score threshold below which
+    bounding box detection is of low confidence and
+    is ignored while considering true positives for a class
     :return confusion_matrix numpy array of (categories, categories) shape
     """
     confusion_matrix = np.zeros(shape=(len(categories), len(categories)))
 
     df = pd.read_csv(groundtruth_csv)
-
-    for label in categories:
-        print("There are {} {} classes in the ground truth dataset".format(
-            len(df[df.label == label]), label))
-
     groundtruth_boxes = []
     groundtruth_classes = []
     for index, row in df.iterrows():
@@ -78,12 +75,6 @@ def get_confusion_matrix(
             detection_boxes.append([row.xmin, row.xmax, row.ymin, row.ymax])
             detection_classes.append(categories.index(row.label))
             detection_scores.append(row.prob)
-
-    for label in categories:
-        print("There are {} {} classes in the prediction dataset".format(
-            len(
-                df.query('label == {} & prob > {}'.format(
-                    label, confidence_threshold))), label))
 
     matches = []
 
@@ -132,6 +123,7 @@ def get_confusion_matrix(
 
 
 def display(
+        groundtruth_csv, predicted_csv,
         confusion_matrix, categories,
         iou_threshold, confidence_threshold,
         output_path):
@@ -139,8 +131,17 @@ def display(
     Save and display confusion matrix, precision, recall scores of each of
     the categories of objects detected.
 
-    :param np.array confusion_matrix:
-    confusion matrix of length (categories, categories)
+    :param str groundtruth_csv: Absolute path to csv
+    containing image_id,xmin,ymin,xmax,ymax,label"
+    and several rows corresponding to the groundtruth bounding box objects
+    :param str predicted_csv: Absolute path to csv
+    containing image_id,xmin,ymin,xmax,ymax,label,prob"
+    and several rows corresponding to the predicted bounding box objects
+    :param list categories: list of names of the objects detected
+    :param iou_threshold IOU threshold below which the bounding box is invalid
+    :param confidence_threshold Confidence score threshold below which
+    bounding box detection is of low confidence and
+    is ignored while considering true positives for a class
     :param list categories: list of names of the objects detected
     :param str output_path: Redirect stdout to file in paht
     """
@@ -148,6 +149,25 @@ def display(
     stdout_origin = sys.stdout
     sys.stdout = open(output_path, "w")
     number_classes = len(categories)
+
+    df = pd.read_csv(groundtruth_csv)
+    for label in categories:
+        print("There are {} {} classes in the ground truth dataset".format(
+            len(df[df.label == label]), label))
+
+    df = pd.read_csv(predicted_csv)
+    for label in categories:
+        print("There are {} {} classes in the prediction dataset".format(
+            len(
+                df.query('label == {} & prob > {}'.format(
+                    label, confidence_threshold))), label))
+
+    confusion_matrix = get_confusion_matrix(
+        groundtruth_csv,
+        predicted_csv,
+        categories,
+        iou_threshold,
+        confidence_threshold)
 
     # printing the headers with class names and parameters used
     length_name = max([len(str(s)) for s in categories] + [5])
@@ -220,15 +240,9 @@ def confusion_matrix(
     # Attempt to get class names, if available.
     with open(classes_json, "r") as f:
         class_labels = json.load(f)
-    confusion_matrix = get_confusion_matrix(
+    display(
         groundtruth_csv,
         predicted_csv,
-        class_labels,
-        iou_threshold,
-        confidence_threshold)
-
-    display(
-        confusion_matrix,
         class_labels,
         iou_threshold,
         confidence_threshold,
