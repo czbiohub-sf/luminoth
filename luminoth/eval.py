@@ -20,8 +20,6 @@ from luminoth.utils.image_vis import image_vis_summaries
 @click.option('override_params', '--override', '-o', multiple=True, help='Override model config params.')  # noqa
 @click.option('--files-per-class', type=int, default=10, help='How many files per class display in every epoch.')  # noqa
 @click.option('--max-detections', type=int, default=100, help='Max detections to consider.')  # noqa
-@click.option('--iou-threshold', type=float, default=0.5, help='IOU threshold below which the bounding box is invalid')  # noqa
-@click.option('--confidence-threshold', type=float, default=0.9, help='Confidence score threshold below which bounding box detection is invalid')  # noqa
 def eval(dataset_split, config_files, watch, from_global_step, override_params,
          files_per_class, max_detections):
     """Evaluate models using dataset."""
@@ -283,8 +281,7 @@ def get_checkpoints(run_dir, from_global_step=None, last_only=False):
 
 def evaluate_once(config, writer, saver, ops, checkpoint,
                   class_labels, metrics_scope='metrics', image_vis=None,
-                  files_per_class=None, files_to_visualize=None,
-                  iou_threshold=None, confidence_threshold=None):
+                  files_per_class=None, files_to_visualize=None):
     """Run the evaluation once.
 
     Create a new session with the previously-built graph, run it through the
