@@ -11,6 +11,7 @@ It's base subcommands are:
 
 import click
 
+from luminoth.confusion_matrix import confusion_matrix
 from luminoth.eval import eval
 from luminoth.predict import predict
 from luminoth.tools import checkpoint, cloud, dataset, server
@@ -27,6 +28,7 @@ def cli():
 
 cli.add_command(checkpoint)
 cli.add_command(cloud)
+cli.add_command(confusion_matrix)
 cli.add_command(dataset)
 cli.add_command(eval)
 cli.add_command(predict)
