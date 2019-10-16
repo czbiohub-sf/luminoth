@@ -158,8 +158,7 @@ def display(
     for label in categories:
         print("There are {} {} classes in the prediction dataset".format(
             len(
-                df.query('label == {} & prob > {}'.format(
-                    label, confidence_threshold))), label))
+                df[(df['label'] == label) & (df['prob'] > confidence_threshold)]), label))
 
     confusion_matrix = get_confusion_matrix(
         groundtruth_csv,
