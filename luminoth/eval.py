@@ -702,7 +702,8 @@ def calculate_confusion_matrix(output_per_batch, num_classes, iou_threshold):
     for i in range(len(groundtruth_boxes)):
         for j in range(len(detection_boxes)):
             iou = bbox_overlap(groundtruth_boxes[i], detection_boxes[j])
-            if iou > iou_threshold:
+            print(iou)
+            if iou[0] > iou_threshold:
                 matches.append([i, j, iou])
 
     matches = np.array(matches)
