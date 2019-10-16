@@ -5,7 +5,7 @@ Confusion matrix comparing ground truth and predicted bounding boxes detected by
 
 Assuming you already have both your dataset and predicted output ready::
 
-  $ lumi confusion_matrix --groundtruth_csv /data/uv_microscopy_data/UVM-2019-06-28-16-01-18/lumi_csv/preds_val_3/objects.csv --predicted_csv /data/uv_microscopy_data/UVM-2019-06-28-16-01-18/lumi_csv/preds_val_3/objects.csv --output_txt outout_18.txt --classes_json /data/uv_microscopy_data/all_data/classes.json
+  $ lumi confusion_matrix --groundtruth_csv lumi_csv/val.csv --predicted_csv preds_val/objects.csv --output_txt outout_18.txt --classes_json all_data/classes.json
 
 The ``lumi confusion_matrix`` CLI tool provides the following options related to training.
 
