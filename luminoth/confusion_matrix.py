@@ -208,8 +208,8 @@ def confusion_matrix(
         confidence_threshold,
         classes_json):
     # Attempt to get class names, if available.
-    with open(classes_json) as f:
-        class_labels = json.loads(f)
+    with open(classes_json, "r") as f:
+        class_labels = json.load(f)
     confusion_matrix = get_confusion_matrix(
         groundtruth_csv,
         predicted_csv,
