@@ -193,7 +193,7 @@ def display(
     sys.stdout = stdout_origin
 
 
-@click.command()
+@click.command(help="Save or print confusion matrix per class after comparing ground truth and prediced bounding boxes")  # noqa
 @click.option("--groundtruth_csv", help="Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label and several rows corresponding to the groundtruth bounding box objects", required=True, type=str) # noqa
 @click.option("--predicted_csv", help="Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label,prob and several rows corresponding to the predicted bounding box objects", required=True, type=str) # noqa
 @click.option("--output_txt", help="output txt file containing confusion matrix, precision, recall", required=True, type=str) # noqa
