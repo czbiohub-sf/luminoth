@@ -15,7 +15,8 @@ from luminoth.vis import build_colormap, vis_objects
 
 IMAGE_FORMATS = ['jpg', 'jpeg', 'png']
 VIDEO_FORMATS = ['mov', 'mp4', 'avi']  # TODO: check if more formats work
-LUMI_CSV_COLUMNS = ['image_id', 'xmin', 'xmax', 'ymin', 'ymax', 'label']
+LUMI_CSV_COLUMNS = [
+    'image_id', 'xmin', 'xmax', 'ymin', 'ymax', 'label', 'prob']
 
 
 def get_file_type(filename):
@@ -285,7 +286,8 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
                                 'xmax': obj[2],
                                 'ymin': obj[1],
                                 'ymax': obj[3],
-                                'label': label_name},
+                                'label': label_name,
+                                'prob': obj["prob"]},
                                ignore_index=True)
 
     # Build the `Formatter` based on the outputs, which automatically writes

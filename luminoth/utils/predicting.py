@@ -137,12 +137,31 @@ class PredictorNetwork(object):
             for obj in objects.tolist()
         ]
 
-        predictions = sorted([
-            {
-                'bbox': obj,
-                'label': label,
-                'prob': round(prob, 4),
-            } for obj, label, prob in zip(objects, labels, probs)
-        ], key=lambda x: x['prob'], reverse=True)
+        # Save a prediction by suppressing the class with
+        # lowest probability for the same bounding box
+        predictions = []
+        for obj, label, prob in zip(objects, labels, probs):
+            if objects.count(obj) == 1:
+                d = {
+                    'bbox': obj,
+                    'label': label,
+                    'prob': round(prob, 4)}
+                predictions.append(d)
+            elif objects.count(obj) > 1:
+                prob_repeated_objs = {
+                    i: probs[i] for i, value in enumerate(objects)
+                    if value == obj}
+                max_prob = max(prob_repeated_objs.values())
+                prob_index = [
+                    index for index, prob in prob_repeated_objs.items()
+                    if prob == max_prob]
+                d = {
+                    'bbox': obj,
+                    'label': labels[prob_index],
+                    'prob': round(max_prob, 4)}
+                predictions.append(d)
+
+        predictions = sorted(
+            predictions, key=lambda x: x['prob'], reverse=True)
 
         return predictions

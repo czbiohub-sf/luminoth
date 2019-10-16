@@ -408,9 +408,14 @@ def evaluate_once(config, writer, saver, ops, checkpoint,
             )
 
             confusion_matrix = calculate_confusion_matrix(
-                output_per_batch, config.model.network.num_classes, iou_threshold=iou_threshold)
+                output_per_batch,
+                config.model.network.num_classes,
+                iou_threshold=iou_threshold)
 
-            display_confusion_matrix(confusion_matrix, class_labels, confidence_threshold=confidence_threshold)
+            display_confusion_matrix(
+                confusion_matrix,
+                class_labels,
+                confidence_threshold=confidence_threshold)
 
             map_at_50 = np.mean(ap_per_class[:, 0])
             map_at_75 = np.mean(ap_per_class[:, 5])
@@ -626,13 +631,13 @@ def calculate_metrics(output_per_batch, num_classes):
         true_positives = labels[sorted_indices, :]
         false_positives = 1 - true_positives
 
-        cum_true_positives = np.cumsum(true_positives, axis=0)
-        cum_false_positives = np.cumsum(false_positives, axis=0)
+        sum_true_positives = np.cumsum(true_positives, axis=0)
+        sum_false_positives = np.cumsum(false_positives, axis=0)
 
-        recall = cum_true_positives.astype(float) / num_examples
+        recall = sum_true_positives.astype(float) / num_examples
         precision = np.divide(
-            cum_true_positives.astype(float),
-            cum_true_positives + cum_false_positives
+            sum_true_positives.astype(float),
+            sum_true_positives + sum_false_positives
         )
 
         # Find AP by integrating over PR curve, with interpolated precision.
@@ -674,7 +679,8 @@ def calculate_confusion_matrix(output_per_batch, num_classes, iou_threshold):
             ``gt_bboxes``, ``gt_classes``. Under each key, there should be a
             list of the results per batch as returned by the detector.
         num_classes (int): Number of classes on the dataset.
-        iou_threshold (float): IOU Overlap threshold to consider two bounding boxes as a match
+        iou_threshold (float): IOU Overlap threshold to consider
+        two bounding boxes as a match
 
     Returns:
         confusion_matrix numpy array of (num_classes, num_classes) shape
@@ -701,13 +707,15 @@ def calculate_confusion_matrix(output_per_batch, num_classes, iou_threshold):
 
     matches = np.array(matches)
     if matches.shape[0] > 0:
-        # Sort list of matches by descending IOU so we can remove duplicate detections
+        # Sort list of matches by descending IOU
+        # so we can remove duplicate detections
         # while keeping the highest IOU entry.
         matches = matches[matches[:, 2].argsort()[::-1][:len(matches)]]
         # Remove duplicate detections from the list.
         matches = matches[np.unique(matches[:, 1], return_index=True)[1]]
 
-        # Sort the list again by descending IOU. Removing duplicates doesn't preserve
+        # Sort the list again by descending IOU.
+        # Removing duplicates doesn't preserve
         # our previous sort.
         matches = matches[matches[:, 2].argsort()[::-1][:len(matches)]]
 
@@ -716,13 +724,18 @@ def calculate_confusion_matrix(output_per_batch, num_classes, iou_threshold):
 
     for i in range(len(groundtruth_boxes)):
         if matches.shape[0] > 0 and matches[matches[:, 0] == i].shape[0] == 1:
-            confusion_matrix[groundtruth_classes[i]][detection_classes[int(matches[matches[:, 0] == i, 1][0])]] += 1
+            confusion_matrix[
+                groundtruth_classes[i]][
+                detection_classes[
+                    int(matches[matches[:, 0] == i, 1][0])]] += 1
         else:
-            confusion_matrix[groundtruth_classes[i]][confusion_matrix.shape[1] - 1] += 1
+            confusion_matrix[
+                groundtruth_classes[i]][confusion_matrix.shape[1] - 1] += 1
 
     for i in range(len(detection_boxes)):
         if matches.shape[0] > 0 and matches[matches[:, 1] == i].shape[0] == 0:
-            confusion_matrix[confusion_matrix.shape[0] - 1][detection_classes[i]] += 1
+            confusion_matrix[
+                confusion_matrix.shape[0] - 1][detection_classes[i]] += 1
 
     return confusion_matrix
 
@@ -734,29 +747,37 @@ def display_confusion_matrix(confusion_matrix, classes, confidence_threshold):
     Args:
         confusion_matrix numpy array of (num_classes, num_classes) shape
         classes (list): List of classes in the dataset.
-        confidence_threshold (float): Confidence threshold at which a box was marked in prediction
+        confidence_threshold (float): Confidence threshold at
+        which a box was marked in prediction
 
     Returns:
-        Displays confusion_matrix numpy array of (num_classes, num_classes) shape
+        Displays confusion_matrix numpy array
+        of (num_classes, num_classes) shape and
+        corresponding class labels
     """
     # printing the headers with class names and parameters used
     number_classes = len(classes)
     length_name = max([len(str(s)) for s in classes] + [5])
-    spacing = "- " * max((int(7 + ((length_name + 3) * (number_classes + 3)) / 2)),
-                         length_name + 33)
+    spacing = "- " * max(
+        (int(7 + ((length_name + 3) * (number_classes + 3)) / 2)),
+        length_name + 33)
     tf.logging.info(spacing + "\nConfusion Matrix\n" + spacing)
-    tf.logging.info(("thresh_confidence: %f" % confidence_threshold).rstrip("0"))
+    tf.logging.info(
+        "thresh_confidence: %f" % confidence_threshold).rstrip("0")
     confusion_matrix = np.uint32(confusion_matrix)
-    confusion_matrix = confusion_matrix / confusion_matrix.astype(np.float).sum(axis=1, keepdims=True)
+    confusion_matrix = confusion_matrix / confusion_matrix.astype(
+        np.float).sum(axis=1, keepdims=True)
     content = " " * (length_name + 3 + 12)
     for j in range(number_classes):
         content += "[%*s] " % (length_name, classes[j])
-    tf.logging.info("%*sPrediction" % (12 + (len(content) - 10) // 2, ""))
+    tf.logging.info(
+        "%*sPrediction" % (12 + (len(content) - 10) // 2, ""))
     tf.logging.info(content)
 
     # printing the normalized confusion matrix elements
     for i in range(number_classes):
-        content = "Groundtruth " if i == int((number_classes) / 2) else " " * 12
+        content = \
+            "Groundtruth " if i == int((number_classes) / 2) else " " * 12
         content += "[%*s] " % (length_name, classes[i])
         for j in range(number_classes):
             content += "%*f " % (length_name + 2, confusion_matrix[i, j])

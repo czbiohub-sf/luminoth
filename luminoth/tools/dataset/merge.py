@@ -6,7 +6,7 @@ import tensorflow as tf
 @click.command()
 @click.argument('src', nargs=-1)
 @click.argument('dst', nargs=1)
-@click.option('--type', type=str, default="tf", help='Type of datasets to merge.')
+@click.option('--type', type=str, default="tf", help='Type of datasets to merge.') # noqa
 @click.option('--debug', is_flag=True, help='Set level logging to DEBUG.')
 def merge(src, dst, debug):
     """
