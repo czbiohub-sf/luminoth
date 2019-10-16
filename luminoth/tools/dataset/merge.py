@@ -50,7 +50,8 @@ def merge(src, dst, type, debug):
             total_records += total_src_records
             dfs.append(df)
 
-        merged_df = pd.concat(dfs).reset_index(drop=True, inplace=True)
+        merged_df = pd.concat(dfs)
+        merged_df.reset_index(drop=True, inplace=True)
 
         tf.logging.info('Saved {} to "{}"'.format(total_records, dst))
 
