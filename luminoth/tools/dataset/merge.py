@@ -8,7 +8,7 @@ import tensorflow as tf
 @click.argument('dst', nargs=1)
 @click.option('--type', type=str, default="tf", help='Type of datasets to merge.') # noqa
 @click.option('--debug', is_flag=True, help='Set level logging to DEBUG.')
-def merge(src, dst, debug):
+def merge(src, dst, type, debug):
     """
     Merges existing datasets into a single one.
     """
