@@ -61,7 +61,7 @@ def get_confusion_matrix(
 
     for label in categories:
         print("There are {} {} classes in the ground truth dataset".format(
-            len(df[df.label == label])), label)
+            len(df[df.label == label]), label))
 
     groundtruth_boxes = []
     groundtruth_classes = []
