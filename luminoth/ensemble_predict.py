@@ -113,7 +113,7 @@ def ensemble_predict(
                     label_name = obj['label']
                     image_names.append(file)
                     dets.append(
-                        obj + [class_labels.index(label_name), obj["prob"]])
+                        obj['bbox'] + [class_labels.index(label_name), obj["prob"]])
 
         submissions[config['train']['job_dir']] = dets
     predict_and_save_ensemble_result(

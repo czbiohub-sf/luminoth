@@ -282,10 +282,10 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
             for obj in objects:
                 label_name = obj['label']
                 df = df.append({'image_id': file,
-                                'xmin': obj[0],
-                                'xmax': obj[2],
-                                'ymin': obj[1],
-                                'ymax': obj[3],
+                                'xmin': obj['bbox'][0],
+                                'xmax': obj['bbox'][2],
+                                'ymin': obj['bbox'][1],
+                                'ymax': obj['bbox'][3],
                                 'label': label_name,
                                 'prob': obj["prob"]},
                                ignore_index=True)
