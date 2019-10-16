@@ -1,7 +1,6 @@
 import codecs
 import os
 import re
-import sys
 
 from setuptools import find_packages, setup
 
@@ -12,7 +11,9 @@ NAME = 'luminoth'
 PACKAGES = find_packages()
 META_PATH = os.path.join('luminoth', '__init__.py')
 KEYWORDS = [
-    'tensorflow', 'computer vision', 'object detection', 'toolkit', 'deep learning',
+    'tensorflow', 'computer vision',
+    'object detection', 'toolkit',
+    'deep learning',
     'faster rcnn'
 ]
 CLASSIFIERS = [
