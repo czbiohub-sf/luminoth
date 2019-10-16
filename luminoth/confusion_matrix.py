@@ -147,8 +147,8 @@ def display(
     print(spacing + "\nConfusion Matrix\n" + spacing)
     print(("thresh_confidence: %f" % confidence_threshold).rstrip("0"))
     confusion_matrix = np.uint32(confusion_matrix)
-    confusion_matrix /= confusion_matrix.astype(np.float).sum(
-        axis=1, keepdims=True)
+    confusion_matrix = confusion_matrix / confusion_matrix.astype(
+        np.float).sum(axis=1, keepdims=True)
     content = " " * (length_name + 3 + 12)
     for j in range(number_classes):
         content += "[%*s] " % (length_name, categories[j])
