@@ -123,8 +123,7 @@ def get_confusion_matrix(
 
 
 def display(
-        groundtruth_csv, predicted_csv,
-        confusion_matrix, categories,
+        groundtruth_csv, predicted_csv, categories,
         iou_threshold, confidence_threshold,
         output_path):
     """
