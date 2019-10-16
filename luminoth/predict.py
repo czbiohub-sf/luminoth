@@ -294,6 +294,7 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
     # the formatted output to all the requested output files.
     if output_path == '-':
         output = sys.stdout
+        pd.set_option('display.max_colwidth', -1)
         output.write(df.to_string())
         output.close()
     else:
