@@ -59,6 +59,10 @@ def get_confusion_matrix(
 
     df = pd.read_csv(groundtruth_csv)
 
+    for label in categories:
+        print("There are {} {} classes in the ground truth dataset".format(
+            len(df[df.label == label])), label)
+
     groundtruth_boxes = []
     groundtruth_classes = []
     for index, row in df.iterrows():
@@ -74,6 +78,12 @@ def get_confusion_matrix(
             detection_boxes.append([row.xmin, row.xmax, row.ymin, row.ymax])
             detection_classes.append(categories.index(row.label))
             detection_scores.append(row.prob)
+
+    for label in categories:
+        print("There are {} {} classes in the prediction dataset".format(
+            len(
+                df.query('label == {} & prob > {}'.format(
+                    label, confidence_threshold))), label))
 
     matches = []
 
@@ -145,7 +155,7 @@ def display(
         (int(7 + ((length_name + 3) * (number_classes + 3)) / 2)),
         length_name + 33)
     print(spacing + "\nConfusion Matrix\n" + spacing)
-    print(("thresh_confidence: %f" % confidence_threshold).rstrip("0"))
+    print(("confidence_threshold: %f" % confidence_threshold).rstrip("0"))
     confusion_matrix = np.uint32(confusion_matrix)
     confusion_matrix = confusion_matrix / confusion_matrix.astype(
         np.float).sum(axis=1, keepdims=True)
