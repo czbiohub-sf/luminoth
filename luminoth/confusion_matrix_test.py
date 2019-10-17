@@ -20,7 +20,7 @@ class ConfusionMatrixTest(tf.test.TestCase):
         groundtruth_csv = tf.name
         df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
         bbox = [0, 0, 10, 10]
-        df = df.append({'image_id': file,
+        df = df.append({'image_id': "file",
                         'xmin': bbox[0],
                         'xmax': bbox[2],
                         'ymin': bbox[1],
@@ -68,6 +68,7 @@ class ConfusionMatrixTest(tf.test.TestCase):
 
         expected = np.ones((1, 1))
         np.testing.assert_array_equal(cm, expected)
+
 
 if __name__ == '__main__':
     tf.test.main()
