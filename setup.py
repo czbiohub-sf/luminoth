@@ -41,7 +41,7 @@ INSTALL_REQUIRES = [
     'requests==2.18.4',
     'pandas==0.19.2',
     'numpy==1.14.5',
-    'scikit-learn==0.21.2',
+    'scikit-learn==0.19.2',
     'scikit-video==1.1.10',
     'Flask>=0.12',
     'PyYAML>=3.12,<4',
