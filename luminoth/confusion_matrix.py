@@ -3,6 +3,7 @@ import pandas as pd
 import click
 import sys
 import json
+import sklearn.metrics
 
 from luminoth.utils.bbox_overlap import bbox_overlap
 
@@ -26,8 +27,6 @@ def get_confusion_matrix(
     is ignored while considering true positives for a class
     :return confusion_matrix numpy array of (categories, categories) shape
     """
-    confusion_matrix = np.zeros(shape=(len(categories), len(categories)))
-
     df = pd.read_csv(groundtruth_csv)
     groundtruth_boxes = []
     groundtruth_classes = []
@@ -73,24 +72,28 @@ def get_confusion_matrix(
         # Remove duplicate ground truths from the list.
         matches = matches[np.unique(matches[:, 0], return_index=True)[1]]
 
-    for i in range(len(groundtruth_boxes)):
-        if matches.shape[0] > 0 and matches[matches[:, 0] == i].shape[0] == 1:
-            confusion_matrix[
-                groundtruth_classes[i]][
-                detection_classes[
-                    int(matches[matches[:, 0] == i, 1][0])]] += 1
-        else:
-            confusion_matrix[
-                groundtruth_classes[i]][
-                    confusion_matrix.shape[1] - 1] += 1
+    gt_matched_classes = [groundtruth_classes[match[0]] for match in matches]
+    predicted_matched_classes = [detection_classes[match[1]] for match in matches]
 
-    for i in range(len(detection_boxes)):
-        if matches.shape[0] > 0 and matches[matches[:, 1] == i].shape[0] == 0:
-            confusion_matrix[
-                confusion_matrix.shape[0] - 1][
-                    detection_classes[i]] += 1
+    # for i in range(len(groundtruth_boxes)):
+    #     if matches.shape[0] > 0 and matches[matches[:, 0] == i].shape[0] == 1:
+    #         confusion_matrix[
+    #             groundtruth_classes[i]][
+    #             detection_classes[
+    #                 int(matches[matches[:, 0] == i, 1][0])]] += 1
+    #     else:
+    #         confusion_matrix[
+    #             groundtruth_classes[i]][
+    #                 confusion_matrix.shape[1] - 1] += 1
 
-    return confusion_matrix
+    # for i in range(len(detection_boxes)):
+    #     if matches.shape[0] > 0 and matches[matches[:, 1] == i].shape[0] == 0:
+    #         confusion_matrix[
+    #             confusion_matrix.shape[0] - 1][
+    #                 detection_classes[i]] += 1
+
+    return sklearn.metrics.confusion_matrix(
+        gt_matched_classes, predicted_matched_classes)
 
 
 def display(
