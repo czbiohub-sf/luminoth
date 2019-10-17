@@ -32,7 +32,7 @@ def get_confusion_matrix(
     groundtruth_classes = []
     for index, row in df.iterrows():
         groundtruth_boxes.append([row.xmin, row.ymin, row.xmax, row.ymax])
-        groundtruth_classes.append(categories.index(row.label))
+        groundtruth_classes.append(row.label)
 
     df = pd.read_csv(predicted_csv)
     detection_boxes = []
@@ -41,7 +41,7 @@ def get_confusion_matrix(
     for index, row in df.iterrows():
         if row.prob > confidence_threshold:
             detection_boxes.append([row.xmin, row.ymin, row.xmax, row.ymax])
-            detection_classes.append(categories.index(row.label))
+            detection_classes.append(row.label)
             detection_scores.append(row.prob)
 
     matches = []
@@ -202,7 +202,7 @@ def display(
 @click.command(help="Save or print confusion matrix per class after comparing ground truth and prediced bounding boxes")  # noqa
 @click.option("--groundtruth_csv", help="Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label and several rows corresponding to the groundtruth bounding box objects", required=True, type=str) # noqa
 @click.option("--predicted_csv", help="Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label,prob and several rows corresponding to the predicted bounding box objects", required=True, type=str) # noqa
-@click.option("--output_txt", help="output txt file containing confusion matrix, precision, recall per class", required=True, type=str) # noqa
+@click.option("--output_txt", help="output txt file containing confusion matrix, precision, recall per class", type=str) # noqa
 @click.option('--iou_threshold', type=float, default=0.5, help='IOU threshold below which the bounding box is invalid')  # noqa
 @click.option('--confidence_threshold', type=float, default=0.9, help='Confidence score threshold below which bounding box detection is of low confidence and is ignored while considering true positives')  # noqa
 @click.option('--classes_json', required=True, help='path to a json file containing list of class label for the objects')  # noqa
