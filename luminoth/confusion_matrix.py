@@ -55,7 +55,6 @@ def get_confusion_matrix(
             if iou > iou_threshold:
                 matches.append([i, j, iou])
 
-    print(matches)
     matches = np.array(matches)
     if matches.shape[0] > 0:
         # Sort list of matches by descending IOU
