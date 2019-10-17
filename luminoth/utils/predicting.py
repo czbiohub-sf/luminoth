@@ -140,6 +140,7 @@ class PredictorNetwork(object):
         # Save a prediction by suppressing the class with
         # lowest probability for the same bounding box
         predictions = []
+        assert len(objects) == len(labels) == len(probs)
         for obj, label, prob in zip(objects, labels, probs):
             if objects.count(obj) == 1:
                 d = {
@@ -148,10 +149,11 @@ class PredictorNetwork(object):
                     'prob': round(prob, 4)}
                 predictions.append(d)
             elif objects.count(obj) > 1:
-                tf.logging.debug('objects repeated')
+                print('objects repeated')
                 prob_repeated_objs = {
                     i: probs[i] for i, value in enumerate(objects)
                     if value == obj}
+                print(prob_repeated_objs)
                 max_prob = max(prob_repeated_objs.values())
                 max_prob_index = [
                     index for index, prob in prob_repeated_objs.items()
