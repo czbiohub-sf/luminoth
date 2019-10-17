@@ -113,11 +113,11 @@ def display(
             len(df[df.label == label]), label))
 
     df = pd.read_csv(predicted_csv)
+    print(
+        "The prediction classes printed below & " +
+        "considered are higher than confidence_threshold {}".format(
+            confidence_threshold))
     for label in categories:
-        print(
-            "The predictions considered" +
-            "are higher than confidence_threshold {}".format(
-                confidence_threshold))
         print("There are {} {} classes in the prediction dataset".format(
             len(
                 df[(df['label'] == label) & (
