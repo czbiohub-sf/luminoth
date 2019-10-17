@@ -55,6 +55,7 @@ def get_confusion_matrix(
             if iou > iou_threshold:
                 matches.append([i, j, iou])
 
+    print(matches)
     matches = np.array(matches)
     if matches.shape[0] > 0:
         # Sort list of matches by descending IOU
@@ -72,9 +73,11 @@ def get_confusion_matrix(
         # Remove duplicate ground truths from the list.
         matches = matches[np.unique(matches[:, 0], return_index=True)[1]]
 
-    gt_matched_classes = [groundtruth_classes[match[0]] for match in matches]
+    print(matches)
+    gt_matched_classes = [
+        groundtruth_classes[int(match[0])] for match in matches.tolist()]
     predicted_matched_classes = [
-        detection_classes[match[1]] for match in matches]
+        detection_classes[int(match[1])] for match in matches.tolist()]
     print(gt_matched_classes)
     print(predicted_matched_classes)
     print(categories)
