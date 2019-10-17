@@ -73,14 +73,10 @@ def get_confusion_matrix(
         # Remove duplicate ground truths from the list.
         matches = matches[np.unique(matches[:, 0], return_index=True)[1]]
 
-    print(matches)
     gt_matched_classes = [
         groundtruth_classes[int(match[0])] for match in matches.tolist()]
     predicted_matched_classes = [
         detection_classes[int(match[1])] for match in matches.tolist()]
-    print(gt_matched_classes)
-    print(predicted_matched_classes)
-    print(categories)
     return sklearn.metrics.confusion_matrix(
         gt_matched_classes, predicted_matched_classes, labels=categories)
 
