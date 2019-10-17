@@ -14,7 +14,7 @@ class ConfusionMatrixTest(tf.test.TestCase):
         tf.reset_default_graph()
 
     def get_test_data(self, bbox):
-        tf = tempfile.NamedTemporaryFile(suffix=".csv")
+        tf = tempfile.NamedTemporaryFile(suffix=".csv", delete=False)
         csv = tf.name
         df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
         df = df.append({'image_id': "file",

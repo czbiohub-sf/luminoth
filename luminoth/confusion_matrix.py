@@ -72,6 +72,9 @@ def get_confusion_matrix(
         # Remove duplicate ground truths from the list.
         matches = matches[np.unique(matches[:, 0], return_index=True)[1]]
 
+    if matches.size == 0:
+        return np.zeros((len(categories), len(categories)))
+
     gt_matched_classes = [
         groundtruth_classes[int(match[0])] for match in matches.tolist()]
     predicted_matched_classes = [
