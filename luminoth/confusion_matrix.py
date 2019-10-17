@@ -142,6 +142,9 @@ def display(
         iou_threshold,
         confidence_threshold)
 
+    print("Confusion matrix before normalization")
+    print(confusion_matrix)
+
     # printing the headers with class names and parameters used
     length_name = max([len(str(s)) for s in categories] + [5])
     spacing = "- " * max(
