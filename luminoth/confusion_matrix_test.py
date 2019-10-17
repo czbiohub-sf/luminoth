@@ -4,9 +4,7 @@ import tensorflow as tf
 import tempfile
 
 import luminoth.confusion_matrix as confusion_matrix
-
-LUMI_CSV_COLUMNS = [
-    'image_id', 'xmin', 'xmax', 'ymin', 'ymax', 'label', 'prob']
+from luminoth.predict import LUMI_CSV_COLUMNS
 
 
 class ConfusionMatrixTest(tf.test.TestCase):
@@ -16,20 +14,19 @@ class ConfusionMatrixTest(tf.test.TestCase):
         tf.reset_default_graph()
 
     def get_test_data(self, bbox):
-        tf = tempfile.NamedTemporaryFile(name=".csv")
-        groundtruth_csv = tf.name
+        tf = tempfile.NamedTemporaryFile(suffix=".csv")
+        csv = tf.name
         df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
-        bbox = [0, 0, 10, 10]
         df = df.append({'image_id': "file",
                         'xmin': bbox[0],
                         'xmax': bbox[2],
                         'ymin': bbox[1],
                         'ymax': bbox[3],
                         'label': "normal",
-                        'prob': 0.9},
+                        'prob': 0.95},
                        ignore_index=True)
-        df.to_csv(groundtruth_csv)
-        return groundtruth_csv
+        df.to_csv(csv)
+        return csv
 
     def test_NoOverlap(self):
         # Single box test

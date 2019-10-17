@@ -32,7 +32,7 @@ def get_confusion_matrix(
     groundtruth_boxes = []
     groundtruth_classes = []
     for index, row in df.iterrows():
-        groundtruth_boxes.append([row.xmin, row.xmax, row.ymin, row.ymax])
+        groundtruth_boxes.append([row.xmin, row.ymin, row.xmax, row.ymax])
         groundtruth_classes.append(categories.index(row.label))
 
     df = pd.read_csv(predicted_csv)
@@ -41,7 +41,7 @@ def get_confusion_matrix(
     detection_scores = []
     for index, row in df.iterrows():
         if row.prob > confidence_threshold:
-            detection_boxes.append([row.xmin, row.xmax, row.ymin, row.ymax])
+            detection_boxes.append([row.xmin, row.ymin, row.xmax, row.ymax])
             detection_classes.append(categories.index(row.label))
             detection_scores.append(row.prob)
 
@@ -50,8 +50,8 @@ def get_confusion_matrix(
     for i in range(len(groundtruth_boxes)):
         for j in range(len(detection_boxes)):
             iou = bbox_overlap(
-                np.array([[groundtruth_boxes[i]]]),
-                np.array([[detection_boxes[j]]]))
+                np.array(groundtruth_boxes[i]).reshape(1, 4),
+                np.array(detection_boxes[j]).reshape(1, 4))
 
             if iou > iou_threshold:
                 matches.append([i, j, iou])
