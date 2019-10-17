@@ -4,38 +4,7 @@ import click
 import sys
 import json
 
-
-def compute_iou(groundtruth_box, detection_box):
-    """
-    Return a float intersection pixel area of two
-    bounding boxes divided by the union of the two
-
-    :param list groundtruth_box: xmin, g_xmax, ymin, ymax
-    x_leftmost_corner, x_rightmost_corner,y_leftmost_corner,y_rightmost_corner
-    :param list detection_box: xmin, g_xmax, ymin, ymax
-    x_leftmost_corner, x_rightmost_corner,y_leftmost_corner,y_rightmost_corner
-    :return float iou intersection pixel area of two
-    bounding boxes divided by the union of the two
-    """
-    if groundtruth_box == detection_box:
-        return 1.0
-    g_xmin, g_xmax, g_ymin, g_ymax = tuple(groundtruth_box)
-    d_xmin, d_xmax, d_ymin, d_ymax = tuple(detection_box)
-
-    xa = max(g_xmin, d_xmin)
-    ya = max(g_ymin, d_ymin)
-    xb = min(g_xmax, d_xmax)
-    yb = min(g_ymax, d_ymax)
-
-    boxAArea = (g_xmax - g_xmin + 1) * (g_ymax - g_ymin + 1)
-    boxBArea = (d_xmax - d_xmin + 1) * (d_ymax - d_ymin + 1)
-    intersection = max(0, xb - xa + 1) * max(0, yb - ya + 1)
-
-    if boxAArea + boxBArea == intersection:
-        return 1.0
-
-    iou = float(intersection) / float(boxAArea + boxBArea - intersection)
-    return iou
+from luminoth.utils.bbox_overlap import bbox_overlap
 
 
 def get_confusion_matrix(
@@ -80,7 +49,9 @@ def get_confusion_matrix(
 
     for i in range(len(groundtruth_boxes)):
         for j in range(len(detection_boxes)):
-            iou = compute_iou(groundtruth_boxes[i], detection_boxes[j])
+            iou = bbox_overlap(
+                np.array([[groundtruth_boxes[i]]]),
+                np.array([[detection_boxes[j]]]))
 
             if iou > iou_threshold:
                 matches.append([i, j, iou])
