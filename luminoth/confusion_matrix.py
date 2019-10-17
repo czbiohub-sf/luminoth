@@ -93,7 +93,7 @@ def get_confusion_matrix(
     #                 detection_classes[i]] += 1
 
     return sklearn.metrics.confusion_matrix(
-        gt_matched_classes, predicted_matched_classes)
+        gt_matched_classes, predicted_matched_classes, labels=categories)
 
 
 def display(
