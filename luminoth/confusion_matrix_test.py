@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import tempfile
+import os
 
 import luminoth.confusion_matrix as confusion_matrix
 from luminoth.predict import LUMI_CSV_COLUMNS
@@ -10,8 +11,13 @@ from luminoth.predict import LUMI_CSV_COLUMNS
 class ConfusionMatrixTest(tf.test.TestCase):
     """Tests for confusion_matrix
     """
+    def setUp(self):
+        self.tempfiles_to_delete = []
+
     def tearDown(self):
         tf.reset_default_graph()
+        for file in self.tempfiles_to_delete:
+            os.remove(file)
 
     def get_test_data(self, bbox):
         tf = tempfile.NamedTemporaryFile(suffix=".csv", delete=False)
@@ -26,6 +32,7 @@ class ConfusionMatrixTest(tf.test.TestCase):
                         'prob': 0.95},
                        ignore_index=True)
         df.to_csv(csv)
+        self.tempfiles_to_delete.append(csv)
         return csv
 
     def test_NoOverlap(self):
