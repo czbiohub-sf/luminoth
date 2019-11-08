@@ -91,11 +91,14 @@ dataset:
     min_size: 600
     max_size: 1024
   # Data augmentation techniques.
+
   data_augmentation:
     - flip:
         left_right: True
         up_down: False
         prob: 0.5
+        # Exclude data augmentation on a class or classes to compensate for class imbalaces
+        exclude_class: [1]
     # Also available:
     # # If you resize to too small images, you may end up not having any anchors
     # # that aren't partially outside the image.
