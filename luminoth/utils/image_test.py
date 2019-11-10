@@ -5,7 +5,7 @@ from easydict import EasyDict
 
 from luminoth.utils.image import (
     resize_image, flip_image, random_patch, random_resize, random_distortion,
-    patch_image
+    patch_image, translate
 )
 from luminoth.utils.test.gt_boxes import generate_gt_boxes
 
@@ -68,6 +68,25 @@ class ImageTest(tf.test.TestCase):
                 resized_dict['image'],
                 resized_dict.get('bboxes'),
                 resized_dict.get('scale_factor'),
+            )
+
+    def _translate_image(self, image_array, boxes_array=None):
+        image = tf.placeholder(tf.float32, image_array.shape)
+        feed_dict = {
+            image: image_array,
+        }
+        if boxes_array is not None:
+            boxes = tf.placeholder(tf.float32, boxes_array.shape)
+            feed_dict[boxes] = boxes_array
+        else:
+            boxes = None
+        print(boxes)
+        translated = translate(image, bboxes=boxes)
+        with self.test_session() as sess:
+            translated_dict = sess.run(translated, feed_dict=feed_dict)
+            return (
+                translated_dict['image'],
+                translated_dict.get('bboxes'),
             )
 
     def _flip_image(self, image_array, boxes_array=None, left_right=False,
@@ -331,7 +350,7 @@ class ImageTest(tf.test.TestCase):
         )
         # Check that sum of columns is not modified, just the order.
         self.assertAllClose(
-            np.array([[89.,  89.,  99.,  99.,  -1.]]), flipped_boxes
+            np.array([[89., 89., 99., 99., -1.]]), flipped_boxes
         )
 
     def testFlipBboxesDiffDtype(self):
@@ -566,6 +585,17 @@ class ImageTest(tf.test.TestCase):
         large_number = 0.1
         self.assertAllClose(image, ret_image, rtol=0.05, atol=large_number)
 
+    def testTranslate(self):
+        """Tests the integrity of the return values of translate.
+        """
+        image, boxes = self._get_image_with_boxes((500, 500, 3), 10)
+        print(boxes)
+        ret_image, ret_bboxes = self._translate_image(image, boxes)
+        # Assertions
+        self.assertEqual(image.shape, ret_image.shape)
+        self.assertAllEqual(
+            boxes, ret_bboxes
+        )
 
 if __name__ == '__main__':
     tf.test.main()
