@@ -107,7 +107,7 @@ dataset:
     #     max_size: 1024
     #     prob: 0.2
     # - rotate:
-    #     prob: 1.0
+    #     prob: 0.5
     #     exclude_class: [1]
     # - gaussian:
     #     prob: 0.5
@@ -117,13 +117,13 @@ dataset:
     #     min_gaussian_stddev: 0
     #     max_gaussian_stddev: 1.0
     # - expand:
-    #     prob: 0.3
+    #     prob: 0.5
     #     exclude_class: [1]
     #     fill: 0
     #     min_ratio: 1
     #     max_ratio: 4
     # - equalize:
-    #     prob: 0.3
+    #     prob: 0.5
     #     exclude_class: [1]
     # - patch:
     #     min_height: 600
