@@ -3,14 +3,15 @@ import tensorflow as tf
 from luminoth.datasets.base_dataset import BaseDataset
 from luminoth.utils.image import (
     resize_image_fixed, resize_image, flip_image, random_patch, random_resize,
-    random_distortion, expand)
+    random_distortion, expand, rot90)
 
 DATA_AUGMENTATION_STRATEGIES = {
     'flip': flip_image,
     'patch': random_patch,
     'resize': random_resize,
     'distortion': random_distortion,
-    'expand': expand
+    'expand': expand,
+    'rotate': rot90
 }
 
 

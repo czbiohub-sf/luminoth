@@ -93,6 +93,25 @@ class ObjectDetectionDatasetTest(tf.test.TestCase):
         self.assertAllEqual(image, image_aug)
         self.assertAllEqual(bboxes, bboxes_aug)
 
+    def testRotatedAugmentation(self):
+        """
+        Tests that the augmentation is applied in order
+        """
+        image = np.random.randint(low=0, high=255, size=(600, 800, 3))
+        bboxes = np.array([
+            [10, 10, 26, 28, 1],
+            [10, 10, 20, 22, 1],
+            [10, 11, 20, 21, 1],
+            [19, 30, 31, 33, 2],
+        ])
+        config = [
+            {'rotate': {'prob': 1, 'exclude_class': 1}},
+            {'rotate': {'prob': 0, 'exclude_class': 1}}]
+
+        image_aug, bboxes_aug, aug = self._run_augment(config, image, bboxes)
+        self.assertEqual(len(bboxes_aug), 1)
+        self.assertEqual(aug[0], {'rotate': True})
+        self.assertEqual(aug[1], {'rotate': False})
 
 if __name__ == '__main__':
     tf.test.main()

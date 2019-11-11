@@ -1,7 +1,4 @@
 import tensorflow as tf
-import numpy as np
-import imgaug as ia
-import imgaug.augmenters as iaa
 
 from luminoth.utils.bbox_transform_tf import clip_boxes
 
@@ -623,77 +620,61 @@ def expand(image, bboxes=None, fill=0, min_ratio=1, max_ratio=4, seed=None):
     return return_dict
 
 
-def translate_np(image, bboxes=None, translate_px={"x": (1, 5)}):
-
-    seq = iaa.Sequential([iaa.Affine(translate_px=translate_px)])
-    boxes, labels = bboxes[:, 0:4], bboxes[:, 4]
-    ia_boxes = ia.BoundingBoxesOnImage.from_xyxy_array(boxes, image.shape)
-    image_aug, bbs_aug = seq(images=image, bounding_boxes=ia_boxes)
-
-    bboxes = np.column_stack(bbs_aug.to_xyxy_array(), labels)
-    return image_aug, bboxes
-
-
-def translate(image, bboxes=None, translate_px={"x": (1, 5)}):
-    print("translate in image")
-    print(image)
-    print("translate in bboxes")
-    print(bboxes)
-    image_aug, bboxes = tf.compat.v1.map_fn(translate_np, [image, bboxes], tf.float32)
-
-    return_dict = {'image': tf.convert_to_tensor(image_aug)}
-    if bboxes is not None:
-        return_dict['bboxes'] = bboxes
-
-    return return_dict
-
-
-def _rot90_boxes(boxes):
+def _rot90_boxes(boxes, image_shape):
     """Rotate boxes counter-clockwise by 90 degrees.
     Args:
-    boxes: rank 2 float32 tensor containing the bounding boxes -> [N, 4].
-           Boxes are in normalized form meaning their coordinates vary
-           between [0, 1].
-           Each row is in the form of [ymin, xmin, ymax, xmax].
+    boxes: rank 2 float32 tensor containing the bounding boxes -> [N, 5].
+           Each row is in the form of (x_min, y_min, x_max, y_max, label)
     Returns:
     Rotated boxes.
     """
-    ymin, xmin, ymax, xmax = tf.split(value=boxes, num_or_size_splits=5, axis=1)
-    rotated_ymin = tf.subtract(1.0, xmax)
-    rotated_ymax = tf.subtract(1.0, xmin)
-    rotated_xmin = ymin
-    rotated_xmax = ymax
-    rotated_boxes = tf.concat(
-        [rotated_ymin, rotated_xmin, rotated_ymax, rotated_xmax], 1)
-    return rotated_boxes
+    boxes = tf.to_float(boxes)
+    height = image_shape[0]
+    width = image_shape[1]
+
+    x_min, y_min, x_max, y_max, label = tf.unstack(boxes, axis=1)
+    normalized_x_min = x_min / height
+    normalized_y_min = y_min / width
+    normalized_x_max = x_max / height
+    normalized_y_max = y_max / width
+
+    new_x_min = (tf.round(normalized_y_min * width))
+    new_y_min = (tf.round((tf.subtract(1.0, normalized_x_max)) * height))
+    new_x_max = (tf.round(normalized_y_max * width))
+    new_y_max = (tf.round((tf.subtract(1.0, normalized_x_min)) * height))
+
+    bboxes = tf.stack(
+        [new_x_min,
+         new_y_min,
+         new_x_max,
+         new_y_max,
+         label],
+        axis=1
+    )
+    return bboxes
 
 
 def rot90(image, bboxes=None):
-    """Flips image on its axis for data augmentation.
-
+    """Rotate image and bounding boxes clockwise 90 degrees for data augmentation.
+        # rotated_x = xcos(theta) + ysin(theta)
+        # rotated_y = -xsin(theta) + ycos(theta)
     Args:
         image: Tensor with image of shape (H, W, 3).
         bboxes: Optional Tensor with bounding boxes with shape
             (total_bboxes, 5).
-        up_down: Boolean flag to flip the image vertically (upside down)
     Returns:
-        image: Flipped image with the same shape.
+        image: Rotated image with the same shape.
         bboxes: Tensor with the same shape.
     """
-
-    if bboxes is not None:
-        # bboxes usually come from dataset as ints, but just in case we are
-        # using flip for preprocessing, where bboxes usually are represented as
-        # floats, we cast them.
-        bboxes = tf.to_int32(bboxes)
-
+    image_shape = tf.to_float(tf.shape(image))
     image = tf.image.rot90(image)
     if bboxes is not None:
-        bboxes = _rot90_boxes(bboxes)
+        rotated_bboxes = _rot90_boxes(bboxes, image_shape)
+        rotated_bboxes = tf.cast(rotated_bboxes, bboxes.dtype)
 
     return_dict = {'image': image}
     if bboxes is not None:
-        return_dict['bboxes'] = bboxes
+        return_dict['bboxes'] = rotated_bboxes
 
     return return_dict
 

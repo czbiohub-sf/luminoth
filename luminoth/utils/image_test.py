@@ -5,7 +5,7 @@ from easydict import EasyDict
 
 from luminoth.utils.image import (
     resize_image, flip_image, random_patch, random_resize, random_distortion,
-    patch_image, translate
+    patch_image, rot90
 )
 from luminoth.utils.test.gt_boxes import generate_gt_boxes
 
@@ -70,24 +70,13 @@ class ImageTest(tf.test.TestCase):
                 resized_dict.get('scale_factor'),
             )
 
-    def _translate_image(self, image_array, boxes_array=None):
-        image = tf.placeholder(tf.float32, image_array.shape)
-        feed_dict = {
-            image: image_array,
-        }
-        if boxes_array is not None:
-            boxes = tf.placeholder(tf.float32, boxes_array.shape)
-            feed_dict[boxes] = boxes_array
-        else:
-            boxes = None
-        print(boxes)
-        translated = translate(image, bboxes=boxes)
+    def _rot90(self, image_array, boxes_array):
         with self.test_session() as sess:
-            translated_dict = sess.run(translated, feed_dict=feed_dict)
-            return (
-                translated_dict['image'],
-                translated_dict.get('bboxes'),
-            )
+            rotate = rot90(
+                image_array, bboxes=boxes_array)
+            return_dict = sess.run(rotate)
+            ret_bboxes = return_dict.get('bboxes')
+            return return_dict['image'], ret_bboxes
 
     def _flip_image(self, image_array, boxes_array=None, left_right=False,
                     up_down=False, bboxes_dtype=tf.int32):
@@ -585,17 +574,35 @@ class ImageTest(tf.test.TestCase):
         large_number = 0.1
         self.assertAllClose(image, ret_image, rtol=0.05, atol=large_number)
 
-    def testTranslate(self):
-        """Tests the integrity of the return values of translate.
+    def testRotate90(self):
+        """Tests the integrity of the return values of rotate by 90 degrees.
         """
-        image, boxes = self._get_image_with_boxes((500, 500, 3), 10)
-        print(boxes)
-        ret_image, ret_bboxes = self._translate_image(image, boxes)
-        # Assertions
-        self.assertEqual(image.shape, ret_image.shape)
-        self.assertAllEqual(
-            boxes, ret_bboxes
+        total_boxes = 10
+        image, boxes = self._get_image_with_boxes((500, 250, 3), total_boxes)
+        label = 3
+        height = image.shape[0]
+        bboxes_w_label = tf.concat(
+            [
+                boxes,
+                tf.fill((boxes.shape[0], 1), label)
+            ],
+            axis=1
         )
+        ret_image, ret_bboxes = self._rot90(image, tf.to_int32(bboxes_w_label))
+        # Assertions
+        self.assertEqual(ret_image.shape, (250, 500, 3))
+        for i in range(total_boxes):
+            self.assertEqual(ret_bboxes[i, 4], label)
+            self.assertEqual(int(round(boxes[i, 0] + ret_bboxes[i, 3])), height)
+
+            self.assertEqual(boxes[i, 1], int(round(ret_bboxes[i, 0])))
+            self.assertEqual(boxes[i, 3], int(round(ret_bboxes[i, 2])))
+
+        # first coord + last coord = height
+        # 3rd coord + 2nd coord = width
+        # 2nd coord = first coord
+        # 4th coord = third coord
+
 
 if __name__ == '__main__':
     tf.test.main()
