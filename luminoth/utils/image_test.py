@@ -593,15 +593,11 @@ class ImageTest(tf.test.TestCase):
         self.assertEqual(ret_image.shape, (250, 500, 3))
         for i in range(total_boxes):
             self.assertEqual(ret_bboxes[i, 4], label)
-            self.assertEqual(int(round(boxes[i, 0] + ret_bboxes[i, 3])), height)
+            self.assertEqual(
+                int(round(boxes[i, 0] + ret_bboxes[i, 3])), height)
 
             self.assertEqual(boxes[i, 1], int(round(ret_bboxes[i, 0])))
             self.assertEqual(boxes[i, 3], int(round(ret_bboxes[i, 2])))
-
-        # first coord + last coord = height
-        # 3rd coord + 2nd coord = width
-        # 2nd coord = first coord
-        # 4th coord = third coord
 
 
 if __name__ == '__main__':

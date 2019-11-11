@@ -113,5 +113,6 @@ class ObjectDetectionDatasetTest(tf.test.TestCase):
         self.assertEqual(aug[0], {'rotate': True})
         self.assertEqual(aug[1], {'rotate': False})
 
+
 if __name__ == '__main__':
     tf.test.main()

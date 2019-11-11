@@ -677,5 +677,3 @@ def rot90(image, bboxes=None):
         return_dict['bboxes'] = rotated_bboxes
 
     return return_dict
-
-
