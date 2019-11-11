@@ -122,6 +122,9 @@ dataset:
     #     fill: 0
     #     min_ratio: 1
     #     max_ratio: 4
+    # - equalize:
+    #     prob: 0.3
+    #     exclude_class: [1]
     # - patch:
     #     min_height: 600
     #     min_width: 600

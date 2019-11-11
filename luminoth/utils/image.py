@@ -625,6 +625,7 @@ def _rot90_boxes(boxes, image_shape):
     Args:
         boxes: rank 2 float32 tensor containing the bounding boxes -> [N, 5].
                Each row is in the form of (x_min, y_min, x_max, y_max, label)
+        image_shape: image shape in a tensor (h, w, c)
     Returns:
         Rotated boxes.
     """
@@ -656,12 +657,12 @@ def _rot90_boxes(boxes, image_shape):
 
 def rot90(image, bboxes=None):
     """Rotate image and bounding boxes clockwise 90 degrees for data augmentation.
-        # rotated_x = xcos(theta) + ysin(theta)
-        # rotated_y = -xsin(theta) + ycos(theta)
+        rotated_x = xcos(theta) + ysin(theta)
+        rotated_y = -xsin(theta) + ycos(theta)
     Args:
         image: Tensor with image of shape (H, W, 3).
-        bboxes: Optional Tensor with bounding boxes with shape
-            (total_bboxes, 5).
+        bboxes: Optional Tensor with bounding boxes with shape (num_bboxes, 5).
+            where we have (x_min, y_min, x_max, y_max, label) for each one.
     Returns:
         image: Rotated image with the same shape.
         bboxes: Tensor with the same shape.
@@ -696,8 +697,9 @@ def random_patch_gaussian(image,
     https://arxiv.org/abs/1906.02611
 
     Args:
-        image: Rank 3 float32 tensor with shape [height, width, channels] and
-          values in the range [0.0, 255.0].
+        image: Tensor with image of shape (H, W, 3).
+        bboxes: Optional Tensor with bounding boxes with shape (num_bboxes, 5).
+            where we have (x_min, y_min, x_max, y_max, label) for each one.
         target_height: Height of the patch. If set to none, it will be the
             maximum (tf.shape(image)[0] - offset_height - 1). Positive.
         target_width: Width of the patch. If set to none, it will be the
@@ -709,8 +711,7 @@ def random_patch_gaussian(image,
         seed: (optional) Integer. Random seed.
 
     Returns:
-        Rank 3 float32 tensor with same shape as the input
-        image and with gaussian
+        image: Tensor with image of shape (H, W, 3) with gaussian
         noise applied within a random patch.
         bboxes: Unchanged bboxes.
     """
@@ -760,6 +761,41 @@ def random_patch_gaussian(image,
     # Return results
     image = tf.cast(gaussian_patched_image, original_dtype)
     return_dict = {'image': image}
+    if bboxes is not None:
+        return_dict['bboxes'] = bboxes
+    return return_dict
+
+
+def equalize_histogram(image, bboxes=None):
+    """Equalize image for data augmentation.
+    Args:
+        image: Tensor with image of shape (H, W, 3).
+        bboxes: Optional Tensor with bounding boxes with shape (num_bboxes, 5).
+            where we have (x_min, y_min, x_max, y_max, label) for each one.
+    Returns:
+        image: Equalized image with the same shape (H, W, 3).
+        bboxes: Unchanged bboxes
+    """
+    image_shape = tf.shape(image)
+    original_dtype = image.dtype
+    image = tf.image.rgb_to_grayscale(image)
+    values_range = tf.constant([0., 255.], dtype=tf.float32)
+    histogram = tf.histogram_fixed_width(
+        tf.to_float(image), values_range, 256)
+    cdf = tf.cumsum(histogram)
+    cdf_min = cdf[tf.reduce_min(tf.where(tf.greater(cdf, 0)))]
+
+    pix_cnt = image_shape[0] * image_shape[1]
+    px_map = tf.round(
+        tf.to_float(cdf - cdf_min) * 255. / tf.to_float(pix_cnt - 1))
+    px_map = tf.cast(px_map, tf.uint8)
+
+    eq_hist = tf.expand_dims(tf.gather_nd(px_map, tf.cast(image, tf.int32)), 2)
+
+    eq_hist = tf.image.grayscale_to_rgb(eq_hist)
+    eq_hist = tf.cast(eq_hist, original_dtype)
+    # Return results
+    return_dict = {'image': eq_hist}
     if bboxes is not None:
         return_dict['bboxes'] = bboxes
     return return_dict

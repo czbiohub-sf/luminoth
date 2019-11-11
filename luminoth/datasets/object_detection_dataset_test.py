@@ -113,7 +113,7 @@ class ObjectDetectionDatasetTest(tf.test.TestCase):
         self.assertEqual(aug[0], {'rotate': True})
         self.assertEqual(aug[1], {'rotate': False})
 
-    def testRandomPathGaussain(self):
+    def testRandomPathGaussian(self):
         """
         Tests that the gaussian augmentation is applied in order
         """
@@ -132,6 +132,26 @@ class ObjectDetectionDatasetTest(tf.test.TestCase):
         self.assertEqual(len(bboxes_aug), 1)
         self.assertEqual(aug[0], {'gaussian': True})
         self.assertEqual(aug[1], {'gaussian': False})
+
+    def testEqualize(self):
+        """
+        Tests that the equalize augmentation is applied in order
+        """
+        image = np.random.randint(low=0, high=255, size=(600, 800, 3))
+        bboxes = np.array([
+            [10, 10, 26, 28, 1],
+            [10, 10, 20, 22, 1],
+            [10, 11, 20, 21, 1],
+            [19, 30, 31, 33, 2],
+        ])
+        config = [
+            {'equalize': {'prob': 1, 'exclude_class': 1}},
+            {'equalize': {'prob': 0, 'exclude_class': 1}}]
+
+        image_aug, bboxes_aug, aug = self._run_augment(config, image, bboxes)
+        self.assertEqual(len(bboxes_aug), 1)
+        self.assertEqual(aug[0], {'equalize': True})
+        self.assertEqual(aug[1], {'equalize': False})
 
 
 if __name__ == '__main__':
