@@ -623,10 +623,10 @@ def expand(image, bboxes=None, fill=0, min_ratio=1, max_ratio=4, seed=None):
 def _rot90_boxes(boxes, image_shape):
     """Rotate boxes counter-clockwise by 90 degrees.
     Args:
-    boxes: rank 2 float32 tensor containing the bounding boxes -> [N, 5].
-           Each row is in the form of (x_min, y_min, x_max, y_max, label)
+        boxes: rank 2 float32 tensor containing the bounding boxes -> [N, 5].
+               Each row is in the form of (x_min, y_min, x_max, y_max, label)
     Returns:
-    Rotated boxes.
+        Rotated boxes.
     """
     boxes = tf.to_float(boxes)
     height = image_shape[0]
@@ -676,4 +676,86 @@ def rot90(image, bboxes=None):
     if bboxes is not None:
         return_dict['bboxes'] = rotated_bboxes
 
+    return return_dict
+
+
+def random_patch_gaussian(image,
+                          bboxes=None,
+                          target_height=None,
+                          target_width=None,
+                          min_gaussian_stddev=0.0,
+                          max_gaussian_stddev=1.0,
+                          seed=None):
+    """Randomly applies gaussian noise to a random patch on the image.
+    The gaussian noise is applied to the image with values scaled to the range
+    [0.0, 1.0]. The result of applying gaussian noise to the scaled image is
+    clipped to be within the range [0.0, 1.0], equivalent to the range
+    [0.0, 255.0] after rescaling the image back.
+    See "Improving Robustness Without Sacrificing Accuracy with Patch Gaussian
+    Augmentation " by Lopes et al., 2019, for further details.
+    https://arxiv.org/abs/1906.02611
+
+    Args:
+        image: Rank 3 float32 tensor with shape [height, width, channels] and
+          values in the range [0.0, 255.0].
+        target_height: Height of the patch. If set to none, it will be the
+            maximum (tf.shape(image)[0] - offset_height - 1). Positive.
+        target_width: Width of the patch. If set to none, it will be the
+            maximum (tf.shape(image)[1] - offset_width - 1). Positive.
+        min_gaussian_stddev: Float. An inclusive lower bound for the standard
+          deviation of the gaussian noise.
+        max_gaussian_stddev: Float. An exclusive upper bound for the standard
+          deviation of the gaussian noise.
+        seed: (optional) Integer. Random seed.
+
+    Returns:
+        Rank 3 float32 tensor with same shape as the input image and with gaussian
+        noise applied within a random patch.
+        bboxes: Unchanged bboxes.
+    """
+    original_dtype = image.dtype
+    image = tf.cast(image, tf.float32)
+    gaussian_stddev = tf.random_uniform(
+        shape=[],
+        minval=min_gaussian_stddev,
+        maxval=max_gaussian_stddev,
+        dtype=tf.float32,
+        seed=seed)
+    image_shape = tf.shape(image)
+    offset_height = tf.random_uniform(
+        shape=[],
+        minval=0,
+        maxval=image_shape[0],
+        dtype=tf.int32,
+        seed=seed)
+    offset_width = tf.random_uniform(
+        shape=[],
+        minval=0,
+        maxval=image_shape[1],
+        dtype=tf.int32,
+        seed=seed)
+    gaussian = tf.random.normal(
+        image_shape,
+        stddev=gaussian_stddev,
+        dtype=tf.float32,
+        seed=seed)
+
+    scaled_image = image / 255.0
+    image_plus_gaussian = tf.clip_by_value(scaled_image + gaussian, 0.0, 1.0)
+    patch_mask = patch_image(
+        tf.ones([image.shape[0], image.shape[1], image.shape[2]], dtype=tf.uint8),
+        bboxes=None,
+        offset_height=offset_height,
+        offset_width=offset_width,
+        target_height=target_height,
+        target_width=target_width)['image']
+
+    patch_mask = tf.cast(patch_mask, tf.bool)
+    patched_image = tf.where(patch_mask, image_plus_gaussian, scaled_image)
+    gaussian_patched_image = patched_image * 255.0
+    # Return results
+    image = tf.cast(gaussian_patched_image, original_dtype)
+    return_dict = {'image': image}
+    if bboxes is not None:
+        return_dict['bboxes'] = bboxes
     return return_dict
