@@ -620,7 +620,8 @@ class ImageTest(tf.test.TestCase):
             ],
             axis=1
         )
-        ret_image, ret_bboxes = self._random_patch_gaussian(image, tf.to_int32(bboxes_w_label))
+        ret_image, ret_bboxes = self._random_patch_gaussian(
+            image, tf.to_int32(bboxes_w_label))
         # Assertions
         self.assertEqual(ret_image.shape, image.shape)
 
@@ -629,6 +630,7 @@ class ImageTest(tf.test.TestCase):
         )
         for i in range(total_boxes):
             self.assertEqual(ret_bboxes[i, 4], label)
+
 
 if __name__ == '__main__':
     tf.test.main()

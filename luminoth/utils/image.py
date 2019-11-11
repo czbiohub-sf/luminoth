@@ -709,7 +709,8 @@ def random_patch_gaussian(image,
         seed: (optional) Integer. Random seed.
 
     Returns:
-        Rank 3 float32 tensor with same shape as the input image and with gaussian
+        Rank 3 float32 tensor with same shape as the input
+        image and with gaussian
         noise applied within a random patch.
         bboxes: Unchanged bboxes.
     """
@@ -741,9 +742,12 @@ def random_patch_gaussian(image,
         seed=seed)
 
     scaled_image = image / 255.0
-    image_plus_gaussian = tf.clip_by_value(scaled_image + gaussian, 0.0, 1.0)
+    image_plus_gaussian = tf.clip_by_value(
+        scaled_image + gaussian, 0.0, 1.0)
     patch_mask = patch_image(
-        tf.ones([image.shape[0], image.shape[1], image.shape[2]], dtype=tf.uint8),
+        tf.ones(
+            [image.shape[0], image.shape[1], image.shape[2]],
+            dtype=tf.uint8),
         bboxes=None,
         offset_height=offset_height,
         offset_width=offset_width,
