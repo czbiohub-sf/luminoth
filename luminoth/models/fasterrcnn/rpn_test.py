@@ -33,7 +33,10 @@ class RPNTest(tf.test.TestCase):
                 'stddev': 0.01,
             },
             'l2_regularization_scale': 0.0005,
-            'l1_sigma': 3.0,
+            'loss': {
+                'type': 'smooth_l1',
+                'l1_sigma': 3.0,
+            },
             'activation_function': 'relu6',
             'proposals': {
                 'pre_nms_top_n': 12000,

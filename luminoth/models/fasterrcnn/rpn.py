@@ -9,7 +9,8 @@ from sonnet.python.modules.conv import Conv2D
 
 from .rpn_target import RPNTarget
 from .rpn_proposal import RPNProposal
-from luminoth.utils.losses import smooth_l1_loss
+from luminoth.utils.losses import (
+    smooth_l1_loss, focal_loss, SMOOTH_L1, FOCAL)
 from luminoth.utils.vars import (
     get_initializer, layer_summaries, variable_summaries,
     get_activation_function
@@ -55,7 +56,16 @@ class RPN(snt.AbstractModule):
             scale=config.l2_regularization_scale
         )
 
-        self._l1_sigma = config.l1_sigma
+        loss_config = config.loss
+        if loss_config.type == SMOOTH_L1:
+            self.loss_type = SMOOTH_L1
+            self._l1_sigma = loss_config.l1_sigma
+        elif config.loss.type == FOCAL:
+            self.loss_type = FOCAL
+            self._focal_alpha = loss_config.pop('focal_alpha', None)
+            self._focal_gamma = loss_config.pop('focal_gamma', None)
+            self.background_class = loss_config.pop('background_class', 0)
+            self.ignore_class = loss_config.pop('ignore_class', -1)
 
         # We could use normal relu without any problems.
         self._rpn_activation = get_activation_function(

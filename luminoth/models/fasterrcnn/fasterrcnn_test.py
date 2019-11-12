@@ -113,7 +113,10 @@ class FasterRCNNNetworkTest(tf.test.TestCase):
                     },
                     'activation_function': 'relu6',
                     'l2_regularization_scale': 0.0005,
-                    'l1_sigma': 3.0,
+                    'loss': {
+                        'type': 'smooth_l1',
+                        'l1_sigma': 3.0,
+                    },
                     'proposals': {
                         'pre_nms_top_n': 12000,
                         'post_nms_top_n': 2000,

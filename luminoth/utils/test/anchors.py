@@ -58,11 +58,3 @@ def generate_anchors(anchors_reference, anchor_stride, feature_map_size):
     )
 
     return all_anchors
-
-
-if __name__ == '__main__':
-    from luminoth.utils.anchors import generate_anchors_reference
-
-    ref = generate_anchors_reference(
-        base_size=16, ratios=[0.5, 1, 2], scales=2**np.arange(3, 6)
-    )
