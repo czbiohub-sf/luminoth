@@ -265,9 +265,54 @@ class RPNTest(tf.test.TestCase):
 
         )
 
-    def testLoss(self):
-        """Tests that loss returns reasonable values in simple cases.
+    def testL1Loss(self):
+        """Tests that smooth l1 loss returns reasonable values in simple cases.
         """
+        model = RPN(
+            self.num_anchors, self.config, debug=True
+        )
+
+        # Define placeholders that are used inside the loss method.
+        rpn_cls_prob = tf.placeholder(tf.float32)
+        rpn_cls_target = tf.placeholder(tf.float32)
+        rpn_cls_score = tf.placeholder(tf.float32)
+        rpn_bbox_target = tf.placeholder(tf.float32)
+        rpn_bbox_pred = tf.placeholder(tf.float32)
+
+        loss = model.loss({
+            'rpn_cls_prob': rpn_cls_prob,
+            'rpn_cls_target': rpn_cls_target,
+            'rpn_cls_score': rpn_cls_score,
+            'rpn_bbox_target': rpn_bbox_target,
+            'rpn_bbox_pred': rpn_bbox_pred,
+        })
+
+        # Test perfect score.
+        with self.test_session() as sess:
+            sess.run(tf.global_variables_initializer())
+            loss_dict = sess.run(loss, feed_dict={
+                # Probability is (background_prob, foreground_prob)
+                rpn_cls_prob: [[0, 1], [1., 0]],
+                # Target: 1 being foreground, 0 being background.
+                rpn_cls_target: [1, 0],
+                # Class scores before applying softmax. Since using cross
+                # entropy, we need a big difference between values.
+                rpn_cls_score: [[-100., 100.], [100., -100.]],
+                # Targets and predictions are exactly equal.
+                rpn_bbox_target: [[0.1, 0.1, 0.1, 0.1], [0.1, 0.1, 0.1, 0.1]],
+                rpn_bbox_pred: [[0.1, 0.1, 0.1, 0.1], [0.1, 0.1, 0.1, 0.1]],
+            })
+
+            # Assert close since cross-entropy could return very small value.
+            self.assertAllClose(tuple(loss_dict.values()), (0, 0))
+
+    def testFocalLoss(self):
+        """Tests that smooth l1 loss returns reasonable values in simple cases.
+        """
+        loss = {
+            'type': 'focal',
+            'l1_sigma': 3.0}
+        self.config.loss = loss
         model = RPN(
             self.num_anchors, self.config, debug=True
         )
