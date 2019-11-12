@@ -45,13 +45,17 @@ def focal_loss(logits, targets, alpha=None, gamma=None, normalizer=1.0):
           [batch, height_in, width_in, num_predictions].
         targets: A float32 tensor of size
           [batch, height_in, width_in, num_predictions].
-        alpha: A float32 scalar multiplying alpha to the loss from positive examples
+        alpha: A float32 scalar multiplying
+        alpha to the loss from positive examples
           and (1-alpha) to the loss from negative examples.
-        gamma: A float32 scalar modulating loss from hard and easy examples.
-        normalizer: A float32 scalar normalizes the total loss from all examples.
+        gamma: A float32 scalar modulating
+        loss from hard and easy examples.
+        normalizer: A float32 scalar normalizes
+        the total loss from all examples.
 
     Returns:
-    loss: A float32 Tensor of size [batch, height_in, width_in, num_predictions]
+    loss: A float32 Tensor of size
+        [batch, height_in, width_in, num_predictions]
         representing normalized loss on the prediction map.
     """
     with tf.name_scope('focal_loss'):
@@ -62,15 +66,21 @@ def focal_loss(logits, targets, alpha=None, gamma=None, normalizer=1.0):
 
         positive_label_mask = tf.math.equal(targets, 1.0)
         cross_entropy = (
-            tf.nn.sigmoid_cross_entropy_with_logits(labels=targets, logits=logits))
+            tf.nn.sigmoid_cross_entropy_with_logits(
+                labels=targets, logits=logits))
         # Below are comments/derivations for computing modulator.
-        # For brevity, let x = logits,  z = targets, r = gamma, and p_t = sigmod(x)
+        # For brevity,
+        # let x = logits,  z = targets, r = gamma, and p_t = sigmod(x)
         # for positive samples and 1 - sigmoid(x) for negative examples.
         #
-        # The modulator, defined as (1 - P_t)^r, is a critical part in focal loss
-        # computation. For r > 0, it puts more weights on hard examples, and less
-        # weights on easier ones. However if it is directly computed as (1 - P_t)^r,
-        # its back-propagation is not stable when r < 1. The implementation here
+        # The modulator, defined as (1 - P_t)^r,
+        # is a critical part in focal loss
+        # computation. For r > 0,
+        # it puts more weights on hard examples, and less
+        # weights on easier ones. However if
+        # it is directly computed as (1 - P_t)^r,
+        # its back-propagation is not stable when r < 1.
+        # The implementation here
         # resolves the issue.
         #
         # For positive samples (labels being 1),
@@ -102,4 +112,3 @@ def focal_loss(logits, targets, alpha=None, gamma=None, normalizer=1.0):
         weighted_loss /= normalizer
         weighted_loss = tf.reduce_sum(weighted_loss)
     return weighted_loss
-

@@ -288,9 +288,14 @@ class RPN(snt.AbstractModule):
             rpn_bbox_pred = tf.boolean_mask(rpn_bbox_pred, positive_labels)
 
             # We apply smooth l1 loss as described by the Fast R-CNN paper.
-            reg_loss_per_anchor = smooth_l1_loss(
-                rpn_bbox_pred, rpn_bbox_target, sigma=self._l1_sigma
-            )
+            if self.loss_type == SMOOTH_L1:
+                reg_loss_per_anchor = smooth_l1_loss(
+                    rpn_bbox_pred, rpn_bbox_target, sigma=self._l1_sigma
+                )
+            else:
+                reg_loss_per_anchor = focal_loss(
+                    cls_score, cls_target, self._focal_alpha, self._focal_gamma
+                )
 
             prediction_dict['reg_loss_per_anchor'] = reg_loss_per_anchor
 

@@ -10,8 +10,10 @@ class LossesTest(tf.test.TestCase):
         tf.reset_default_graph()
         self.all_zeros = [0.0, 0.0, 0.0, 0.0]
         self.all_ones = [1.0, 1.0, 1.0, 1.0]
-        self.random_prediction = [0.47450006, -0.80413032, -0.26595005, 0.17124325]
-        self.random_target = [0.10058594, 0.07910156, 0.10555581, -0.1224325]
+        self.random_prediction = [
+            0.47450006, -0.80413032, -0.26595005, 0.17124325]
+        self.random_target = [
+            0.10058594, 0.07910156, 0.10555581, -0.1224325]
 
     def test_smooth_l1_loss(self):
         bbox_prediction_tf = tf.placeholder(tf.float32)
