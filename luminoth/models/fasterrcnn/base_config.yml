@@ -201,7 +201,7 @@ model:
     loss:
       _replace: True
       type: smooth_l1
-        l1_sigma: 3.0
+      l1_sigma: 3.0
     # Also available
     # loss:
     #   _replace: True
