@@ -746,9 +746,7 @@ def random_patch_gaussian(image,
     image_plus_gaussian = tf.clip_by_value(
         scaled_image + gaussian, 0.0, 1.0)
     patch_mask = patch_image(
-        tf.ones(
-            [image.shape[0], image.shape[1], image.shape[2]],
-            dtype=tf.uint8),
+        tf.ones_like(image),
         bboxes=None,
         offset_height=offset_height,
         offset_width=offset_width,
