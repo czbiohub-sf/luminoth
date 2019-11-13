@@ -644,7 +644,6 @@ class ImageTest(tf.test.TestCase):
         """
         total_boxes = 10
         image, boxes = self._get_image_with_boxes((500, 250, 3), total_boxes)
-        print(image.shape)
         label = 3
         bboxes_w_label = tf.concat(
             [
