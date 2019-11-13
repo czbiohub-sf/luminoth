@@ -682,8 +682,8 @@ def rot90(image, bboxes=None):
 
 def random_patch_gaussian(image,
                           bboxes=None,
-                          target_height=None,
-                          target_width=None,
+                          min_height=600,
+                          min_width=600,
                           min_gaussian_stddev=0.0,
                           max_gaussian_stddev=1.0,
                           seed=None):
@@ -717,25 +717,35 @@ def random_patch_gaussian(image,
     """
     original_dtype = image.dtype
     image = tf.cast(image, tf.float32)
+    image_shape = tf.shape(image)
+    min_height = tf.minimum(min_height, image_shape[0] - 1)
+    min_width = tf.minimum(min_width, image_shape[1] - 1)
     gaussian_stddev = tf.random_uniform(
         shape=[],
         minval=min_gaussian_stddev,
         maxval=max_gaussian_stddev,
         dtype=tf.float32,
         seed=seed)
-    image_shape = tf.shape(image)
-    offset_height = tf.random_uniform(
-        shape=[],
-        minval=0,
-        maxval=image_shape[0],
-        dtype=tf.int32,
-        seed=seed)
     offset_width = tf.random_uniform(
         shape=[],
         minval=0,
-        maxval=image_shape[1],
+        maxval=tf.subtract(
+            image_shape[1],
+            min_width
+        ),
         dtype=tf.int32,
-        seed=seed)
+        seed=seed
+    )
+    offset_height = tf.random_uniform(
+        shape=[],
+        minval=0,
+        maxval=tf.subtract(
+            image_shape[0],
+            min_height
+        ),
+        dtype=tf.int32,
+        seed=seed
+    )
     gaussian = tf.random.normal(
         image_shape,
         stddev=gaussian_stddev,
@@ -750,8 +760,8 @@ def random_patch_gaussian(image,
         bboxes=None,
         offset_height=offset_height,
         offset_width=offset_width,
-        target_height=target_height,
-        target_width=target_width)['image']
+        target_height=None,
+        target_width=None)['image']
 
     patch_mask = tf.cast(patch_mask, tf.bool)
     patched_image = tf.where(patch_mask, image_plus_gaussian, scaled_image)
