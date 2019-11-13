@@ -57,8 +57,8 @@ class ObjectDetectionDatasetTest(tf.test.TestCase):
             [19, 30, 31, 33, 2],
         ])
         config = [
-            {'flip': {'prob': 0, 'exclude_class': 2}},
-            {'flip': {'prob': 1, 'exclude_class': 2}}]
+            {'flip': {'prob': 0, 'ignore_class': 2}},
+            {'flip': {'prob': 1, 'ignore_class': 2}}]
 
         image_aug, bboxes_aug, aug = self._run_augment(config, image, bboxes)
         self.assertEqual(len(bboxes_aug), 3)
@@ -66,8 +66,8 @@ class ObjectDetectionDatasetTest(tf.test.TestCase):
         self.assertEqual(aug[1], {'flip': True})
 
         config = [
-            {'flip': {'prob': 1, 'exclude_class': 1}},
-            {'flip': {'prob': 0, 'exclude_class': 1}}]
+            {'flip': {'prob': 1, 'ignore_class': 1}},
+            {'flip': {'prob': 0, 'ignore_class': 1}}]
 
         image_aug, bboxes_aug, aug = self._run_augment(config, image, bboxes)
         self.assertEqual(len(bboxes_aug), 1)
@@ -105,8 +105,8 @@ class ObjectDetectionDatasetTest(tf.test.TestCase):
             [19, 30, 31, 33, 2],
         ])
         config = [
-            {'rotate': {'prob': 1, 'exclude_class': 1}},
-            {'rotate': {'prob': 0, 'exclude_class': 1}}]
+            {'rotate': {'prob': 1, 'ignore_class': 1}},
+            {'rotate': {'prob': 0, 'ignore_class': 1}}]
 
         image_aug, bboxes_aug, aug = self._run_augment(config, image, bboxes)
         self.assertEqual(len(bboxes_aug), 1)
@@ -125,8 +125,8 @@ class ObjectDetectionDatasetTest(tf.test.TestCase):
             [19, 30, 31, 33, 2],
         ])
         config = [
-            {'gaussian': {'prob': 1, 'exclude_class': 1}},
-            {'gaussian': {'prob': 0, 'exclude_class': 1}}]
+            {'gaussian': {'prob': 1, 'ignore_class': 1}},
+            {'gaussian': {'prob': 0, 'ignore_class': 1}}]
 
         image_aug, bboxes_aug, aug = self._run_augment(config, image, bboxes)
         self.assertEqual(len(bboxes_aug), 1)
@@ -145,8 +145,8 @@ class ObjectDetectionDatasetTest(tf.test.TestCase):
             [19, 30, 31, 33, 2],
         ])
         config = [
-            {'equalize': {'prob': 1, 'exclude_class': 1}},
-            {'equalize': {'prob': 0, 'exclude_class': 1}}]
+            {'equalize': {'prob': 1, 'ignore_class': 1}},
+            {'equalize': {'prob': 0, 'ignore_class': 1}}]
 
         image_aug, bboxes_aug, aug = self._run_augment(config, image, bboxes)
         self.assertEqual(len(bboxes_aug), 1)

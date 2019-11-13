@@ -58,9 +58,7 @@ class RCNN(snt.AbstractModule):
         )
         self.regularizer = tf.contrib.layers.l2_regularizer(
             scale=config.l2_regularization_scale)
-
         self._l1_sigma = config.l1_sigma
-
         # Debug mode makes the module return more detailed Tensors which can be
         # useful for debugging.
         self._debug = debug
