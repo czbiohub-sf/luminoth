@@ -11,9 +11,10 @@ import pandas as pd
 import click
 
 """
-Split data in bb_labels .txt ir .csv files to train
-and val categories data and create csvs containing
-their metadata as follows::
+Split data in bb_labels .txt ir .csv files to a CSV dataset
+directory structure as follows::
+
+        .
         ├── train
         │   ├── image_1.jpg
         │   ├── image_2.jpg
@@ -24,7 +25,6 @@ their metadata as follows::
         │   └── image_6.jpg
         ├── train.csv
         └── val.csv
-
     The CSV file itself must have the following format::
 
         image_id,xmin,ymin,xmax,ymax,label
