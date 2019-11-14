@@ -97,8 +97,10 @@ dataset:
         left_right: True
         up_down: False
         prob: 0.5
+        # TODO PV ignore_class and the below data augmentation techniques are currently
+        # not improving precision, recall - WIP
         # Exclude data augmentation on one class to compensate for class imbalaces
-        ignore_class: [1]
+        # ignore_class: [1]
     # Also available:
     # # If you resize to too small images, you may end up not having any anchors
     # # that aren't partially outside the image.
@@ -202,7 +204,7 @@ model:
       _replace: True
       type: smooth_l1
       l1_sigma: 3.0
-    # Also available
+    # TODO PV Also available but not tested
     # loss:
     #   _replace: True
     #   type: focal

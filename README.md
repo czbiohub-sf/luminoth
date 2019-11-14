@@ -108,7 +108,7 @@ lumi train -c config.yml
 lumi eval -c config.yml --no-watch
 lumi checkpoint create config.yml -e name='Faster RCNN' -e alias=cnn_trial
 lumi predict val/ -d preds_val/ --checkpoint trial -f objects.csv
-
+lumi confusion_matrix --groundtruth_csv val.csv --predicted_csv objects.csv --output_txt output.txt --classes_json classes.json
 ```
 
 # License
