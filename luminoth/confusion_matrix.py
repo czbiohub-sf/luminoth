@@ -9,24 +9,33 @@ from luminoth.utils.bbox_overlap import bbox_overlap
 
 
 def get_confusion_matrix(
-        groundtruth_csv, predicted_csv,
-        categories, iou_threshold, confidence_threshold):
+        groundtruth_csv,
+        predicted_csv,
+        labels,
+        iou_threshold,
+        confidence_threshold):
     """
-    Returns confusion matrix of shape (categories, categories)
+    Returns confusion matrix of shape (labels, labels)
 
-    :param str groundtruth_csv: Absolute path to csv
-    containing image_id,xmin,ymin,xmax,ymax,label"
-    and several rows corresponding to the groundtruth bounding box objects
-    :param str predicted_csv: Absolute path to csv
-    containing image_id,xmin,ymin,xmax,ymax,label,prob"
-    and several rows corresponding to the predicted bounding box objects
-    :param list categories: list of names of the objects detected
-    :param iou_threshold IOU threshold below which the bounding box is invalid
-    :param confidence_threshold Confidence score threshold below which
-    bounding box detection is of low confidence and
-    is ignored while considering true positives for a class
-    :return confusion_matrix numpy array of (categories, categories) shape
+    Args:
+        groundtruth_csv: Absolute path to csv
+            containing image_id,xmin,ymin,xmax,ymax,label"
+            and several rows corresponding to the groundtruth
+            bounding box objects
+        predicted_csv: Absolute path to csv
+            containing image_id,xmin,ymin,xmax,ymax,label,prob"
+            and several rows corresponding to the predicted
+            bounding box objects
+        labels: list of names of the objects detected
+        iou_threshold: IOU threshold below which the bounding box is invalid
+        confidence_threshold: Confidence score threshold below which
+            bounding box detection is of low confidence and
+            is ignored while considering true positives for a class
+
+    Returns:
+        confusion_matrix: numpy array of (labels, labels) shape
     """
+    number_classes = len(labels)
     df = pd.read_csv(groundtruth_csv)
     groundtruth_boxes = []
     groundtruth_classes = []
@@ -35,22 +44,22 @@ def get_confusion_matrix(
         groundtruth_classes.append(row.label)
 
     df = pd.read_csv(predicted_csv)
-    detection_boxes = []
-    detection_classes = []
-    detection_scores = []
+    prediction_boxes = []
+    prediction_classes = []
+    prediction_scores = []
     for index, row in df.iterrows():
         if row.prob > confidence_threshold:
-            detection_boxes.append([row.xmin, row.ymin, row.xmax, row.ymax])
-            detection_classes.append(row.label)
-            detection_scores.append(row.prob)
+            prediction_boxes.append([row.xmin, row.ymin, row.xmax, row.ymax])
+            prediction_classes.append(row.label)
+            prediction_scores.append(row.prob)
 
     matches = []
 
     for i in range(len(groundtruth_boxes)):
-        for j in range(len(detection_boxes)):
+        for j in range(len(prediction_boxes)):
             iou = bbox_overlap(
                 np.array(groundtruth_boxes[i]).reshape(1, 4),
-                np.array(detection_boxes[j]).reshape(1, 4))
+                np.array(prediction_boxes[j]).reshape(1, 4))
 
             if iou > iou_threshold:
                 matches.append([i, j, iou])
@@ -73,45 +82,75 @@ def get_confusion_matrix(
         matches = matches[np.unique(matches[:, 0], return_index=True)[1]]
 
     if matches.size == 0:
-        return np.zeros((len(categories), len(categories)))
-
+        return np.zeros((len(labels), len(labels)))
+    matches_list = matches.tolist()
     gt_matched_classes = [
-        groundtruth_classes[int(match[0])] for match in matches.tolist()]
+        groundtruth_classes[int(match[0])] for match in matches_list]
     predicted_matched_classes = [
-        detection_classes[int(match[1])] for match in matches.tolist()]
-    return sklearn.metrics.confusion_matrix(
-        gt_matched_classes, predicted_matched_classes, labels=categories)
+        prediction_classes[int(match[1])] for match in matches_list]
+
+    confusion_matrix = sklearn.metrics.confusion_matrix(
+        gt_matched_classes, predicted_matched_classes, labels=labels)
+
+    complete_confusion_matrix = np.zeros(
+        (number_classes + 2, number_classes + 2), dtype=np.uint8)
+    complete_confusion_matrix[
+        :number_classes, :number_classes] = confusion_matrix
+
+    for i, label in enumerate(sorted(labels)):
+        predictions_per_label = len(
+            prediction_classes[prediction_classes == label])
+        matched_predictions_per_label = len(
+            predicted_matched_classes[predicted_matched_classes == label])
+        complete_confusion_matrix[i, number_classes + 1] = \
+            predictions_per_label - matched_predictions_per_label
+
+        gts_per_label = len(
+            groundtruth_classes[groundtruth_classes == label])
+        matched_gts_per_label = len(
+            gt_matched_classes[gt_matched_classes == label])
+
+        complete_confusion_matrix[number_classes + 1, i] = \
+            gts_per_label - matched_gts_per_label
+
+    return complete_confusion_matrix
 
 
 def display(
-        groundtruth_csv, predicted_csv, categories,
-        iou_threshold, confidence_threshold,
+        groundtruth_csv,
+        predicted_csv,
+        labels,
+        iou_threshold,
+        confidence_threshold,
         output_path):
     """
     Save and display confusion matrix, precision, recall scores of each of
-    the categories of objects detected.
+    the labels of objects detected.
 
-    :param str groundtruth_csv: Absolute path to csv
-    containing image_id,xmin,ymin,xmax,ymax,label"
-    and several rows corresponding to the groundtruth bounding box objects
-    :param str predicted_csv: Absolute path to csv
-    containing image_id,xmin,ymin,xmax,ymax,label,prob"
-    and several rows corresponding to the predicted bounding box objects
-    :param list categories: list of names of the objects detected
-    :param iou_threshold IOU threshold below which the bounding box is invalid
-    :param confidence_threshold Confidence score threshold below which
-    bounding box detection is of low confidence and
-    is ignored while considering true positives for a class
-    :param list categories: list of names of the objects detected
-    :param str output_path: Redirect stdout to file in paht
+    Args:
+        groundtruth_csv: Absolute path to csv
+            containing image_id,xmin,ymin,xmax,ymax,label"
+            and several rows corresponding to the
+            groundtruth bounding box objects
+        predicted_csv: Absolute path to csv
+            containing image_id,xmin,ymin,xmax,ymax,label,prob"
+            and several rows corresponding
+            to the predicted bounding box objects
+        labels: list of names of the objects detected
+            iou_threshold: float IOU threshold below which
+            the bounding box is invalid
+        confidence_threshold: float Confidence score threshold below which
+            bounding box detection is of low confidence and
+            is ignored while considering true positives for a class
+        labels: list of names of the objects detected
+        output_path: Redirect stdout to file in path
     """
     # Redirect printing output to
     stdout_origin = sys.stdout
     sys.stdout = open(output_path, "w")
-    number_classes = len(categories)
 
     df = pd.read_csv(groundtruth_csv)
-    for label in categories:
+    for label in labels:
         print("There are {} {} classes in the ground truth dataset".format(
             len(df[df.label == label]), label))
 
@@ -120,7 +159,7 @@ def display(
         "The prediction classes printed below & " +
         "considered are higher than confidence_threshold {}".format(
             confidence_threshold))
-    for label in categories:
+    for label in labels:
         print("There are {} {} classes in the prediction dataset".format(
             len(
                 df[(df['label'] == label) & (
@@ -129,35 +168,40 @@ def display(
     confusion_matrix = get_confusion_matrix(
         groundtruth_csv,
         predicted_csv,
-        categories,
+        labels,
         iou_threshold,
         confidence_threshold)
 
     print("Confusion matrix before normalization")
     print(confusion_matrix)
+    inclusive_labels = labels + ["Unmatched"]
+    inclusive_num_classes = len(inclusive_labels)
 
     # printing the headers with class names and parameters used
-    length_name = max([len(str(s)) for s in categories] + [5])
+    length_name = max([len(str(s)) for s in labels] + [5])
     spacing = "- " * max(
-        (int(7 + ((length_name + 3) * (number_classes + 3)) / 2)),
+        (int(7 + ((length_name + 3) * (inclusive_num_classes + 3)) / 2)),
         length_name + 33)
     print(spacing + "\nConfusion Matrix\n" + spacing)
     print(("confidence_threshold: %f" % confidence_threshold).rstrip("0"))
+    print(
+        "Where Unmatched in Groundtruth means"
+        "False Positive and Unmatched in Prediction means False Negative.")
     confusion_matrix = np.uint32(confusion_matrix)
     confusion_matrix = confusion_matrix / confusion_matrix.astype(
         np.float).sum(axis=1, keepdims=True)
     content = " " * (length_name + 3 + 12)
-    for j in range(number_classes):
-        content += "[%*s] " % (length_name, categories[j])
+    for j in range(inclusive_num_classes):
+        content += "[%*s] " % (length_name, labels[j])
     print("%*sPrediction" % (12 + (len(content) - 10) // 2, ""))
     print(content)
 
     # printing the normalized confusion matrix elements
-    for i in range(number_classes):
+    for i in range(inclusive_num_classes):
         content = "Groundtruth " if i == int(
-            (number_classes) / 2) else " " * 12
-        content += "[%*s] " % (length_name, categories[i])
-        for j in range(number_classes):
+            (inclusive_num_classes) / 2) else " " * 12
+        content += "[%*s] " % (length_name, labels[i])
+        for j in range(inclusive_num_classes):
             content += "%*f " % (length_name + 2, confusion_matrix[i, j])
         print(content)
 
@@ -165,8 +209,8 @@ def display(
     results = []
 
     # Print precision and recall
-    for i in range(len(categories)):
-        name = categories[i]
+    for i in range(len(labels)):
+        name = labels[i]
 
         total_target = np.sum(confusion_matrix[i, :])
         total_predicted = np.sum(confusion_matrix[:, i])
@@ -181,7 +225,7 @@ def display(
             'recall_{}@{}IOU: {:.2f}'.format(name, iou_threshold, recall))
 
         results.append(
-            {'category': name,
+            {'label': name,
              'precision_@{}IOU'.format(iou_threshold): precision,
              'recall_@{}IOU'.format(iou_threshold): recall})
 

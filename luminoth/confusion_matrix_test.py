@@ -70,7 +70,8 @@ class ConfusionMatrixTest(tf.test.TestCase):
             groundtruth_csv, predicted_csv,
             categories, iou_threshold, confidence_threshold)
 
-        expected = np.ones((1, 1))
+        expected = np.zeros((3, 3))
+        expected[0, 0] = 1
         np.testing.assert_array_equal(cm, expected)
 
 
