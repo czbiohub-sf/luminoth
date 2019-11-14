@@ -5,10 +5,15 @@ import os
 import click
 import cv2 as cv
 import pandas as pd
-import matplotlib.pyplot as plt
+
+FONT = cv.FONT_HERSHEY_SIMPLEX
+FONT_SCALE = 1
+FONT_COLOR = (0, 0, 255)
+LINE_TYPE = 2
 
 
-def overlay_bb_labels(im_path, df, col=(0, 255, 0), lw=2, display=False):
+def overlay_bb_labels(
+        im_path, df, color=(0, 255, 0), line_width=2, display=False):
     """
     Given a image directory, load given position and overlay
     with bounding boxes
@@ -17,8 +22,9 @@ def overlay_bb_labels(im_path, df, col=(0, 255, 0), lw=2, display=False):
         im_dir: str Directory with images to overlay on
         df: pandas.DataFrame df with image_path,xmin,xmax,ymin,ymax
         pos: int Position index (FOV)
-        col: tuple RGB color tuple for bounding box, Default green (0, 255, 0)
-        lw: int Bounding box line width, Default 2
+        color: tuple RGB color tuple for bounding box
+            Default green (0, 255, 0)
+        line_width: int Bounding box line width, Default 2
         display: boolean display the overlaid image, Default False
     """
     im_rgb = cv.imread(im_path, cv.IMREAD_ANYDEPTH | cv.IMREAD_ANYCOLOR)
@@ -27,10 +33,6 @@ def overlay_bb_labels(im_path, df, col=(0, 255, 0), lw=2, display=False):
     tmp_df = df[df.base_path == basename]
 
     # Plot bounding boxes
-    font = cv.FONT_HERSHEY_SIMPLEX
-    font_scale = 1
-    font_color = (0, 0, 255)
-    line_type = 2
 
     for index, row in tmp_df.iterrows():
         label = row.label
@@ -40,19 +42,20 @@ def overlay_bb_labels(im_path, df, col=(0, 255, 0), lw=2, display=False):
             im_rgb,
             label,
             left_corner_of_text,
-            font,
-            font_scale,
-            font_color,
-            line_type)
+            FONT,
+            FONT_SCALE,
+            FONT_COLOR,
+            LINE_TYPE)
 
         cv.rectangle(
             im_rgb,
             left_corner_of_text,
             right_bottom_corner,
-            col,
-            lw,
+            color,
+            line_width,
         )
 
+    import matplotlib.pyplot as plt
     plt.imshow(im_rgb)
     plt.axis('off')
     if display:

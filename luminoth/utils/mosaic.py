@@ -4,7 +4,6 @@ import glob
 import numpy as np
 import math
 import itertools
-import matplotlib.pyplot as plt
 
 
 def assemble_mosaic(images_in_path, tile_size, fill_value=0, display=True):
@@ -48,6 +47,7 @@ def assemble_mosaic(images_in_path, tile_size, fill_value=0, display=True):
             y * tile_size_y: tile_size_y * (y + 1),
             :] = resized
 
+    import matplotlib.pyplot as plt
     plt.imshow(mosaiced_im)
     plt.axis('off')
     if display:

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import itertools
 import glob
 import math
@@ -13,7 +15,7 @@ import click
 """
 Split data in bb_labels .txt ir .csv files to train
 and val categories data and create csvs containing
-their metadata as follows:
+their metadata as follows::
 
         ├── train
         │   ├── image_1.jpg
