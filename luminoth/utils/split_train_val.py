@@ -25,6 +25,7 @@ directory structure as follows::
         │   └── image_6.jpg
         ├── train.csv
         └── val.csv
+
     The CSV file itself must have the following format::
 
         image_id,xmin,ymin,xmax,ymax,label
