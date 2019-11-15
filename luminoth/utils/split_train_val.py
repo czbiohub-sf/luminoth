@@ -71,9 +71,10 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
                            ignore_index=True)
     if type(label_name) is str:
         cols = ['xmin', 'xmax', 'ymin', 'ymax']
-    else:
+        df[cols] = df[cols].applymap(np.int64)
+    elif type(label_name) is float:
         cols = ['xmin', 'xmax', 'ymin', 'ymax', 'label']
-    df[cols] = df[cols].applymap(np.int64)
+        df[cols] = df[cols].applymap(np.int64)
     return df
 
 

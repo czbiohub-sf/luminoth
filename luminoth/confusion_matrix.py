@@ -83,6 +83,7 @@ def get_confusion_matrix(
 
     if matches.size == 0:
         return np.zeros((len(labels), len(labels)))
+
     matches_list = matches.tolist()
     gt_matched_classes = [
         groundtruth_classes[int(match[0])] for match in matches_list]
@@ -92,25 +93,23 @@ def get_confusion_matrix(
     confusion_matrix = sklearn.metrics.confusion_matrix(
         gt_matched_classes, predicted_matched_classes, labels=labels)
 
+    # Completing confusion matrix with unmatched ground truths and predictions
+    # False negatives and False positives respectively
     complete_confusion_matrix = np.zeros(
-        (number_classes + 2, number_classes + 2), dtype=np.uint8)
+        (number_classes + 1, number_classes + 1), dtype=np.uint8)
     complete_confusion_matrix[
         :number_classes, :number_classes] = confusion_matrix
 
     for i, label in enumerate(sorted(labels)):
-        predictions_per_label = len(
-            prediction_classes[prediction_classes == label])
-        matched_predictions_per_label = len(
-            predicted_matched_classes[predicted_matched_classes == label])
-        complete_confusion_matrix[i, number_classes + 1] = \
+        predictions_per_label = prediction_classes.count(label)
+        matched_predictions_per_label = predicted_matched_classes.count(label)
+        complete_confusion_matrix[i, number_classes] = \
             predictions_per_label - matched_predictions_per_label
 
-        gts_per_label = len(
-            groundtruth_classes[groundtruth_classes == label])
-        matched_gts_per_label = len(
-            gt_matched_classes[gt_matched_classes == label])
+        gts_per_label = groundtruth_classes.count(label)
+        matched_gts_per_label = gt_matched_classes.count(label)
 
-        complete_confusion_matrix[number_classes + 1, i] = \
+        complete_confusion_matrix[number_classes, i] = \
             gts_per_label - matched_gts_per_label
 
     return complete_confusion_matrix
