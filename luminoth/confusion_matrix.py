@@ -293,6 +293,10 @@ def print_precision_recall(
         elements in each class in groundtruth that were matched with
         prediction)
     """
+    print(
+        "Note: Precision and recall here doesnt include the bounding boxes "
+        "that were present in ground truth but not detected in predicted "
+        "and viceversa")
     (gt_classes,
      predicted_classes,
      gt_matched_classes,
@@ -382,6 +386,9 @@ def display(
     print_cm(confusion_matrix, inclusive_labels, confidence_threshold)
 
     print("Confusion matrix afer normalization\n")
+    print(
+        "Note: Normalized by number of elements in each class in all " +
+        "groundtruth, includes both matched and unmatched")
     normalized_confusion_matrix = normalize_confusion_matrix(
         confusion_matrix)
     print_cm(normalized_confusion_matrix, labels, confidence_threshold)
