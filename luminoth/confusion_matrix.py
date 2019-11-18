@@ -330,6 +330,7 @@ def normalize_confusion_matrix(confusion_matrix):
     total_gt = confusion_matrix[-1, :-2]
     confusion_matrix = confusion_matrix[:-2, :-2]
     confusion_matrix = confusion_matrix / total_gt
+    all(i < 1.0 for i in confusion_matrix.tolist())
     return confusion_matrix
 
 
