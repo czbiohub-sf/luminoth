@@ -137,9 +137,11 @@ def append_unmatched_gt_predict(
         (number_classes + 2, number_classes + 2), dtype=np.uint8)
     complete_confusion_matrix[
         :number_classes, :number_classes] = confusion_matrix
-
+    print(confusion_matrix)
+    print(labels)
     for i, label in enumerate(sorted(labels)):
         predicteds_per_label = predicted_classes.count(label)
+        print(predicteds_per_label)
         matched_predicteds_per_label = predicted_matched_classes.count(label)
 
         complete_confusion_matrix[i, number_classes] = \

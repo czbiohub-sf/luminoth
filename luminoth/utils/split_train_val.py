@@ -48,10 +48,11 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
     Args:
         bb_labels: Dataframe with image_path,x1,y1,x2,y2,class_name
         images: List of images to filter by
+        output_image_format: Defaults to jpg
 
     Returns:
-        pandas.DataFrame Filters out the list of images given from bb_labels
-        and formats it to a csv dataformat required by luminoth
+        df: pandas.DataFrame Filters out the list of images given from bb_label
+            and formats it to a csv dataformat required by luminoth
     """
     df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
     # Find boxes in each image and put them in a dataframe
@@ -108,7 +109,7 @@ def split_data_to_train_val(
         input_image_format: raw image data format
         output_dir: Directory to output the scaled uint8 jpg files, data
         output_image_format: lumi output image format,
-        lumi currently accepts only jpg
+            lumi currently accepts only jpg for inputs
     """
     random.seed(random_seed)
     # Add base_path column to filter into training and validation images later
@@ -116,7 +117,6 @@ def split_data_to_train_val(
     for filename in filenames:
         dfs.append(pd.read_csv(filenames))
     bb_labels = pd.concate(dfs, ignore_index=True)
-    print(filter_dense_anns)
     base_names = [
         os.path.basename(row.image_path).replace(
             input_image_format, "") for index, row in bb_labels.iterrows()]
@@ -150,7 +150,6 @@ def split_data_to_train_val(
         [value for key, value in image_ids_classes.items()]))).tolist()
     all_imgs_length = len(all_imgs)
     all_imgs = natsort.natsorted(all_imgs)
-    print("all images {}". format(all_imgs_length))
     random.shuffle(all_imgs)
 
     # Prepare dataset format for faster rcnn code
@@ -164,14 +163,10 @@ def split_data_to_train_val(
     val_path = os.path.join(output_dir, 'val')
     os.makedirs(val_path, exist_ok=True)
     training_image_index = math.floor(percentage * all_imgs_length)
-    print("training image_index: ", training_image_index)
-    train_imgs = np.unique(all_imgs[0:training_image_index]).tolist()
-    print("len(train_imgs)", len(train_imgs))
+    train_imgs = np.unique(all_imgs[:training_image_index]).tolist()
     val_imgs = np.unique(all_imgs[training_image_index:]).tolist()
-    print("len(val_imgs)", len(val_imgs))
-    print("all_imgs_length", all_imgs_length)
     # Save each classes' images to train directory as jpgs
-    print(train_path)
+
     for index, original_path in enumerate(train_imgs):
         print(index)
         new_path = os.path.join(train_path, os.path.basename(original_path))
@@ -179,7 +174,7 @@ def split_data_to_train_val(
         image = io.imread(original_path)
         image = (image / image.max() * 255).astype(np.uint8)
         io.imsave(new_path, io.imread(original_path))
-    print(val_path)
+
     # Save each classes' images to val directory as jpgs
     for index, original_path in enumerate(val_imgs):
         print(index)
@@ -188,13 +183,14 @@ def split_data_to_train_val(
         image = io.imread(original_path)
         image = (image / image.max() * 255).astype(np.uint8)
         io.imsave(new_path, io.imread(original_path))
-    print(output_image_format)
+
     train_images = natsort.natsorted(
         glob.glob(os.path.join(train_path, "*" + output_image_format)))
     val_images = natsort.natsorted(
         glob.glob(os.path.join(val_path, "*" + output_image_format)))
     print('number of training images: ', len(train_images))
     print('number of validation images: ', len(val_images))
+
     # create metadata dataframes for training and validation images
     train_df = get_lumi_csv_df(bb_labels, train_images, output_image_format)
     val_df = get_lumi_csv_df(bb_labels, val_images, output_image_format)
