@@ -8,6 +8,47 @@ import sklearn.metrics
 from luminoth.utils.bbox_overlap import bbox_overlap
 
 
+"""
+Output from the cli would as below:
+lumi confusion_matrix --groundtruth_csv /val.csv --predicted_csv objects.csv --classes_json classes.json
+
+Confusion matrix before normalization
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+confidence_threshold: 0.9
+Where Unmatched in Groundtruth means False Positive and Unmatched in Prediction means False Negative.
+                                                 Prediction
+                        [        0] [        1] [        2] [Unmatched] [    Total] 
+            [        0]           1           0           0           0           1 
+            [        1]           0           0           1           3           3 
+Groundtruth [        2]           0           0           2           0           3 
+            [Unmatched]           1           1           0           0           0 
+            [    Total]           2           2           2           0           0 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Confusion matrix after normalization
+
+Note: Normalized by number of elements in each class in all groundtruth, includes both matched and unmatched
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+confidence_threshold: 0.9
+Where Unmatched in Groundtruth means False Positive and Unmatched in Prediction means False Negative.
+                             Prediction
+                    [    0] [    1] [    2] 
+            [    0]   0.500   0.000   0.000 
+Groundtruth [    1]   0.000   0.000   0.500 
+            [    2]   0.000   0.000   1.000 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Note: Precision and recall here doesnt include the bounding boxes that were present in ground truth but not detected in predicted and viceversa
+             precision    recall  f1-score   support
+
+        0.0       1.00      1.00      1.00         1
+        1.0       0.00      0.00      0.00         1
+        2.0       0.67      1.00      0.80         2
+
+avg / total       0.58      0.75      0.65         4
+
+""" # noqa
+
+
 def get_matched_gt_predict(
         gt_csv,
         predicted_csv,
@@ -385,7 +426,7 @@ def display(
     inclusive_labels = labels + ["Unmatched", "Total"]
     print_cm(confusion_matrix, inclusive_labels, confidence_threshold)
 
-    print("Confusion matrix afer normalization\n")
+    print("Confusion matrix after normalization\n")
     print(
         "Note: Normalized by number of elements in each class in all " +
         "groundtruth, includes both matched and unmatched")
@@ -411,7 +452,7 @@ def display(
 @click.option("--output_txt", help="output txt file containing confusion matrix, precision, recall per class", type=str) # noqa
 @click.option('--iou_threshold', type=float, default=0.5, help='IOU threshold below which the bounding box is invalid')  # noqa
 @click.option('--confidence_threshold', type=float, default=0.9, help='Confidence score threshold below which bounding box detection is of low confidence and is ignored while considering true positives')  # noqa
-@click.option('--classes_json', required=True, help='path to a json file containing list of class label for the objects,labels are alphabetically sorted')  # noqa
+@click.option('--classes_json', required=True, help='path to a json file containing list of class label for the objects, labels are alphabetically sorted')  # noqa
 def confusion_matrix(
         groundtruth_csv,
         predicted_csv,
