@@ -400,14 +400,14 @@ def display(
 
 
 @click.command(help="Save or print confusion matrix per class after comparing ground truth and prediced bounding boxes")  # noqa
-@click.option("--gt_csv", help="Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label and several rows corresponding to the groundtruth bounding box objects", required=True, type=str) # noqa
+@click.option("--groundtruth_csv", help="Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label and several rows corresponding to the groundtruth bounding box objects", required=True, type=str) # noqa
 @click.option("--predicted_csv", help="Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label,prob and several rows corresponding to the predicted bounding box objects", required=True, type=str) # noqa
 @click.option("--output_txt", help="output txt file containing confusion matrix, precision, recall per class", type=str) # noqa
 @click.option('--iou_threshold', type=float, default=0.5, help='IOU threshold below which the bounding box is invalid')  # noqa
 @click.option('--confidence_threshold', type=float, default=0.9, help='Confidence score threshold below which bounding box detection is of low confidence and is ignored while considering true positives')  # noqa
 @click.option('--classes_json', required=True, help='path to a json file containing list of class label for the objects,labels are alphabetically sorted')  # noqa
 def confusion_matrix(
-        gt_csv,
+        groundtruth_csv,
         predicted_csv,
         output_txt,
         iou_threshold,
@@ -417,7 +417,7 @@ def confusion_matrix(
     with open(classes_json, "r") as f:
         class_labels = json.load(f)
     display(
-        gt_csv,
+        groundtruth_csv,
         predicted_csv,
         class_labels,
         iou_threshold,
