@@ -46,7 +46,7 @@ INSTALL_REQUIRES = [
     'Flask>=0.12',
     'PyYAML>=3.12,<4',
     'click>=6.7,<7',
-    'natsort==6.2.0'
+    'natsort==6.2.0',
     # Sonnet 1.25+ requires tensorflow_probability which we do not need here.
     'dm-sonnet>=1.12,<=1.23',
     # Can remove easydict <=1.8 pin after
