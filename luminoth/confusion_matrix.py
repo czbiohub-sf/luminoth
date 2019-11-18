@@ -134,14 +134,11 @@ def append_unmatched_gt_predict(
     """
     number_classes = len(labels)
     complete_confusion_matrix = np.zeros(
-        (number_classes + 2, number_classes + 2), dtype=np.uint8)
+        (number_classes + 2, number_classes + 2), dtype=np.uint32)
     complete_confusion_matrix[
         :number_classes, :number_classes] = confusion_matrix
-    print(confusion_matrix)
-    print(labels)
     for i, label in enumerate(sorted(labels)):
         predicteds_per_label = predicted_classes.count(label)
-        print(predicteds_per_label)
         matched_predicteds_per_label = predicted_matched_classes.count(label)
 
         complete_confusion_matrix[i, number_classes] = \
@@ -156,7 +153,6 @@ def append_unmatched_gt_predict(
         complete_confusion_matrix[number_classes + 1, i] = gts_per_label
 
         complete_confusion_matrix[i, number_classes + 1] = predicteds_per_label
-
     return complete_confusion_matrix
 
 
@@ -201,7 +197,7 @@ def get_confusion_matrix(
         confidence_threshold)
 
     confusion_matrix = np.zeros(
-        (len(labels), len(labels)), dtype=np.uint16)
+        (len(labels), len(labels)), dtype=np.uint32)
     if gt_matched_classes != [] and predicted_matched_classes != []:
         confusion_matrix = sklearn.metrics.confusion_matrix(
             gt_matched_classes, predicted_matched_classes, labels=labels)
