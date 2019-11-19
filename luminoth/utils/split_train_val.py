@@ -34,6 +34,12 @@ images,csv directory structure as follows::
         image_1.jpg,599,528,612,541,car
         image_2.jpg,393,477,430,552,dog
 
+NB: All functions in this module are very specific to collecting and setting
+train, val data from
+different folders containing similarly named images. For example
+sample_1/ch1_p1_t1.png, sample_2/ch1_p1_t1.png, sample_3/ch1_p1_t1.png
+So, please do not import any functions from here to another module
+unless you explicitly know the behaviour and need it
 """
 LUMI_CSV_COLUMNS = ['image_id', 'xmin', 'xmax', 'ymin', 'ymax', 'label']
 # TODO make the columns match
@@ -45,30 +51,31 @@ OUTPUT_IMAGE_FORMAT = ".jpg"
 def add_basename_gather_df(filenames, input_image_format):
     """
     Returns a dataframe with all the bounding boxes & labels
-    from all the paths in filenames. Also adds a column base_path which
-    is just the basename of a fullpath, e.g /data/bla/img.tif's
-    base_path would be img
+    from all the paths in filenames. Also adds a column undersore_path which
+    is just the underscore_path of a fullpath, e.g /data/bla/img.tif's
+    underscore_path would be _data_bla_img
 
     Args:
         filenames: List of paths to comma separated txt/csv file with
             image_path,x1,y1,x2,y2,class_name
-        input_image_format: remove this format tag from the basename of the
-            image_path while adding base_path column
+        input_image_format: str image format in the path
 
     Returns:
         bb_labels_df: Returns a dataframe with all the bounding boxes & labels
-            from all the paths in filenames. Also adds a column base_path which
-            is just the basename of a fullpath, e.g /data/bla/img.tif's
-            base_path would be img
+            from all the paths in filenames. Also adds a
+            column undersore_path which
+            is just the underscore_path of a fullpath, e.g /data/bla/img.tif's
+            underscore_path would be _data_bla
     """
     dfs = []
     for filename in filenames:
         dfs.append(pd.read_csv(filename))
     bb_labels_df = pd.concat(dfs, ignore_index=True)
     base_names = [
-        os.path.basename(row["image_path"]).replace(
-            input_image_format, "") for index, row in bb_labels_df.iterrows()]
-    bb_labels_df["base_path"] = pd.Series(base_names)
+        os.path.dirname(row["image_path"]).replace(os.sep, "_") + "_" +
+        os.path.basename(row["image_path"]).replace(input_image_format, "")
+        for index, row in bb_labels_df.iterrows()]
+    bb_labels_df["underscore_path"] = pd.Series(base_names)
     label_name = bb_labels_df['class_name'].iloc[0]
     # Cast required columns to integers
     if type(label_name) is str:
@@ -87,10 +94,8 @@ def get_image_paths_per_class(bb_labels_df):
     list of image paths containing the class annotation as values
 
     Args:
-        bb_labels: Returns a dataframe with all the bounding boxes and labels
-            from all the paths in filenames. Also adds a column base_path which
-            is just the basename of a fullpath, e.g /data/bla/img.tif's
-            base_path would be img
+        bb_labels: dataframe with all the bounding boxes and labels
+            from all the paths
 
     Returns:
         image_paths_per_class: dict containing class name as the key and the
@@ -131,7 +136,7 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
     for img_name in images:
         # Filter out the df for all the bounding boxes in one image
         basename = os.path.basename(img_name).replace(output_image_format, "")
-        tmp_df = bb_labels[bb_labels.base_path == basename]
+        tmp_df = bb_labels[bb_labels.underscore_path == basename]
         # Add all the bounding boxes for the images to the dataframe
         count = 0
         for index, row in tmp_df.iterrows():
@@ -176,9 +181,10 @@ def write_lumi_images_csv(
             val folders created would be saving input images as uint8 jpgs to
             the output_dir. In that case the output_image_format would be .jpg
         bb_labels: Returns a dataframe with all the bounding boxes and labels
-            from all the paths in filenames. Also adds a column base_path which
+            from all the paths in filenames. Also adds a column
+            underscore_path which
             is just the basename of a fullpath, e.g /data/bla/img.tif's
-            base_path would be img
+            underscore_path would be img
 
     Returns:
         Writes images to path and writes a csv file containing LUMI_CSV_COLUMNS
@@ -187,8 +193,11 @@ def write_lumi_images_csv(
     # Save each classes' images to given path as output_image_format
     os.makedirs(path, exist_ok=True)
     for index, original_path in enumerate(images):
-        new_path = os.path.join(path, os.path.basename(original_path))
-        new_path = new_path.replace(input_image_format, output_image_format)
+        underscore_path = os.path.dirname(original_path).replace(os.sep, "_")
+        basename = os.path.basename(original_path).replace(
+            input_image_format, output_image_format)
+        basename = underscore_path + "_" + basename
+        new_path = os.path.join(path, basename)
         image = cv2.imread(original_path, cv2.IMREAD_ANYDEPTH)
         image = (image / image.max() * 255).astype(np.uint8)
         cv2.imwrite(new_path, image)
@@ -313,6 +322,10 @@ def split_train_val(
         filter_dense_anns,
         input_image_format,
         output_dir):
+
+    print("Note: If giving multiple filenames, the output directory" +
+          "will contain images with long names to prevent the" +
+          "overwriting image of same name from a different sample")
 
     assert percentage < 1.0
     split_data_to_train_val(
