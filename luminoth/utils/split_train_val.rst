@@ -5,7 +5,7 @@ Split a dataset into training and validation
 
 Assuming you already have both your dataset and predicted output ready::
 
-  $ lumi split_train_val bb_labels_no_mosaic.txt --output_dir all_data_no_mosaic_lumi_csv --percentage 0.8 --random_seed 42 --filter_dense_anns --input_image_format .tif --output_image_format .jpg
+  $ lumi split_train_val bb_labels_no_mosaic.txt --output_dir all_data_no_mosaic_lumi_csv --percentage 0.8 --random_seed 42 --filter_dense_anns True --input_image_format .tif --output_image_format .jpg
 
 The ``lumi split_train_val`` CLI tool provides the following options related to splitting and organizing the data.
 
