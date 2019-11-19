@@ -3,14 +3,14 @@
 import glob
 import itertools
 import math
-import natsort
-import random
 import os
+import random
 
-import numpy as np
-from skimage import io
-import pandas as pd
+import cv2
 import click
+import natsort
+import numpy as np
+import pandas as pd
 
 """
 Split data in bb_labels .txt or .csv files to a lumi CSV dataset with
@@ -132,8 +132,14 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
         basename = os.path.basename(img_name).replace(output_image_format, "")
         tmp_df = bb_labels[bb_labels.base_path == basename]
         # Add all the bounding boxes for the images to the dataframe
+        count = 0
         for index, row in tmp_df.iterrows():
             label_name = row['class_name']
+            if count == 0:
+                label_name_type = type(label_name)
+            assert label_name_type == type(label_name)
+            if label_name_type is float:
+                label_name = np.int64(label_name)
             df = df.append({'image_id': img_name,
                             'xmin': np.int64(row['x1']),
                             'xmax': np.int64(row['x2']),
@@ -141,15 +147,8 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
                             'ymax': np.int64(row['y2']),
                             'label': label_name},
                            ignore_index=True)
+            count += 1
 
-    # Cast required columns to integers
-    label_name_type = type(df['label'].iloc[0])
-    if label_name_type is str:
-        cols = ['xmin', 'xmax', 'ymin', 'ymax']
-        df[cols] = df[cols].applymap(np.int64)
-    elif label_name_type is float:
-        cols = ['xmin', 'xmax', 'ymin', 'ymax', 'label']
-        df[cols] = df[cols].applymap(np.int64)
     df.reset_index(drop=True, inplace=True)
     return df
 
@@ -189,9 +188,9 @@ def write_lumi_images_csv(
     for index, original_path in enumerate(images):
         new_path = os.path.join(path, os.path.basename(original_path))
         new_path = new_path.replace(input_image_format, output_image_format)
-        image = io.imread(original_path)
+        image = cv2.imread(original_path, cv2.IMREAD_ANYDEPTH)
         image = (image / image.max() * 255).astype(np.uint8)
-        io.imsave(new_path, io.imread(original_path))
+        cv2.imwrite(new_path, image)
     images = natsort.natsorted(
         glob.glob(os.path.join(path, "*" + output_image_format)))
     print(
@@ -300,10 +299,10 @@ def split_data_to_train_val(
 
 @click.command(help="Split and arrange images into 2 folders for grayscale jpgs for train, and validation, save bounding boxes and labels for the corresponding images in train.csv and val.csv")  # noqa
 @click.argument("filenames", nargs=-1) # noqa
-@click.option("--percentage", help="Percentage of images to split into training folder, rest of the images are equally divided to validation", required=False, type=float, default=0.9) # noqa
-@click.option("--random_seed", help="Random seed to split data into training, validation images", required=False, type=int, default=43) # noqa
+@click.option("--percentage", help="Percentage of images to split into training folder, rest of the images are saved to validation, default 0.8", required=False, type=float, default=0.8) # noqa
+@click.option("--random_seed", help="Random seed to split data into training, validation images, defaykt 43", required=False, type=int, default=43) # noqa
 @click.option('--filter_dense_anns', help="Filter out images with only the dense class annotations", required=False)  # noqa
-@click.option('--input_image_format', help="output image data format", required=False, type=str, default=".jpg")  # noqa
+@click.option('--input_image_format', help="output image data format, default .jpg", required=False, type=str, default=OUTPUT_IMAGE_FORMAT)  # noqa
 @click.option('--output_dir', help="Absolute path to folder containing train, validation scaled uint8 jpg images and their annotations in csv file", required=True, type=str)  # noqa
 def split_train_val(
         filenames,

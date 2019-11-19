@@ -3,13 +3,13 @@ import math
 import os
 import tempfile
 
-import cv2
 import natsort
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from skimage import io
 
-from luminoth.utils.split_train_val import (
+from luminoth.utils.overlay_bbs import (
     add_basename_gather_df, get_image_paths_per_class, INPUT_CSV_COLUMNS,
     get_lumi_csv_df, LUMI_CSV_COLUMNS, split_data_to_train_val,
     write_lumi_images_csv, filter_dense_annotation)
@@ -17,7 +17,7 @@ from luminoth.utils.test.gt_boxes import generate_gt_boxes
 
 
 class SplitTrainValTest(tf.test.TestCase):
-    """Tests for split_train_val
+    """Tests for overlay_bbs
     """
     def setUp(self):
         self.tempfiles_to_delete = []
@@ -54,7 +54,7 @@ class SplitTrainValTest(tf.test.TestCase):
         df = pd.DataFrame(columns=INPUT_CSV_COLUMNS)
         image_save_path = os.path.join(location, image_path)
         csv_save_path = os.path.join(location, ann_path)
-        cv2.imwrite(image_save_path, image)
+        io.imsave(image_save_path, image)
         for i, bbox in enumerate(bboxes):
             label_name = labels[i]
             df = df.append({'image_path': image_save_path,

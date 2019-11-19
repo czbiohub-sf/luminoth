@@ -10,10 +10,12 @@ FONT = cv.FONT_HERSHEY_SIMPLEX
 FONT_SCALE = 1
 FONT_COLOR = (0, 0, 255)
 LINE_TYPE = 2
+BB_COLOR = (0, 255, 0)
+BB_LINE_WIDTH = 2
 
 
 def overlay_bb_labels(
-        im_path, df, color=(0, 255, 0), line_width=2, display=False):
+        im_path, df, color=BB_COLOR, line_width=BB_LINE_WIDTH):
     """
     Given a image directory, load given position and overlay
     with bounding boxes
@@ -25,7 +27,6 @@ def overlay_bb_labels(
         color: tuple RGB color tuple for bounding box
             Default green (0, 255, 0)
         line_width: int Bounding box line width, Default 2
-        display: boolean display the overlaid image, Default False
     """
     im_rgb = cv.imread(im_path, cv.IMREAD_ANYDEPTH | cv.IMREAD_ANYCOLOR)
 
@@ -54,16 +55,10 @@ def overlay_bb_labels(
             color,
             line_width,
         )
-
-    import matplotlib.pyplot as plt
-    plt.imshow(im_rgb)
-    plt.axis('off')
-    if display:
-        plt.show()
     return im_rgb
 
 
-@click.command(help="Save the bounding boxes and their annotations overlaid on the input image in the given dir")  # noqa
+@click.command(help="Save the bounding boxes and their annotations overlaid on the input image in the given dir as a png image")  # noqa
 @click.argument("im_dir", nargs=1) # noqa
 @click.option("--csv_path", help="Absolute path to csv file containing rois xmin,xmax,ymin,ymax,label", required=True) # noqa
 @click.option("--output_dir", help="Absolute path to folder name to save the roi overlaid images to", required=True) # noqa
