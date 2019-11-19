@@ -12,7 +12,7 @@ from skimage import io
 from luminoth.utils.split_train_val import (
     add_basename_gather_df, get_image_paths_per_class, INPUT_CSV_COLUMNS,
     get_lumi_csv_df, LUMI_CSV_COLUMNS, split_data_to_train_val,
-    write_lumi_images_csv)
+    write_lumi_images_csv, filter_dense_annotation)
 from luminoth.utils.test.gt_boxes import generate_gt_boxes
 
 
@@ -125,6 +125,30 @@ class SplitTrainValTest(tf.test.TestCase):
         for key, value in expected_key_values_length.items():
             assert value == len(image_ids_per_class[key])
 
+    def testFilterDenseAnnotation(self):
+        # Test filtered unique image paths per class test
+        # after suppressing the dense annotation of a class
+        bb_ann_filenames = self.get_ann_filenames(
+            self.num_images,
+            [[0] * self.num_bboxes,
+             [1] * self.num_bboxes,
+             self.labels,
+             self.labels,
+             [0] * self.num_bboxes])
+        df = add_basename_gather_df(
+            bb_ann_filenames, self.input_image_format)
+
+        image_ids_per_class = get_image_paths_per_class(df)
+        expected_key_values_length = {0: 4, 1: 3, 2: 2}
+        for key, value in expected_key_values_length.items():
+            assert value == len(image_ids_per_class[key])
+
+        filtered_image_ids_per_class = filter_dense_annotation(
+            image_ids_per_class)
+        expected_key_values_length = {1: 3, 2: 2}
+        for key, value in expected_key_values_length.items():
+            assert value == len(filtered_image_ids_per_class[key])
+
     def testgetLumiCsvDf(self):
         # Get lumi csv dataframe test
         df = add_basename_gather_df(
@@ -175,19 +199,16 @@ class SplitTrainValTest(tf.test.TestCase):
             self.input_image_format,
             output_dir,
             self.output_image_format)
-        split_images = [
-            math.floor(percentage * self.num_images),
-            self.num_images - math.floor(percentage * self.num_images)]
+        split_images = [2, 1]
         splits = ["train", "val"]
         for i, split in enumerate(splits):
-            print(i, split)
             images = natsort.natsorted(
                 glob.glob(
                     os.path.join(
                         output_dir, split, "*" + self.output_image_format)))
             assert len(images) == split_images[i]
             lumi_df = pd.read_csv(os.path.join(output_dir, split + ".csv"))
-            assert len(lumi_df) == self.num_bboxes * self.num_images
+            assert len(lumi_df) == self.num_bboxes * split_images[i]
             assert list(lumi_df.columns.values) == LUMI_CSV_COLUMNS
 
     def testSplitDataToTrainValUnFilter(self):
@@ -214,7 +235,7 @@ class SplitTrainValTest(tf.test.TestCase):
                         output_dir, split, "*" + self.output_image_format)))
             assert len(images) == split_images[i]
             lumi_df = pd.read_csv(os.path.join(output_dir, split + ".csv"))
-            assert len(lumi_df) == self.num_bboxes * self.num_images
+            assert len(lumi_df) == self.num_bboxes * split_images[i]
             assert list(lumi_df.columns.values) == LUMI_CSV_COLUMNS
 
 

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import glob
+import itertools
 import math
 import natsort
 import random
@@ -204,6 +205,8 @@ def filter_dense_annotation(image_paths_per_class):
     """
     Returns dict containing class name as the key and the
     list of image paths containing the class annotation as values
+    after deleting the key:value pair, for the label that contains
+    the highest number of annotations
 
     Args:
         image_paths_per_class: dict containing class name as the key and the
@@ -212,6 +215,7 @@ def filter_dense_annotation(image_paths_per_class):
     Returns:
         image_paths_per_class: dict containing class name as the key and the
         list of image paths containing the class annotation as values
+        after suppressing the dense annotation of a class
     """
     max_class_count = max(
         [len(value) for key, value in image_paths_per_class.items()])
@@ -268,27 +272,30 @@ def split_data_to_train_val(
     if filter_dense_anns:
         image_paths_per_class = filter_dense_annotation(image_paths_per_class)
 
-    all_imgs = np.unique(bb_labels['image_path']).tolist()
+    all_imgs = np.unique(
+        list(
+            itertools.chain.from_iterable(
+                [
+                    value for key, value in image_paths_per_class.items()
+                ]))).tolist()
     all_imgs_length = len(all_imgs)
     random.shuffle(all_imgs)
 
     training_image_index = math.floor(percentage * all_imgs_length)
-    print(os.path.join(os.path.dirname(output_dir), 'train.csv'))
     write_lumi_images_csv(
         all_imgs[:training_image_index],
         os.path.join(output_dir, "train"),
         input_image_format,
         output_image_format,
         bb_labels,
-        os.path.join(os.path.dirname(output_dir), 'train.csv'))
-    print(os.path.join(os.path.dirname(output_dir), 'val.csv'))
+        os.path.join(output_dir, 'train.csv'))
     write_lumi_images_csv(
         all_imgs[training_image_index:],
         os.path.join(output_dir, "val"),
         input_image_format,
         output_image_format,
         bb_labels,
-        os.path.join(os.path.dirname(output_dir), 'val.csv'))
+        os.path.join(output_dir, 'val.csv'))
 
 
 @click.command(help="Split and arrange images into 2 folders for grayscale jpgs for train, and validation, save bounding boxes and labels for the corresponding images in train.csv and val.csv")  # noqa

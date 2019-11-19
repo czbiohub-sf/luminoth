@@ -7,7 +7,7 @@ Assuming you already have both your dataset and predicted output ready::
 
   $ lumi confusion_matrix --groundtruth_csv lumi_csv/val.csv --predicted_csv preds_val/objects.csv --output_txt outout_18.txt --classes_json all_data/classes.json
 
-The ``lumi confusion_matrix`` CLI tool provides the following options related to training.
+The ``lumi confusion_matrix`` CLI tool provides the following options related to evaluation.
 
 * ``--groundtruth_csv``: Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label and several rows corresponding to the groundtruth bounding box objects
 
