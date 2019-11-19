@@ -312,7 +312,7 @@ def split_data_to_train_val(
 @click.argument("filenames", nargs=-1) # noqa
 @click.option("--percentage", help="Percentage of images to split into training folder, rest of the images are saved to validation, default 0.8", required=False, type=float, default=0.8) # noqa
 @click.option("--random_seed", help="Random seed to split data into training, validation images, defaykt 43", required=False, type=int, default=43) # noqa
-@click.option('--filter_dense_anns', help="Filter out images with only the dense class annotations", required=False)  # noqa
+@click.option('--filter_dense_anns', help="Filter out images with only the dense class annotations", required=False, default=False)  # noqa
 @click.option('--input_image_format', help="input image data format", required=True, type=str)  # noqa
 @click.option('--output_dir', help="Absolute path to folder containing train, validation scaled uint8 jpg images and their annotations in csv file", required=True, type=str)  # noqa
 def split_train_val(
@@ -323,8 +323,8 @@ def split_train_val(
         input_image_format,
         output_dir):
 
-    print("Note: If giving multiple filenames, the output directory" +
-          "will contain images with long names to prevent the" +
+    print("Note: If giving multiple filenames, the output directory " +
+          "will contain images with long names to prevent the " +
           "overwriting image of same name from a different sample")
 
     assert percentage < 1.0
