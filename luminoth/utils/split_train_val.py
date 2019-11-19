@@ -45,8 +45,10 @@ OUTPUT_IMAGE_FORMAT = ".jpg"
 
 def add_basename_gather_df(filenames, input_image_format):
     """
-    Writes to output_dir two folders train, val images and two csv files,
-    train.csv, val.csv
+    Returns a dataframe with all the bounding boxes & labels
+    from all the paths in filenames. Also adds a column base_path which
+    is just the basename of a fullpath, e.g /data/bla/img.tif's
+    base_path would be img
 
     Args:
         filenames: List of paths to comma separated txt/csv file with
@@ -278,6 +280,7 @@ def split_data_to_train_val(
                     value for key, value in image_paths_per_class.items()
                 ]))).tolist()
     all_imgs_length = len(all_imgs)
+    print("total unique images are {}".format(all_imgs_length))
     random.shuffle(all_imgs)
 
     training_image_index = math.floor(percentage * all_imgs_length)
@@ -302,7 +305,7 @@ def split_data_to_train_val(
 @click.option("--percentage", help="Percentage of images to split into training folder, rest of the images are saved to validation, default 0.8", required=False, type=float, default=0.8) # noqa
 @click.option("--random_seed", help="Random seed to split data into training, validation images, defaykt 43", required=False, type=int, default=43) # noqa
 @click.option('--filter_dense_anns', help="Filter out images with only the dense class annotations", required=False)  # noqa
-@click.option('--input_image_format', help="output image data format, default .jpg", required=False, type=str, default=OUTPUT_IMAGE_FORMAT)  # noqa
+@click.option('--input_image_format', help="input image data format", required=True, type=str)  # noqa
 @click.option('--output_dir', help="Absolute path to folder containing train, validation scaled uint8 jpg images and their annotations in csv file", required=True, type=str)  # noqa
 def split_train_val(
         filenames,

@@ -3,15 +3,45 @@ import glob
 import os
 
 import click
-import cv2 as cv
+import cv2
 import pandas as pd
 
-FONT = cv.FONT_HERSHEY_SIMPLEX
+FONT = cv2.FONT_HERSHEY_SIMPLEX
 FONT_SCALE = 1
 FONT_COLOR = (0, 0, 255)
 LINE_TYPE = 2
 BB_COLOR = (0, 255, 0)
 BB_LINE_WIDTH = 2
+
+
+def add_base_path(csv_path, input_image_format):
+    """
+    Returns a dataframe with all the bounding boxes & labels
+    from all the image paths in csv_path. Also adds a column base_path which
+    is just the basename of a fullpath, e.g /data/bla/img.tif's
+    base_path would be img
+
+    Args:
+        csv_path: Path to comma separated txt/csv file with
+            image_path,x1,y1,x2,y2,class_name or
+            image_path,xmin,ymin,xmax,ymax,label
+        input_image_format: remove this format tag from the basename of the
+            image_path while adding base_path column
+
+    Returns:
+        bb_labels_df: Returns a dataframe with all the bounding boxes & labels
+            from all the paths in filenames. Also adds a column base_path which
+            is just the basename of a fullpath, e.g /data/bla/img.tif's
+            base_path would be img
+    """
+    dfs = []
+    dfs.append(pd.read_csv(csv_path))
+    bb_labels_df = pd.concat(dfs, ignore_index=True)
+    base_names = [
+        os.path.basename(row["image_path"]).replace(
+            input_image_format, "") for index, row in bb_labels_df.iterrows()]
+    bb_labels_df["base_path"] = pd.Series(base_names)
+    return bb_labels_df
 
 
 def overlay_bb_labels(
@@ -22,24 +52,27 @@ def overlay_bb_labels(
 
     Args:
         im_dir: str Directory with images to overlay on
-        df: pandas.DataFrame df with image_path,xmin,xmax,ymin,ymax
+        df: pandas.DataFrame df with image_path,x1,y1,x2,y2,class_name or
+            image_path,xmin,ymin,xmax,ymax,label
         pos: int Position index (FOV)
         color: tuple RGB color tuple for bounding box
             Default green (0, 255, 0)
         line_width: int Bounding box line width, Default 2
+
+    Returns:
+        im_rgb: overlaid_image with same shape and 3 channels
     """
-    im_rgb = cv.imread(im_path, cv.IMREAD_ANYDEPTH | cv.IMREAD_ANYCOLOR)
+    im_rgb = cv2.imread(im_path, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
 
-    basename = os.path.basename(im_path).replace("pred_", "")
-    tmp_df = df[df.base_path == basename]
+    basename = os.path.basename(im_path)
+    tmp_df = df[df.base_path.endswith(basename)]
 
-    # Plot bounding boxes
-
+    # Plot bounding boxes, annotation label
     for index, row in tmp_df.iterrows():
         label = row.label
         left_corner_of_text = (int(row.xmin), int(row.ymin))
         right_bottom_corner = (int(row.xmax), int(row.ymax))
-        cv.putText(
+        cv2.putText(
             im_rgb,
             label,
             left_corner_of_text,
@@ -48,7 +81,7 @@ def overlay_bb_labels(
             FONT_COLOR,
             LINE_TYPE)
 
-        cv.rectangle(
+        cv2.rectangle(
             im_rgb,
             left_corner_of_text,
             right_bottom_corner,
@@ -58,27 +91,47 @@ def overlay_bb_labels(
     return im_rgb
 
 
-@click.command(help="Save the bounding boxes and their annotations overlaid on the input image in the given dir as a png image")  # noqa
+def overlay_bbs_on_all_images(
+        im_dir, csv_path, output_dir, input_image_format):
+    """
+    Save the bounding boxes and their annotations overlaid
+     on the input image in the given dir as a png image
+     in the output_dir
+
+    Args:
+        im_dir: str Directory with images to overlay on
+        csv_path: Path to comma separated txt/csv file with
+            image_path,x1,y1,x2,y2,class_name or
+            image_path,xmin,ymin,xmax,ymax,label
+        output_dir: str Directory to save overlaid images to
+        input_image_format: str Format of the input images
+
+    Returns:
+        Writes overlaid images to output_dir
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    images_in_path = glob.glob(im_dir + "*." + input_image_format)
+    df = add_base_path(csv_path)
+
+    for im_path in images_in_path:
+        im_rgb = overlay_bb_labels(im_path, df)
+        png = os.path.basename(im_path).replace(input_image_format, "png")
+        cv2.imwrite(os.path.join(output_dir, png), im_rgb)
+    print("Overlaid bounding box labeled images are at {}:".format(output_dir))
+
+
+@click.command(help="Save the bounding boxes and their annotations overlaid on the input images in the given dir as png images in the output_dir")  # noqa
 @click.argument("im_dir", nargs=1) # noqa
 @click.option("--csv_path", help="Absolute path to csv file containing rois xmin,xmax,ymin,ymax,label", required=True) # noqa
 @click.option("--output_dir", help="Absolute path to folder name to save the roi overlaid images to", required=True) # noqa
-@click.option("--fmt", help="Format of images in input directory", required=True) # noqa
-@click.option('--display', help="Display overlaid images, Default False")  # noqa
-def overlay_bbs(im_dir, csv_path, output_dir, fmt, display):
+@click.option("--input_image_format", help="Format of images in input directory", required=True) # noqa
+def overlay_bbs(im_dir, csv_path, output_dir, input_image_format):
 
-    os.makedirs(output_dir, exist_ok=True)
-    images_in_path = glob.glob(im_dir + "*." + fmt)
-    df = pd.read_csv(csv_path)
-    base_names = [
-        os.path.basename(row.image_id) for index, row in df.iterrows()]
-    df["base_path"] = pd.Series(base_names)
-
-    for im_path in images_in_path:
-        im_rgb = overlay_bb_labels(im_path, df, display=display)
-        png = os.path.basename(im_path).replace(fmt, "png")
-        cv.imwrite(os.path.join(output_dir, png), im_rgb)
-
-    print("Overlaid bounding box labeled images are at {}".format(output_dir))
+    overlay_bbs_on_all_images(
+        im_dir,
+        csv_path,
+        output_dir,
+        input_image_format)
 
 
 if __name__ == '__main__':
