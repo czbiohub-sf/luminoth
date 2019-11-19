@@ -12,8 +12,8 @@ import pandas as pd
 import click
 
 """
-Split data in bb_labels .txt ir .csv files to a CSV dataset
-directory structure as follows::
+Split data in bb_labels .txt or .csv files to a lumi CSV dataset with
+images,csv directory structure as follows::
 
         .
         ├── train
@@ -36,48 +36,10 @@ directory structure as follows::
 
 """
 LUMI_CSV_COLUMNS = ['image_id', 'xmin', 'xmax', 'ymin', 'ymax', 'label']
+# TODO make the columns match
+INPUT_CSV_COLUMNS = ['image_path', 'x1', 'x2', 'y1', 'y2', 'class_name']
+
 OUTPUT_IMAGE_FORMAT = ".jpg"
-
-
-def get_lumi_csv_df(bb_labels, images, output_image_format):
-    """
-    Filters out the list of images given from bb_labels and
-    formats it to a csv dataformat required by luminoth
-
-    Args:
-        bb_labels: Dataframe with image_path,x1,y1,x2,y2,class_name
-        images: List of images to filter by
-        output_image_format: Defaults to jpg
-
-    Returns:
-        df: pandas.DataFrame Filters out the list of images given from bb_label
-            and formats it to a csv dataformat required by luminoth
-    """
-    df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
-    # Find boxes in each image and put them in a dataframe
-    for img_name in images:
-        # Filter out the df for all the bounding boxes in one image
-        basename = os.path.basename(img_name).replace(output_image_format, "")
-        tmp_df = bb_labels[bb_labels.base_path == basename]
-        # Add all the bounding boxes for the images to the dataframe
-        for index, row in tmp_df.iterrows():
-            label_name = row['class_name']
-            df = df.append({'image_id': img_name,
-                            'xmin': int(row['x1']),
-                            'xmax': int(row['x2']),
-                            'ymin': int(row['y1']),
-                            'ymax': int(row['y2']),
-                            'label': label_name},
-                           ignore_index=True)
-
-    # Cast required columns to integers
-    if type(label_name) is str:
-        cols = ['xmin', 'xmax', 'ymin', 'ymax']
-        df[cols] = df[cols].applymap(np.int64)
-    elif type(label_name) is float:
-        cols = ['xmin', 'xmax', 'ymin', 'ymax', 'label']
-        df[cols] = df[cols].applymap(np.int64)
-    return df
 
 
 def add_basename_gather_df(filenames, input_image_format):
@@ -86,7 +48,7 @@ def add_basename_gather_df(filenames, input_image_format):
     train.csv, val.csv
 
     Args:
-        filenames: List of paths to comma separated txt file with
+        filenames: List of paths to comma separated txt/csv file with
             image_path,x1,y1,x2,y2,class_name
         input_image_format: remove this format tag from the basename of the
             image_path while adding base_path column
@@ -99,12 +61,21 @@ def add_basename_gather_df(filenames, input_image_format):
     """
     dfs = []
     for filename in filenames:
-        dfs.append(pd.read_csv(filenames))
-    bb_labels_df = pd.concate(dfs, ignore_index=True)
+        dfs.append(pd.read_csv(filename))
+    bb_labels_df = pd.concat(dfs, ignore_index=True)
     base_names = [
-        os.path.basename(row.image_path).replace(
+        os.path.basename(row["image_path"]).replace(
             input_image_format, "") for index, row in bb_labels_df.iterrows()]
     bb_labels_df["base_path"] = pd.Series(base_names)
+    label_name = bb_labels_df['class_name'].iloc[0]
+    # Cast required columns to integers
+    if type(label_name) is str:
+        cols = ['x1', 'x2', 'y1', 'y2']
+        bb_labels_df[cols] = bb_labels_df[cols].applymap(np.int64)
+    elif type(label_name) is np.float64:
+        cols = ['x1', 'x2', 'y1', 'y2', 'class_name']
+        bb_labels_df[cols] = bb_labels_df[cols].applymap(np.int64)
+    bb_labels_df.reset_index(drop=True, inplace=True)
     return bb_labels_df
 
 
@@ -131,11 +102,55 @@ def get_image_paths_per_class(bb_labels_df):
         filtered_df = bb_labels_df[bb_labels_df['class_name'] == class_name]
         images = np.unique(filtered_df['image_path']).tolist()
         image_paths_per_class[class_name] = images
-        print('There are {} images with  {} {} classes in the dataset'.format(
-            len(image_paths_per_class[class_name]),
-            len(filtered_df),
-            class_name))
+        print(
+            'There are {} images with {} {} labeled classes in dataset'.format(
+                len(image_paths_per_class[class_name]),
+                len(filtered_df),
+                class_name))
     return image_paths_per_class
+
+
+def get_lumi_csv_df(bb_labels, images, output_image_format):
+    """
+    Filters out the list of images given from bb_labels and
+    formats it to a csv dataformat required by luminoth
+
+    Args:
+        bb_labels: Dataframe with image_path,x1,y1,x2,y2,class_name
+        images: List of images to filter by
+        output_image_format: Defaults to jpg
+
+    Returns:
+        df: pandas.DataFrame Filters out the list of images given from bb_label
+            and formats it to a csv dataformat required by luminoth
+    """
+    df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
+    # Find boxes in each image and put them in a dataframe
+    for img_name in images:
+        # Filter out the df for all the bounding boxes in one image
+        basename = os.path.basename(img_name).replace(output_image_format, "")
+        tmp_df = bb_labels[bb_labels.base_path == basename]
+        # Add all the bounding boxes for the images to the dataframe
+        for index, row in tmp_df.iterrows():
+            label_name = row['class_name']
+            df = df.append({'image_id': img_name,
+                            'xmin': np.int64(row['x1']),
+                            'xmax': np.int64(row['x2']),
+                            'ymin': np.int64(row['y1']),
+                            'ymax': np.int64(row['y2']),
+                            'label': label_name},
+                           ignore_index=True)
+
+    # Cast required columns to integers
+    label_name_type = type(df['label'].iloc[0])
+    if label_name_type is str:
+        cols = ['xmin', 'xmax', 'ymin', 'ymax']
+        df[cols] = df[cols].applymap(np.int64)
+    elif label_name_type is float:
+        cols = ['xmin', 'xmax', 'ymin', 'ymax', 'label']
+        df[cols] = df[cols].applymap(np.int64)
+    df.reset_index(drop=True, inplace=True)
+    return df
 
 
 def write_lumi_images_csv(
@@ -178,14 +193,37 @@ def write_lumi_images_csv(
         io.imsave(new_path, io.imread(original_path))
     images = natsort.natsorted(
         glob.glob(os.path.join(path, "*" + output_image_format)))
-    print('number of images in path : ', len(images))
+    print(
+        'number of images in path {} : {}'.format(
+            path, len(images)))
     df = get_lumi_csv_df(bb_labels, images, output_image_format)
-    df.to_csv(output_csv_path)
+    df.to_csv(output_csv_path, index=False)
+
+
+def filter_dense_annotation(image_paths_per_class):
+    """
+    Returns dict containing class name as the key and the
+    list of image paths containing the class annotation as values
+
+    Args:
+        image_paths_per_class: dict containing class name as the key and the
+        list of image paths containing the class annotation as values
+
+    Returns:
+        image_paths_per_class: dict containing class name as the key and the
+        list of image paths containing the class annotation as values
+    """
+    max_class_count = max(
+        [len(value) for key, value in image_paths_per_class.items()])
+    max_class_count_name = [
+        key for key, value in image_paths_per_class.items() if len(
+            value) == max_class_count][0]
+    image_paths_per_class.pop(max_class_count_name)
+    return image_paths_per_class
 
 
 def split_data_to_train_val(
         filenames,
-        class_labels,
         percentage,
         random_seed,
         filter_dense_anns,
@@ -199,7 +237,6 @@ def split_data_to_train_val(
     Args:
         filenames: List of paths to comma separated txt file with
             image_path,x1,y1,x2,y2,class_name
-        class_labels: list of classes
         output_dir: Full path to save the train,
             val folders and their csv files
         random_seed: Randomize the images so no
@@ -223,25 +260,20 @@ def split_data_to_train_val(
     bb_labels = add_basename_gather_df(filenames, input_image_format)
 
     # Get unique images per classes
-    image_paths_per_class = get_image_paths_per_class(bb_labels, class_labels)
+    image_paths_per_class = get_image_paths_per_class(bb_labels)
 
     # Balancing class count by taking into account only images with
     # classes that are sparsely present these images are
     # expected to contain the other class that has lots of annotations
     if filter_dense_anns:
-        max_class_count = max(
-            [len(value) for key, value in image_paths_per_class.items()])
-        max_class_count_name = [
-            key for key, value in image_paths_per_class.items() if len(
-                value) == max_class_count][0]
-        image_paths_per_class.pop(max_class_count_name)
+        image_paths_per_class = filter_dense_annotation(image_paths_per_class)
 
     all_imgs = np.unique(bb_labels['image_path']).tolist()
     all_imgs_length = len(all_imgs)
     random.shuffle(all_imgs)
 
     training_image_index = math.floor(percentage * all_imgs_length)
-
+    print(os.path.join(os.path.dirname(output_dir), 'train.csv'))
     write_lumi_images_csv(
         all_imgs[:training_image_index],
         os.path.join(output_dir, "train"),
@@ -249,7 +281,7 @@ def split_data_to_train_val(
         output_image_format,
         bb_labels,
         os.path.join(os.path.dirname(output_dir), 'train.csv'))
-
+    print(os.path.join(os.path.dirname(output_dir), 'val.csv'))
     write_lumi_images_csv(
         all_imgs[training_image_index:],
         os.path.join(output_dir, "val"),

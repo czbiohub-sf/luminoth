@@ -62,6 +62,7 @@ class ConfusionMatrixTest(tf.test.TestCase):
             os.remove(file)
 
     def get_test_data(self, bboxes, labels):
+        # Write test data csv file
         tf = tempfile.NamedTemporaryFile(suffix=".csv", delete=False)
         csv = tf.name
         df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
@@ -86,6 +87,7 @@ class ConfusionMatrixTest(tf.test.TestCase):
         return csv
 
     def testGetMatchedGTPredict(self):
+        # Get matched gt, predict, total classes test
         (obtained_gt_classes,
          obtained_predicted_classes,
          obtained_gt_matched_classes,
@@ -108,6 +110,7 @@ class ConfusionMatrixTest(tf.test.TestCase):
             self.expected_predicted_matched_classes)
 
     def testAppendUnmatchedGTPredict(self):
+        # Add unmatched, total to confusion matrix test
         (gt_classes,
          predicted_classes,
          gt_matched_classes,
@@ -134,7 +137,7 @@ class ConfusionMatrixTest(tf.test.TestCase):
         np.testing.assert_array_equal(complete_cm, self.expected_cm)
 
     def testUnequalBoxes(self):
-        # Single box test
+        # Single unequal box confusion matrix test
         labels = ["normal"]
         bboxes = [[0, 0, 10, 10]]
         groundtruth_csv = self.get_test_data(bboxes, labels)
@@ -151,7 +154,7 @@ class ConfusionMatrixTest(tf.test.TestCase):
         np.testing.assert_array_equal(cm, expected)
 
     def testEqualBoxes(self):
-        # Equal boxes
+        # Equal boxes confusion matrix test
         labels = ["normal"]
         bboxes = [[0, 0, 10, 10]]
         groundtruth_csv = self.get_test_data(bboxes, labels)
@@ -167,13 +170,14 @@ class ConfusionMatrixTest(tf.test.TestCase):
         np.testing.assert_array_equal(cm, expected)
 
     def testGetConfusionMatrix(self):
-
+        # Getting confusion matrix on random bboxes test
         cm = confusion_matrix.get_confusion_matrix(
             self.gt_csv, self.predicted_csv,
             self.labels, self.iou_threshold, self.confidence_threshold)
         np.testing.assert_array_equal(cm, self.expected_cm)
 
     def testNormalizeConfusionMatrix(self):
+        # Getting normalized confusion matrix on random bboxes test
 
         normalized_cm = confusion_matrix.normalize_confusion_matrix(
             self.expected_cm)

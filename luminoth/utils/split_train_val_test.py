@@ -1,11 +1,18 @@
+import glob
+import math
+import os
+import tempfile
+
+import natsort
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import tempfile
-import os
+from skimage import io
 
-from luminoth.utils import split_train_val
-from luminoth.predict import LUMI_CSV_COLUMNS
+from luminoth.utils.split_train_val import (
+    add_basename_gather_df, get_image_paths_per_class, INPUT_CSV_COLUMNS,
+    get_lumi_csv_df, LUMI_CSV_COLUMNS, split_data_to_train_val,
+    write_lumi_images_csv)
 from luminoth.utils.test.gt_boxes import generate_gt_boxes
 
 
@@ -14,14 +21,15 @@ class SplitTrainValTest(tf.test.TestCase):
     """
     def setUp(self):
         self.tempfiles_to_delete = []
-        self.iou_threshold = 0.5
-        self.confidence_threshold = 0.9
-        self.labels = ["normal"]
-
-        # Create fake images, fake csv files
-        # place them in different folders
-        # atleast 3 -4 different images
-        # with 2 different classe of bounding boxes in them
+        self.labels = [0, 1, 2, 0, 2, 1, 0, 0, 2, 1, 0]
+        self.input_image_format = ".png"
+        self.num_images = 5
+        self.output_image_format = ".jpg"
+        self.image_shape = [50, 41]
+        self.num_bboxes = 11
+        self.bb_ann_filenames = self.get_ann_filenames(self.num_images)
+        self.images = [
+            path.replace("txt", "png") for path in self.bb_ann_filenames]
 
     def tearDown(self):
         tf.reset_default_graph()
@@ -29,6 +37,7 @@ class SplitTrainValTest(tf.test.TestCase):
             os.remove(file)
 
     def _gen_image(self, *shape):
+        np.random.seed(43)
         return np.random.rand(*shape)
 
     def _get_image_with_boxes(self, image_size, total_boxes):
@@ -36,23 +45,24 @@ class SplitTrainValTest(tf.test.TestCase):
         bboxes = generate_gt_boxes(
             total_boxes, image_size[:2],
         )
+        image = image.astype(np.uint8)
         return image, bboxes
 
-    def get_test_data(self, bboxes, labels):
-        tf = tempfile.NamedTemporaryDirectory(prefix="test_split_train_val", delete=False)
-        im_dir = tf.name
-        im_dir = tf.name
-        im_dir = tf.name
-        df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
+    def get_test_data(self, image, image_path, bboxes, labels, ann_path):
+        # Write test images, csv/txt files
+        location = tempfile.mkdtemp()
+        df = pd.DataFrame(columns=INPUT_CSV_COLUMNS)
+        image_save_path = os.path.join(location, image_path)
+        csv_save_path = os.path.join(location, ann_path)
+        io.imsave(image_save_path, image)
         for i, bbox in enumerate(bboxes):
             label_name = labels[i]
-            df = df.append({'image_id': "file",
-                            'xmin': bbox[0],
-                            'xmax': bbox[2],
-                            'ymin': bbox[1],
-                            'ymax': bbox[3],
-                            'label': label_name,
-                            'prob': 0.95},
+            df = df.append({'image_path': image_save_path,
+                            'x1': bbox[0],
+                            'x2': bbox[2],
+                            'y1': bbox[1],
+                            'y2': bbox[3],
+                            'class_name': label_name},
                            ignore_index=True)
         if type(label_name) is str:
             cols = ['xmin', 'xmax', 'ymin', 'ymax']
@@ -60,76 +70,152 @@ class SplitTrainValTest(tf.test.TestCase):
         elif type(label_name) is float:
             cols = ['xmin', 'xmax', 'ymin', 'ymax', 'label']
             df[cols] = df[cols].applymap(np.int64)
-        df.to_csv(csv)
-        self.tempfiles_to_delete.append(csv)
-        return csv
+        df.to_csv(csv_save_path)
+        self.tempfiles_to_delete.append(image_save_path)
+        self.tempfiles_to_delete.append(csv_save_path)
+        return csv_save_path
 
-    def testNoOverlap(self):
-        # Single box test
-        bboxes = [[0, 0, 10, 10]]
-        groundtruth_csv = self.get_test_data(bboxes, self.labels)
+    def get_ann_filenames(self, num_images, all_labels=None):
+        # Get list of test annotation csv/txt files
+        if all_labels is None:
+            all_labels = [self.labels] * num_images
+        filenames = []
+        for i in range(num_images):
+            labels = all_labels[i]
+            im_filename = "test_bb_labels_{}{}".format(
+                i, self.input_image_format)
+            csv_filename = "test_bb_labels_{}.txt".format(i)
+            image, bboxes = self._get_image_with_boxes(
+                self.image_shape, self.num_bboxes)
+            csv = self.get_test_data(
+                image, im_filename, bboxes, labels, csv_filename)
+            filenames.append(csv)
+        return filenames
 
-        bboxes = [[11, 11, 20, 20]]
-        predicted_csv = self.get_test_data(bboxes, self.labels)
+    def testAddBasenameGatherDfCsv(self):
+        # Combine list of annotation csv files and add base_path column test
+        df = add_basename_gather_df(
+            self.bb_ann_filenames, self.input_image_format)
+        for index, row in df.iterrows():
+            assert row["base_path"] == os.path.basename(
+                row["image_path"].replace(self.input_image_format, ""))
 
-        labels = ["normal"]
+    def testAddBasenameGatherDfTxt(self):
+        # Combine list of annotation txt files and add base_path column test
+        df = add_basename_gather_df(
+            self.bb_ann_filenames, self.input_image_format)
+        for index, row in df.iterrows():
+            assert row["base_path"] == os.path.basename(
+                row["image_path"].replace(self.input_image_format, ""))
 
-        cm = confusion_matrix.get_confusion_matrix(
-            groundtruth_csv, predicted_csv,
-            labels, self.iou_threshold, self.confidence_threshold)
+    def testGetImagePathsPerClass(self):
+        # Get unique image paths per class test
+        bb_ann_filenames = self.get_ann_filenames(
+            self.num_images,
+            [[0] * self.num_bboxes,
+             [1] * self.num_bboxes,
+             self.labels,
+             self.labels,
+             [0] * self.num_bboxes])
+        df = add_basename_gather_df(
+            bb_ann_filenames, self.input_image_format)
 
-        expected = np.zeros((1, 1))
-        np.testing.assert_array_equal(cm, expected)
+        image_ids_per_class = get_image_paths_per_class(df)
+        expected_key_values_length = {0: 4, 1: 3, 2: 2}
+        for key, value in expected_key_values_length.items():
+            assert value == len(image_ids_per_class[key])
 
-    def testAllOverlap(self):
-        # Equal boxes
-        bboxes = [[0, 0, 10, 10]]
-        groundtruth_csv = self.get_test_data(bboxes, self.labels)
+    def testgetLumiCsvDf(self):
+        # Get lumi csv dataframe test
+        df = add_basename_gather_df(
+            self.bb_ann_filenames, self.input_image_format)
+        lumi_df = get_lumi_csv_df(
+            df, self.images, self.input_image_format)
+        assert len(lumi_df) == self.num_bboxes * self.num_images
+        assert list(lumi_df.columns.values) == LUMI_CSV_COLUMNS
 
-        bboxes = [[0, 0, 10, 10]]
-        predicted_csv = self.get_test_data(bboxes, self.labels)
+    def testWriteLumiImagesCsv(self):
+        bb_labels = add_basename_gather_df(
+            self.bb_ann_filenames, self.input_image_format)
+        output_dir = tempfile.mkdtemp()
+        output_ann_path = os.path.join(output_dir, "test_train.csv")
+        write_lumi_images_csv(
+            self.images,
+            output_dir,
+            self.input_image_format,
+            self.output_image_format,
+            bb_labels,
+            output_ann_path)
+        images = natsort.natsorted(
+            glob.glob(
+                os.path.join(output_dir, "*" + self.output_image_format)))
+        assert len(images) == len(self.images)
+        lumi_df = pd.read_csv(output_ann_path)
+        assert len(lumi_df) == self.num_bboxes * self.num_images
+        assert list(lumi_df.columns.values) == LUMI_CSV_COLUMNS
 
-        cm = confusion_matrix.get_confusion_matrix(
-            groundtruth_csv, predicted_csv,
-            self.labels, self.iou_threshold, self.confidence_threshold)
+    def testSplitDataToTrainValFilter(self):
+        percentage = 0.8
+        random_seed = 42
 
-        expected = np.zeros((2, 2))
-        expected[0, 0] = 1
-        np.testing.assert_array_equal(cm, expected)
+        bb_ann_filenames = self.get_ann_filenames(
+            self.num_images,
+            [[0] * self.num_bboxes,
+             [1] * self.num_bboxes,
+             self.labels,
+             self.labels,
+             [0] * self.num_bboxes])
 
-    def testConfusionMatrix(self):
-        gt_bboxes = np.array(
-            [[38, 1, 51, 18, 1],
-             [28, 70, 83, 99, 0],
-             [77, 29, 94, 99, 2],
-             [41, 81, 68, 99, 0],
-             [43, 24, 99, 94, 1],
-             [30, 67, 99, 99, 2]
-             ])
+        output_dir = tempfile.mkdtemp()
+        split_data_to_train_val(
+            bb_ann_filenames,
+            percentage,
+            random_seed,
+            True,
+            self.input_image_format,
+            output_dir,
+            self.output_image_format)
+        split_images = [
+            math.floor(percentage * self.num_images),
+            self.num_images - math.floor(percentage * self.num_images)]
+        splits = ["train", "val"]
+        for i, split in enumerate(splits):
+            print(i, split)
+            images = natsort.natsorted(
+                glob.glob(
+                    os.path.join(
+                        output_dir, split, "*" + self.output_image_format)))
+            assert len(images) == split_images[i]
+            lumi_df = pd.read_csv(os.path.join(output_dir, split + ".csv"))
+            assert len(lumi_df) == self.num_bboxes * self.num_images
+            assert list(lumi_df.columns.values) == LUMI_CSV_COLUMNS
 
-        predicted_bboxes = np.array(
-            [[38, 1, 51, 9, 1],
-             [42, 70, 83, 99, 0],
-             [77, 29, 94, 99, 2],
-             [30, 67, 99, 99, 2],
-             [41, 81, 0, 99, 0],
-             [43, 24, 99, 104, 1]
-             ])
+    def testSplitDataToTrainValUnFilter(self):
+        percentage = 0.6
+        random_seed = 42
+        split_images = [
+            math.floor(percentage * self.num_images),
+            self.num_images - math.floor(percentage * self.num_images)]
+        output_dir = tempfile.mkdtemp()
+        split_data_to_train_val(
+            self.bb_ann_filenames,
+            percentage,
+            random_seed,
+            False,
+            self.input_image_format,
+            output_dir,
+            self.output_image_format)
 
-        gt_csv = self.get_test_data(
-            gt_bboxes, [1, 0, 2, 0, 1, 2])
-        predicted_csv = self.get_test_data(
-            predicted_bboxes, [1, 0, 2, 2, 0, 1])
-
-        cm = confusion_matrix.get_confusion_matrix(
-            gt_csv, predicted_csv,
-            [0, 1, 2], self.iou_threshold, self.confidence_threshold)
-        expected_cm = np.array(
-            [[1, 0, 0, 1],
-             [0, 1, 0, 1],
-             [0, 0, 2, 0],
-             [1, 1, 0, 0]])
-        np.testing.assert_array_equal(cm, expected_cm)
+        splits = ["train", "val"]
+        for i, split in enumerate(splits):
+            images = natsort.natsorted(
+                glob.glob(
+                    os.path.join(
+                        output_dir, split, "*" + self.output_image_format)))
+            assert len(images) == split_images[i]
+            lumi_df = pd.read_csv(os.path.join(output_dir, split + ".csv"))
+            assert len(lumi_df) == self.num_bboxes * self.num_images
+            assert list(lumi_df.columns.values) == LUMI_CSV_COLUMNS
 
 
 if __name__ == '__main__':
