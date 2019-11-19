@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import glob
-import itertools
 import math
 import os
 import random
@@ -273,12 +272,12 @@ def split_data_to_train_val(
     if filter_dense_anns:
         image_paths_per_class = filter_dense_annotation(image_paths_per_class)
 
-    all_imgs = np.unique(
-        list(
-            itertools.chain.from_iterable(
-                [
-                    value for key, value in image_paths_per_class.items()
-                ]))).tolist()
+    all_imgs = []
+    for class_name, images in image_paths_per_class.items():
+        for im_path in images:
+            all_imgs.append(im_path)
+
+    all_imgs = np.unique(all_imgs).tolist()
     all_imgs_length = len(all_imgs)
     print("total unique images are {}".format(all_imgs_length))
     random.shuffle(all_imgs)
