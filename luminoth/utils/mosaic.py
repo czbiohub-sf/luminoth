@@ -37,12 +37,7 @@ def assemble_mosaic(images_in_path, tile_size, fill_value):
         channels = shape[2]
     else:
         channels = 1
-    if tile_size is not None:
-        tile_size_x = tile_size[0]
-        tile_size_y = tile_size[1]
-    else:
-        tile_size_x = shape[0]
-        tile_size_y = shape[1]
+    tile_size_x, tile_size_y = tile_size[0], tile_size[1]
     mosaiced_im = np.ones(
         (x_tiles * tile_size_x, y_tiles * tile_size_y, channels),
         dtype=np.uint8)
@@ -75,6 +70,17 @@ def _set_fill_value(image, fill_value):
     return fill_value
 
 
+def _set_tile_size(image, tile_size):
+    shape = image.shape
+    if tile_size is not None:
+        if type(tile_size[0]) is str:
+            tile_size = int(
+                tile_size[0].split(",")[0], tile_size[0].split(",")[1])
+    else:
+        tile_size = [shape[0], shape[1]]
+    return tile_size
+
+
 def mosaic_images(im_dir, tile_size, fill_value, output_png, fmt):
     """
     Mosaic images in im_dir after resizing them to tile_size.
@@ -98,6 +104,7 @@ def mosaic_images(im_dir, tile_size, fill_value, output_png, fmt):
         glob.glob(os.path.join(im_dir, "*" + fmt)))
     image = cv2.imread(images_in_path[0], cv2.IMREAD_GRAYSCALE)
     fill_value = _set_fill_value(image, fill_value)
+    tile_size = _set_tile_size(image, tile_size)
     mosaiced_image = assemble_mosaic(
         images_in_path, tile_size, fill_value)
     shape = mosaiced_image.shape
