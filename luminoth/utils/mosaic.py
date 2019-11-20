@@ -74,8 +74,8 @@ def _set_tile_size(image, tile_size):
     shape = image.shape
     if tile_size is not None:
         if type(tile_size[0]) is str:
-            tile_size = int(
-                tile_size[0].split(",")[0], tile_size[0].split(",")[1])
+            tile_size = [int(
+                tile_size[0].split(",")[0]), int(tile_size[0].split(",")[1])]
     else:
         tile_size = [shape[0], shape[1]]
     return tile_size
