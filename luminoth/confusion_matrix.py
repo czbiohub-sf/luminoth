@@ -369,11 +369,15 @@ def normalize_confusion_matrix(confusion_matrix):
         (len(labels), len(labels)) after normalizing the detections with
         total groundtruth per class
     """
-    normalized_confusion_matrix = confusion_matrix.astype(np.float32)
-    total_gt = normalized_confusion_matrix[-1, :-2]
-    normalized_confusion_matrix = normalized_confusion_matrix[:-2, :-2]
-    normalized_confusion_matrix = normalized_confusion_matrix / total_gt
-    all(i < 1.0 for i in normalized_confusion_matrix.flatten().tolist())
+
+    total_gt = confusion_matrix[-1, :-2]
+    confusion_matrix = confusion_matrix[:-2, :-2]
+    confusion_matrix = confusion_matrix.astype(np.float32)
+    total_gt = total_gt.astype(np.float32)
+    normalized_confusion_matrix = confusion_matrix / total_gt
+    assert all(
+        i <= 1.0 for i in normalized_confusion_matrix.flatten().tolist()
+    ) is True
     return normalized_confusion_matrix
 
 
