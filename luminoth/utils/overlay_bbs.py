@@ -124,7 +124,12 @@ def overlay_bbs_on_all_images(
     Returns:
         Writes overlaid images to output_dir
     """
-    os.makedirs(output_dir, exist_ok=True)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    else:
+        print(
+            "Path {} already exists, might be overwriting data".format(
+                output_dir))
     images_in_path = glob.glob(
         os.path.join(im_dir, "*" + input_image_format))
     df = add_base_path(csv_path, input_image_format, image_path_column)

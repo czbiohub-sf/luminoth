@@ -30,7 +30,7 @@ def assemble_mosaic(images_in_path, tile_size, fill_value):
         tile_size[0] * sqrt(len(images_in_path)) * tile_size[1] * sqrt(
         len(images_in_path)).
     """
-    x_tiles = y_tiles = math.ceil(np.sqrt(len(images_in_path)))
+    x_tiles = y_tiles = int(math.ceil(np.sqrt(len(images_in_path))))
     shape = cv2.imread(
         images_in_path[0], cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR).shape
     if len(shape) > 2:

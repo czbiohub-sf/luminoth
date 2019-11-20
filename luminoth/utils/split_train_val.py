@@ -191,7 +191,10 @@ def write_lumi_images_csv(
         to output_csv_path
     """
     # Save each classes' images to given path as output_image_format
-    os.makedirs(path, exist_ok=True)
+    if not os.path.exists(path):
+        os.makedirs(path)
+    else:
+        print("Path {} already exists, might be overwriting data".format(path))
     for index, original_path in enumerate(images):
         base_path = os.path.dirname(original_path).replace(os.sep, "_")
         basename = os.path.basename(original_path).replace(
@@ -293,14 +296,14 @@ def split_data_to_train_val(
 
     training_image_index = math.floor(percentage * all_imgs_length)
     write_lumi_images_csv(
-        all_imgs[:training_image_index],
+        all_imgs[0:training_image_index],
         os.path.join(output_dir, "train"),
         input_image_format,
         output_image_format,
         bb_labels,
         os.path.join(output_dir, 'train.csv'))
     write_lumi_images_csv(
-        all_imgs[training_image_index:],
+        all_imgs[training_image_index:all_imgs_length],
         os.path.join(output_dir, "val"),
         input_image_format,
         output_image_format,
