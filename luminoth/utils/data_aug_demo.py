@@ -16,6 +16,7 @@ from luminoth.utils.image import (
 from luminoth.utils.split_train_val import LUMI_CSV_COLUMNS
 
 TILE_SIZE = [256, 256]
+FILL_VALUE = 128
 
 
 def update_augmentation(
@@ -158,7 +159,7 @@ def mosaic_data_aug(
     bboxes = np.array(bboxes, dtype=np.int32)
     augmented_images = get_data_aug_images(image, bboxes, labels)
     mosaiced_image = assemble_mosaic(
-        augmented_images, tile_size, fill_value)
+        augmented_images, tile_size, int(fill_value))
     shape = mosaiced_image.shape
     cv2.imwrite(output_png, mosaiced_image)
 
@@ -171,7 +172,7 @@ def mosaic_data_aug(
 @click.option("--csv_path", help="Csv containing image_id,xmin,xmax,ymin,ymax,label.Bounding boxes in the input png to augment", required=True, type=str) # noqa
 @click.option("--image_path_column", help="Name of the image path column, it is often image_id for lumi output, or could be image_path if saved outside of lumi", required=True, type=str) # noqa
 @click.option("--tile_size", help="[x,y] list of tile size in x, y", required=False, multiple=True, default=TILE_SIZE) # noqa
-@click.option("--fill_value", help="fill the image with zeros or the first intensity at [0,0] in the image", required=False, type=str, default="first") # noqa
+@click.option("--fill_value", help="fill the tiles in mosaic image that are not filled by the small tiles with this value", required=False, type=int, default=FILL_VALUE) # noqa
 @click.option("--output_png", help="Absolute path to folder name to save the data aug mosaiced images to", required=True, type=str) # noqa
 def data_aug_demo(
         input_image, input_image_format, csv_path,
