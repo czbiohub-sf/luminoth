@@ -137,7 +137,7 @@ def overlay_bbs_on_all_images(
 
 
 @click.command(help="Save the bounding boxes and their annotations overlaid on the input images in the given dir as png images in the output_dir")  # noqa
-@click.argument("--im_dir", help="Path to directory containing images to overlay on", type=str, required=True) # noqa
+@click.option("--im_dir", help="Path to directory containing images to overlay on", type=str, required=True) # noqa
 @click.option("--csv_path", help="Absolute path to csv file containing rois xmin,xmax,ymin,ymax,label,image_path", required=True, type=str) # noqa
 @click.option("--image_path_column", help="Name of the image path column, it is often image_id for lumi output, or could be image_path if saved outside of lumi", required=True, type=str) # noqa
 @click.option("--output_dir", help="Absolute path to folder name to save the roi overlaid images to", required=True, type=str) # noqa
