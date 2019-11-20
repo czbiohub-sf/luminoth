@@ -52,7 +52,7 @@ def overlay_bb_labels(
         color=BB_COLOR,
         line_width=BB_LINE_WIDTH):
     """
-    Given a image directory, load given position and overlay
+    Given a image load given position and overlay
     with bounding boxes
 
     Args:

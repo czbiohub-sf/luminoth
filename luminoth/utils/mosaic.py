@@ -117,7 +117,7 @@ def mosaic_images(im_dir, tile_size, fill_value, output_png, fmt):
 @click.option("--im_dir", help="Directory containing images to mosaic", required=True, type=str) # noqa
 @click.option("--tile_size", help="[x,y] list of tile size in x, y", required=False, multiple=True) # noqa
 @click.option("--fill_value", help="fill the image with zeros or the first intensity at [0,0] in the image", required=False, type=str) # noqa
-@click.option("--output_png", help="Absolute path to folder name to save the roi overlaid images to", required=True, type=str) # noqa
+@click.option("--output_png", help="Absolute path to name to save the mosaic image to", required=True, type=str) # noqa
 @click.option("--fmt", help="Format of images in input directory", required=True, type=str) # noqa
 def mosaic(im_dir, tile_size, fill_value, output_png, fmt):
     mosaic_images(im_dir, tile_size, fill_value, output_png, fmt)
