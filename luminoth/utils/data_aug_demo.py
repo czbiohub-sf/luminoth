@@ -86,4 +86,4 @@ def data_aug_demp(input_png, tile_size, fill_value, output_png):
 
 
 if __name__ == '__main__':
-    mosaic_data_aug()
+    data_aug_demp()
