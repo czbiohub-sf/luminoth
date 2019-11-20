@@ -46,7 +46,7 @@ def update_augmentation(
     cv2.putText(
         overlaid_augmented_image,
         augmentation,
-        (10, 10),
+        (100, 100),
         FONT,
         FONT_SCALE,
         FONT_COLOR,

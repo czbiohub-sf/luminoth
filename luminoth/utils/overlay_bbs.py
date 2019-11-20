@@ -91,7 +91,6 @@ def overlay_bb_labels(
             FONT_SCALE,
             FONT_COLOR,
             LINE_TYPE)
-        print("index {} writing text label {}".format(index, label))
 
         cv2.rectangle(
             im_rgb,
