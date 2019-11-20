@@ -337,7 +337,7 @@ def split_train_val(
         output_dir,
         OUTPUT_IMAGE_FORMAT)
 
-    print("Formatted lumi csv folder at {}".format(output_dir))
+    print("Formatted lumi csv folder at: {}".format(output_dir))
 
 
 if __name__ == '__main__':

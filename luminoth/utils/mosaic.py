@@ -103,14 +103,14 @@ def mosaic_images(im_dir, tile_size, fill_value, output_png, fmt):
     shape = mosaiced_image.shape
     cv2.imwrite(output_png, mosaiced_image)
 
-    print("Mosaiced image is at {} of shape {}".format(output_png, shape))
+    print("Mosaiced image is at: {} of shape {}".format(output_png, shape))
 
 
 @click.command(help="Save one assembled mosaic from images in a directory")  # noqa
 @click.option("--im_dir", help="Directory containing images to mosaic", required=True, type=str) # noqa
-@click.option("--tile_size", help="[x,y] list of tile size in x, y", required=False, type=int, multiple=True) # noqa
+@click.option("--tile_size", help="[x,y] list of tile size in x, y", required=False, multiple=True) # noqa
 @click.option("--fill_value", help="fill the image with zeros or the first intensity at [0,0] in the image", required=False, type=str) # noqa
-@click.option("--output_png", help="Absolute path to folder name to save the roi overlaid images to", required=True) # noqa
+@click.option("--output_png", help="Absolute path to folder name to save the roi overlaid images to", required=True, type=str) # noqa
 @click.option("--fmt", help="Format of images in input directory", required=True, type=str) # noqa
 def mosaic(im_dir, tile_size, fill_value, output_png, fmt):
 

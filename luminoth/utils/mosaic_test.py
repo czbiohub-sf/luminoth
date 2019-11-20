@@ -84,7 +84,7 @@ class OverlayBbsTest(tf.test.TestCase):
         tile_size = self.gray_image_shape
         mosaic_images(
             im_dir,
-            tile_size,
+            None,
             "first",
             output_png,
             self.input_image_format)
@@ -104,7 +104,7 @@ class OverlayBbsTest(tf.test.TestCase):
         tile_size = self.color_image_shape
         mosaic_images(
             im_dir,
-            tile_size,
+            None,
             12,
             output_png,
             self.input_image_format)

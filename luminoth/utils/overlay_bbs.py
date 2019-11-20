@@ -133,7 +133,7 @@ def overlay_bbs_on_all_images(
         im_rgb = overlay_bb_labels(im_path, input_image_format, df)
         png = os.path.basename(im_path).replace(input_image_format, ".png")
         cv2.imwrite(os.path.join(output_dir, png), im_rgb)
-    print("Overlaid bounding box labeled images are at {}:".format(output_dir))
+    print("Overlaid bounding box labeled images are at: {}".format(output_dir))
 
 
 @click.command(help="Save the bounding boxes and their annotations overlaid on the input images in the given dir as png images in the output_dir")  # noqa
