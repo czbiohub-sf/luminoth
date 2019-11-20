@@ -294,7 +294,7 @@ def split_data_to_train_val(
     print("total unique images are {}".format(all_imgs_length))
     random.shuffle(all_imgs)
 
-    training_image_index = math.floor(percentage * all_imgs_length)
+    training_image_index = int(math.floor(percentage * all_imgs_length))
     write_lumi_images_csv(
         all_imgs[0:training_image_index],
         os.path.join(output_dir, "train"),
