@@ -24,7 +24,7 @@ def update_augmentation(
     base_path = "input_{}_image.png".format(augmentation)
     im_filename = os.path.join(location, base_path)
     cv2.imwrite(im_filename, augmented_dict['image'])
-    df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
+    df = pd.DataFrame(columns=LUMI_CSV_COLUMNS + ['base_path'])
 
     for bboxes in augmented_dict['bboxes']:
         df = df.append(
