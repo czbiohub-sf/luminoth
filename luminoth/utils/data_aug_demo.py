@@ -150,7 +150,7 @@ def mosaic_data_aug(
     labels = df['label'].unique().tolist()
     for index, row in tmp_df.iterrows():
         bboxes.append([
-            np.int34(row['xmin']),
+            np.int32(row['xmin']),
             np.int32(row['xmax']),
             np.int32(row['ymin']),
             np.int32(row['ymax']),
