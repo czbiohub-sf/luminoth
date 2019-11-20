@@ -34,7 +34,7 @@ def update_augmentation(
              'xmax': bboxes[1],
              'ymin': bboxes[2],
              'ymax': bboxes[3],
-             'label': labels[bboxes[4]]})
+             'label': labels[bboxes[4]]}, ignore_index=True)
 
     overlaid_rotated_image = overlay_bb_labels(im_filename, ".png", df)
     im_filename = os.path.join(location, augmentation + "bb_labels.png")
@@ -150,12 +150,12 @@ def mosaic_data_aug(
     labels = df['label'].unique().tolist()
     for index, row in tmp_df.iterrows():
         bboxes.append([
-            row['xmin'],
-            row['xmax'],
-            row['ymin'],
-            row['ymax'],
-            labels.index(row['label'])])
-    bboxes = np.array(bboxes)
+            np.int34(row['xmin']),
+            np.int32(row['xmax']),
+            np.int32(row['ymin']),
+            np.int32(row['ymax']),
+            np.int32(labels.index(row['label']))])
+    bboxes = np.array(bboxes, dtype=np.int32)
     augmented_images = get_data_aug_images(image, bboxes, labels)
     mosaiced_image = assemble_mosaic(
         augmented_images, tile_size, fill_value)
