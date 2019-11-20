@@ -17,6 +17,10 @@ from luminoth.utils.split_train_val import LUMI_CSV_COLUMNS
 
 TILE_SIZE = [256, 256]
 FILL_VALUE = 128
+FONT = cv2.FONT_HERSHEY_SIMPLEX
+FONT_SCALE = 1
+FONT_COLOR = (0, 255, 255)
+LINE_TYPE = 2
 
 
 def update_augmentation(
@@ -25,7 +29,8 @@ def update_augmentation(
     base_path = "input_{}_image.png".format(augmentation)
     base_path_wo_format = "input_{}_image".format(augmentation)
     im_filename = os.path.join(location, base_path)
-    cv2.imwrite(im_filename, augmented_dict['image'])
+    image = augmented_dict['image']
+    cv2.imwrite(im_filename, image)
     df = pd.DataFrame(columns=LUMI_CSV_COLUMNS + ['base_path'])
 
     for bboxes in augmented_dict['bboxes']:
@@ -37,10 +42,17 @@ def update_augmentation(
              'label': labels[bboxes[4]]}, ignore_index=True)
     df.base_path = base_path_wo_format
     df.image_path = im_filename
-
-    overlaid_rotated_image = overlay_bb_labels(im_filename, ".png", df)
+    overlaid_augmented_image = overlay_bb_labels(im_filename, ".png", df)
+    cv2.putText(
+        overlaid_augmented_image,
+        augmentation,
+        (10, 10),
+        FONT,
+        FONT_SCALE,
+        FONT_COLOR,
+        LINE_TYPE)
     im_filename = os.path.join(location, augmentation + "bb_labels.png")
-    cv2.imwrite(im_filename, overlaid_rotated_image)
+    cv2.imwrite(im_filename, overlaid_augmented_image)
     augmented_images.append(im_filename)
 
 

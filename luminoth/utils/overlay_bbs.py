@@ -78,10 +78,6 @@ def overlay_bb_labels(
 
     basename = os.path.basename(im_path).replace(input_image_format, "")
     tmp_df = df[df.base_path == basename]
-    print(im_rgb.shape)
-    print(basename)
-    print(tmp_df)
-
     # Plot bounding boxes, annotation label
     for index, row in tmp_df.iterrows():
         label = str(row.label)
@@ -95,7 +91,6 @@ def overlay_bb_labels(
             FONT_SCALE,
             FONT_COLOR,
             LINE_TYPE)
-        print(left_corner_of_text, right_bottom_corner)
         print("index {} writing text label {}".format(index, label))
 
         cv2.rectangle(
@@ -140,7 +135,6 @@ def overlay_bbs_on_all_images(
     for im_path in images_in_path:
         im_rgb = overlay_bb_labels(im_path, input_image_format, df)
         png = os.path.basename(im_path).replace(input_image_format, ".png")
-        print("overlaid image shape {}".format(im_rgb.shape))
         cv2.imwrite(os.path.join(output_dir, png), im_rgb)
     print("Overlaid bounding box labeled images are at: {}".format(output_dir))
 
