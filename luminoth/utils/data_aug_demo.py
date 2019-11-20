@@ -3,6 +3,7 @@ import tempfile
 
 import click
 import cv2
+import numpy as np
 import pandas as pd
 import tensorflow as tf
 
@@ -154,6 +155,7 @@ def mosaic_data_aug(
             row['ymin'],
             row['ymax'],
             labels.index(row['label'])])
+    bboxes = np.array(bboxes)
     augmented_images = get_data_aug_images(image, bboxes, labels)
     mosaiced_image = assemble_mosaic(
         augmented_images, tile_size, fill_value)
