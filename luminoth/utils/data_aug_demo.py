@@ -34,7 +34,7 @@ def update_augmentation(
              'xmax': bboxes[1],
              'ymin': bboxes[2],
              'ymax': bboxes[3],
-             'label': labels[bboxes[5]]})
+             'label': labels[bboxes[4]]})
 
     overlaid_rotated_image = overlay_bb_labels(im_filename, ".png", df)
     im_filename = os.path.join(location, augmentation + "bb_labels.png")
