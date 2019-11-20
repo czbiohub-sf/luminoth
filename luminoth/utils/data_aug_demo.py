@@ -23,6 +23,7 @@ def update_augmentation(
         augmented_dict, labels, location, augmentation, augmented_images):
 
     base_path = "input_{}_image.png".format(augmentation)
+    base_path_wo_format = "input_{}_image".format(augmentation)
     im_filename = os.path.join(location, base_path)
     cv2.imwrite(im_filename, augmented_dict['image'])
     df = pd.DataFrame(columns=LUMI_CSV_COLUMNS + ['base_path'])
@@ -34,7 +35,7 @@ def update_augmentation(
              'ymin': bboxes[2],
              'ymax': bboxes[3],
              'label': labels[bboxes[4]]}, ignore_index=True)
-    df.base_path = base_path
+    df.base_path = base_path_wo_format
     df.image_path = im_filename
 
     overlaid_rotated_image = overlay_bb_labels(im_filename, ".png", df)

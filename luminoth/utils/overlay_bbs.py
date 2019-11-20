@@ -77,10 +77,10 @@ def overlay_bb_labels(
             im_rgb = cv2.cvtColor(im_rgb, cv2.COLOR_GRAY2RGB)
 
     basename = os.path.basename(im_path).replace(input_image_format, "")
-    tmp_df = df[
-        [True if row['base_path'].endswith(
-            basename) else False for index, row in df.iterrows()]]
+    tmp_df = df[df.base_path == basename]
     print(im_rgb.shape)
+    print(basename)
+    print(tmp_df)
 
     # Plot bounding boxes, annotation label
     for index, row in tmp_df.iterrows():
