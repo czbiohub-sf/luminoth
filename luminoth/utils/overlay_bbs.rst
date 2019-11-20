@@ -1,23 +1,21 @@
 .. _cli/overlay_bbs:
 
-Split a dataset into training and validation
-============================================
+Overlay bounding boxes and their annotations on images
+======================================================
 
-Assuming you already have both your dataset and predicted output ready::
+Assuming you already have both your dataset and their bounding box, labeled annotations ready::
 
-  $ lumi overlay_bbs bb_labels_no_mosaic.txt --output_dir all_data_no_mosaic_lumi_csv --percentage 0.8 --random_seed 42 --filter_dense_anns --input_image_format .tif --output_image_format .jpg
+  $ lumi overlay_bbs im_dir predicted_images/ --csv_path groundtruth_val.csv --image_path_column image_path --output_dir overlaid_images --input_image_format jpg
 
-The ``lumi overlay_bbs`` CLI tool provides the following options related to splitting and organizing the data.
+The ``lumi overlay_bbs`` CLI tool provides the following options related to overlaying the bbs, labels on images.
 
-* ``filenames``: List of all the bounding box annotation files, can be 1 to n
+* ``--im_dir``: Directory containing images to overlay on
 
-* ``--percentage``: Percentage of total images to add to the training directory, 1 - percentage is added to the val directory
+* ``--csv_path``: Path to the data frame that contains bounding boxes, labels to overlay with
 
-* ``--random_seed``: Random seed for shuffling the images
+* ``--image_path_column``: Column in the dataframe that has the image path on disk
 
-* ``--filter_dense_anns``: If this flag is set to True, images with class that has more annotations
-  are completely ignored
+* ``--output_dir``: Save the overlaid images ot this directory
 
-* ``--input_image_format``: Input image format
+* ``--input_image_format``: Format of images in input directory
 
-* ``--output_image_format``: Output image format for the images getting saved in train and val directory

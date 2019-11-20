@@ -3,7 +3,7 @@
 Confusion matrix comparing ground truth and predicted bounding boxes detected by a model
 ========================================================================================
 
-Assuming you already have both your dataset and predicted output ready::
+Assuming you already have both your dataset and predicted output ready to evaluate::
 
   $ lumi confusion_matrix --groundtruth_csv lumi_csv/val.csv --predicted_csv preds_val/objects.csv --output_txt outout_18.txt --classes_json all_data/classes.json
 

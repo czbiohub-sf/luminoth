@@ -58,18 +58,13 @@ class SplitTrainValTest(tf.test.TestCase):
         for i, bbox in enumerate(bboxes):
             label_name = labels[i]
             df = df.append({'image_path': image_save_path,
-                            'x1': bbox[0],
-                            'x2': bbox[2],
-                            'y1': bbox[1],
-                            'y2': bbox[3],
-                            'class_name': label_name},
+                            'x1': np.int64(bbox[0]),
+                            'x2': np.int64(bbox[2]),
+                            'y1': np.int64(bbox[1]),
+                            'y2': np.int64(bbox[3]),
+                            'class_name': np.int64(label_name)},
                            ignore_index=True)
-        if type(label_name) is str:
-            cols = ['xmin', 'xmax', 'ymin', 'ymax']
-            df[cols] = df[cols].applymap(np.int64)
-        elif type(label_name) is float:
-            cols = ['xmin', 'xmax', 'ymin', 'ymax', 'label']
-            df[cols] = df[cols].applymap(np.int64)
+
         df.to_csv(csv_save_path)
         self.tempfiles_to_delete.append(image_save_path)
         self.tempfiles_to_delete.append(csv_save_path)
@@ -93,21 +88,21 @@ class SplitTrainValTest(tf.test.TestCase):
         return filenames
 
     def testAddBasenameGatherDfCsv(self):
-        # Combine list of annotation csv files & add underscore_path col test
+        # Combine list of annotation csv files & add base_path col test
         df = add_basename_gather_df(
             self.bb_ann_filenames, self.input_image_format)
         for index, row in df.iterrows():
-            assert row["underscore_path"] == (
+            assert row["base_path"] == (
                 os.path.dirname(row["image_path"]).replace(os.sep, "_") + "_" +
                 os.path.basename(row["image_path"]).replace(
                     self.input_image_format, ""))
 
     def testAddBasenameGatherDfTxt(self):
-        # Combine list of annotation txt files & add underscore_path col test
+        # Combine list of annotation txt files & add base_path col test
         df = add_basename_gather_df(
             self.bb_ann_filenames, self.input_image_format)
         for index, row in df.iterrows():
-            assert row["underscore_path"] == (
+            assert row["base_path"] == (
                 os.path.dirname(row["image_path"]).replace(os.sep, "_") + "_" +
                 os.path.basename(row["image_path"]).replace(
                     self.input_image_format, ""))

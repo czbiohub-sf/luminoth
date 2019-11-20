@@ -52,8 +52,8 @@ def add_basename_gather_df(filenames, input_image_format):
     """
     Returns a dataframe with all the bounding boxes & labels
     from all the paths in filenames. Also adds a column undersore_path which
-    is just the underscore_path of a fullpath, e.g /data/bla/img.tif's
-    underscore_path would be _data_bla_img
+    is just the base_path of a fullpath, e.g /data/bla/img.tif's
+    base_path would be _data_bla_img
 
     Args:
         filenames: List of paths to comma separated txt/csv file with
@@ -64,8 +64,8 @@ def add_basename_gather_df(filenames, input_image_format):
         bb_labels_df: Returns a dataframe with all the bounding boxes & labels
             from all the paths in filenames. Also adds a
             column undersore_path which
-            is just the underscore_path of a fullpath, e.g /data/bla/img.tif's
-            underscore_path would be _data_bla
+            is just the base_path of a fullpath, e.g /data/bla/img.tif's
+            base_path would be _data_bla
     """
     dfs = []
     for filename in filenames:
@@ -75,7 +75,7 @@ def add_basename_gather_df(filenames, input_image_format):
         os.path.dirname(row["image_path"]).replace(os.sep, "_") + "_" +
         os.path.basename(row["image_path"]).replace(input_image_format, "")
         for index, row in bb_labels_df.iterrows()]
-    bb_labels_df["underscore_path"] = pd.Series(base_names)
+    bb_labels_df["base_path"] = pd.Series(base_names)
     label_name = bb_labels_df['class_name'].iloc[0]
     # Cast required columns to integers
     if type(label_name) is str:
@@ -136,7 +136,7 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
     for img_name in images:
         # Filter out the df for all the bounding boxes in one image
         basename = os.path.basename(img_name).replace(output_image_format, "")
-        tmp_df = bb_labels[bb_labels.underscore_path == basename]
+        tmp_df = bb_labels[bb_labels.base_path == basename]
         # Add all the bounding boxes for the images to the dataframe
         count = 0
         for index, row in tmp_df.iterrows():
@@ -182,9 +182,9 @@ def write_lumi_images_csv(
             the output_dir. In that case the output_image_format would be .jpg
         bb_labels: Returns a dataframe with all the bounding boxes and labels
             from all the paths in filenames. Also adds a column
-            underscore_path which
+            base_path which
             is just the basename of a fullpath, e.g /data/bla/img.tif's
-            underscore_path would be img
+            base_path would be img
 
     Returns:
         Writes images to path and writes a csv file containing LUMI_CSV_COLUMNS
@@ -193,10 +193,10 @@ def write_lumi_images_csv(
     # Save each classes' images to given path as output_image_format
     os.makedirs(path, exist_ok=True)
     for index, original_path in enumerate(images):
-        underscore_path = os.path.dirname(original_path).replace(os.sep, "_")
+        base_path = os.path.dirname(original_path).replace(os.sep, "_")
         basename = os.path.basename(original_path).replace(
             input_image_format, output_image_format)
-        basename = underscore_path + "_" + basename
+        basename = base_path + "_" + basename
         new_path = os.path.join(path, basename)
         image = cv2.imread(original_path, cv2.IMREAD_ANYDEPTH)
         image = (image / image.max() * 255).astype(np.uint8)
