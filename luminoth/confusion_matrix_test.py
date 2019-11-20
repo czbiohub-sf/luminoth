@@ -54,7 +54,7 @@ class ConfusionMatrixTest(tf.test.TestCase):
         self.expected_ncm = np.array((
             [[0.5, 0., 0.],
              [0., 0., 0.5],
-             [0., 0., 1.]]))
+             [0., 0., 1.]]), dtype=np.float32)
 
     def tearDown(self):
         tf.reset_default_graph()

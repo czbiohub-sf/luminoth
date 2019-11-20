@@ -369,7 +369,7 @@ def normalize_confusion_matrix(confusion_matrix):
         (len(labels), len(labels)) after normalizing the detections with
         total groundtruth per class
     """
-    confusion_matrix = np.uint32(confusion_matrix)
+    confusion_matrix = np.float32(confusion_matrix)
     total_gt = confusion_matrix[-1, :-2]
     confusion_matrix = confusion_matrix[:-2, :-2]
     confusion_matrix = confusion_matrix / total_gt

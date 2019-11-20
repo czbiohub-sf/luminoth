@@ -113,7 +113,6 @@ def mosaic_images(im_dir, tile_size, fill_value, output_png, fmt):
 @click.option("--output_png", help="Absolute path to folder name to save the roi overlaid images to", required=True, type=str) # noqa
 @click.option("--fmt", help="Format of images in input directory", required=True, type=str) # noqa
 def mosaic(im_dir, tile_size, fill_value, output_png, fmt):
-
     mosaic_images(im_dir, tile_size, fill_value, output_png, fmt)
 
 
