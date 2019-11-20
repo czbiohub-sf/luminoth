@@ -15,7 +15,7 @@ from luminoth.utils.image import (
 )
 
 
-def get_data_aug_images(image, bboxes):
+def get_data_aug_images(image_array, bboxes_array):
     # Convert to tensorflow
     # Open a session, run all the data augmentation
     # Get the numpy arrays within the session, overlay_bb_labels
@@ -24,15 +24,33 @@ def get_data_aug_images(image, bboxes):
     augmented_images = []
     graph = tf.Graph()
     sess = tf.Session(graph=graph)
-    rotate_dict = sess.run(rot90(image, bboxes=bboxes))
-    resize_dict = sess.run(resize_image(image, bboxes=bboxes))
-    random_patch_dict = sess.run(random_patch(image, bboxes=bboxes))
-    random_resize_dict = sess.run(random_resize(image, bboxes=bboxes))
-    random_distortion_dict = sess.run(random_distortion(image, bboxes=bboxes))
-    patch_dict = sess.run(patch_image(image, bboxes=bboxes))
-    flip_dict = sess.run(flip_image(image, bboxes=bboxes))
-    gaussian_dict = sess.run(random_patch_gaussian(image, bboxes=bboxes))
-    equalize_dict = sess.run(equalize_histogram(image, bboxes=bboxes))
+    image = tf.placeholder(tf.float32, image_array.shape)
+    feed_dict = {
+        image: image_array,
+    }
+    if bboxes_array is not None:
+        bboxes = tf.placeholder(tf.float32, bboxes_array.shape)
+        feed_dict[bboxes] = bboxes_array
+    else:
+        bboxes = None
+    rotate = rot90(image, bboxes=bboxes)
+    rotate_dict = sess.run(rotate, feed_dict=feed_dict)
+    resize = resize_image(image, bboxes=bboxes)
+    resize_dict = sess.run(resize, feed_dict=feed_dict)
+    rand_patch = random_patch(image, bboxes=bboxes)
+    random_patch_dict = sess.run(rand_patch, feed_dict=feed_dict)
+    rand_resize = random_resize(image, bboxes=bboxes)
+    random_resize_dict = sess.run(rand_resize, feed_dict=feed_dict)
+    rand_distortion = random_distortion(image, bboxes=bboxes)
+    random_distortion_dict = sess.run(rand_distortion, feed_dict=feed_dict)
+    patch = patch_image(image, bboxes=bboxes)
+    patch_dict = sess.run(patch, feed_dict=feed_dict)
+    flip = flip_image(image, bboxes=bboxes)
+    flip_dict = sess.run(flip, feed_dict=feed_dict)
+    gaussian = random_patch_gaussian(image, bboxes=bboxes)
+    gaussian_dict = sess.run(gaussian, feed_dict=feed_dict)
+    equalized = equalize_histogram(image, bboxes=bboxes)
+    equalize_dict = sess.run(equalized, feed_dict=feed_dict)
 
     return augmented_images
 
@@ -62,7 +80,7 @@ def mosaic_data_aug(
         tile_size[0] * sqrt(len(images_in_path)) * tile_size[1] * sqrt(
         len(images_in_path)).
     """
-    image = cv2.imread(input_image, cv2.IMREAD_GRAYSCALE)
+    image = cv2.imread(input_image, cv2.IMREAD_COLOR)
     df = pd.read_csv(csv_path)
     basename = os.path.basename(input_image).replace(input_image_format, "")
     tmp_df = df[
