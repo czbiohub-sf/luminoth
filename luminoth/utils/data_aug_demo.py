@@ -81,9 +81,9 @@ def mosaic_data_aug(input_png, csv_path, tile_size, fill_value, output_png):
 @click.option("--tile_size", help="[x,y] list of tile size in x, y", required=False, multiple=True) # noqa
 @click.option("--fill_value", help="fill the image with zeros or the first intensity at [0,0] in the image", required=False, type=str) # noqa
 @click.option("--output_png", help="Absolute path to folder name to save the data aug mosaiced images to", required=True, type=str) # noqa
-def data_aug_demp(input_png, tile_size, fill_value, output_png):
+def data_aug_demo(input_png, tile_size, fill_value, output_png):
     mosaic_data_aug(input_png, tile_size, fill_value, output_png)
 
 
 if __name__ == '__main__':
-    data_aug_demp()
+    data_aug_demo()
