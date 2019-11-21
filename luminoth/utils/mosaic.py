@@ -27,8 +27,8 @@ def assemble_mosaic(images_in_path, tile_size, fill_value):
 
     Returns:
         Returned stitched image of shape
-        tile_size[0] * sqrt(len(images_in_path)) * tile_size[1] * sqrt(
-        len(images_in_path)).
+        tile_size[0] * sqrt(len(images_in_path)),
+        tile_size[1] * sqrt(len(images_in_path)).
     """
     x_tiles = y_tiles = int(math.ceil(np.sqrt(len(images_in_path))))
     shape = cv2.imread(
@@ -97,8 +97,8 @@ def mosaic_images(im_dir, tile_size, fill_value, output_png, fmt):
 
     Returns:
         Write stitched image of shape
-        tile_size[0] * sqrt(len(images_in_path)) * tile_size[1] * sqrt(
-        len(images_in_path)).
+        tile_size[0] * sqrt(len(images_in_path)),
+        tile_size[1] * sqrt(len(images_in_path)).
     """
     images_in_path = natsort.natsorted(
         glob.glob(os.path.join(im_dir, "*" + fmt)))

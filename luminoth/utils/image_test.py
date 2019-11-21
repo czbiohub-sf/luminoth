@@ -39,7 +39,7 @@ class ImageTest(tf.test.TestCase):
         tf.reset_default_graph()
 
     def _gen_image(self, *shape):
-        np.random.seed(42)
+        np.random.seed(44)
         return np.random.rand(*shape)
 
     def _get_image_with_boxes(self, image_size, total_boxes):

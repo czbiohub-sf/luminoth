@@ -12,8 +12,8 @@ import tensorflow as tf
 from luminoth.utils.mosaic import assemble_mosaic, mosaic_images
 
 
-class OverlayBbsTest(tf.test.TestCase):
-    """Tests for overlay_bbs
+class MosiacTest(tf.test.TestCase):
+    """Tests for mosaic
     """
     def setUp(self):
         self.tempfiles_to_delete = []
