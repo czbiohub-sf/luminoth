@@ -144,28 +144,11 @@ class PredictorNetwork(object):
         for obj, label, prob in zip(objects, labels, probs):
             tf.logging.info("Repeated bounding box count in image {}:".format(
                 objects.count(obj)))
-            if objects.count(obj) == 1:
-                d = {
-                    'bbox': obj,
-                    'label': label,
-                    'prob': round(prob, 4)}
-                predictions.append(d)
-            elif objects.count(obj) > 1:
-                prob_repeated_objs = {
-                    i: probs[i] for i, value in enumerate(objects)
-                    if value == obj}
-                tf.logging.info(
-                    'Same bounding box repeated with probabilities {}:'.format(
-                        prob_repeated_objs))
-                max_prob = max(prob_repeated_objs.values())
-                max_prob_index = [
-                    index for index, prob in prob_repeated_objs.items()
-                    if prob == max_prob]
-                d = {
-                    'bbox': obj,
-                    'label': labels[max_prob_index],
-                    'prob': round(max_prob, 4)}
-                predictions.append(d)
+            d = {
+                'bbox': obj,
+                'label': label,
+                'prob': round(prob, 4)}
+            predictions.append(d)
 
         predictions = sorted(
             predictions, key=lambda x: x['prob'], reverse=True)
