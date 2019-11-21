@@ -630,19 +630,19 @@ def _rot90_boxes(boxes, image_shape):
         Rotated boxes.
     """
     boxes = tf.to_float(boxes)
-    height = image_shape[1]
-    width = image_shape[0]
+    height = image_shape[0]
+    width = image_shape[1]
 
     x_min, y_min, x_max, y_max, label = tf.unstack(boxes, axis=1)
-    normalized_x_min = x_min / height
-    normalized_y_min = y_min / width
-    normalized_x_max = x_max / height
-    normalized_y_max = y_max / width
+    normalized_x_min = x_min / width
+    normalized_y_min = y_min / height
+    normalized_x_max = x_max / width
+    normalized_y_max = y_max / height
 
-    new_x_min = (tf.round(normalized_y_min * width))
-    new_y_min = (tf.round((tf.subtract(1.0, normalized_x_max)) * height))
-    new_x_max = (tf.round(normalized_y_max * width))
-    new_y_max = (tf.round((tf.subtract(1.0, normalized_x_min)) * height))
+    new_x_min = (tf.round(normalized_y_min * height))
+    new_y_min = (tf.round((tf.subtract(1.0, normalized_x_max)) * width))
+    new_x_max = (tf.round(normalized_y_max * height))
+    new_y_max = (tf.round((tf.subtract(1.0, normalized_x_min)) * width))
 
     bboxes = tf.stack(
         [new_x_min,
