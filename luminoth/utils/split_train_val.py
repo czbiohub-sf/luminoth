@@ -132,6 +132,7 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
             and formats it to a csv dataformat required by luminoth
     """
     df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
+    label_name = ""
     # Find boxes in each image and put them in a dataframe
     for img_name in images:
         # Filter out the df for all the bounding boxes in one image
@@ -144,7 +145,7 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
             if count == 0:
                 label_name_type = type(label_name)
             assert label_name_type == type(label_name)
-            if label_name_type is float:
+            if label_name_type is float or label_name_type is int:
                 label_name = np.int64(label_name)
             df = df.append({'image_id': img_name,
                             'xmin': np.int64(row['x1']),

@@ -101,14 +101,12 @@ class DataAugDemoTest(tf.test.TestCase):
         input_image, csv_path = self.write_test_data(
             image, image_save_path, bboxes, labels)
         output_png = os.path.join(location, "mosaic.png")
-        tile_size = TILE_SIZE
         fill_value = 128
         mosaic_data_aug(
             input_image,
             ".png",
             csv_path,
             "image_id",
-            tile_size,
             fill_value,
             output_png)
         assert os.path.exists(output_png)
@@ -116,8 +114,8 @@ class DataAugDemoTest(tf.test.TestCase):
         mosaiced_image = cv2.imread(
             output_png, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
         assert mosaiced_image.shape == (
-            math.ceil(np.sqrt(num_images)) * tile_size[0],
-            math.ceil(np.sqrt(num_images)) * tile_size[1], 3)
+            math.ceil(np.sqrt(num_images)) * TILE_SIZE[0],
+            math.ceil(np.sqrt(num_images)) * TILE_SIZE[1], 3)
 
     def testMosaicDataAugColor(self):
         # Color mosaic data augmentation test
@@ -129,14 +127,12 @@ class DataAugDemoTest(tf.test.TestCase):
         input_image, csv_path = self.write_test_data(
             image, image_save_path, bboxes, labels)
         output_png = os.path.join(location, "mosaic.png")
-        tile_size = TILE_SIZE
         fill_value = 128
         mosaic_data_aug(
             input_image,
             ".png",
             csv_path,
             "image_id",
-            tile_size,
             fill_value,
             output_png)
         assert os.path.exists(output_png)
@@ -144,8 +140,8 @@ class DataAugDemoTest(tf.test.TestCase):
         mosaiced_image = cv2.imread(
             output_png, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
         assert mosaiced_image.shape == (
-            math.ceil(np.sqrt(num_images)) * tile_size[0],
-            math.ceil(np.sqrt(num_images)) * tile_size[1], 3)
+            math.ceil(np.sqrt(num_images)) * TILE_SIZE[0],
+            math.ceil(np.sqrt(num_images)) * TILE_SIZE[1], 3)
 
 
 if __name__ == '__main__':
