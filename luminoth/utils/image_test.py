@@ -325,8 +325,6 @@ class ImageTest(tf.test.TestCase):
         flipped_image, flipped_boxes = self._flip_image(
             image, boxes, left_right=True
         )
-        print("left right")
-        print(flipped_boxes)
         self.assertAllClose(boxes, flipped_boxes)
         # Check that sum of columns is not modified, just the order.
         self.assertAllClose(image.sum(axis=1), flipped_image.sum(axis=1))
@@ -337,8 +335,6 @@ class ImageTest(tf.test.TestCase):
         flipped_image, flipped_boxes = self._flip_image(
             image, boxes, up_down=True
         )
-        print("up down")
-        print(flipped_boxes)
         self.assertAllClose(boxes, flipped_boxes)
         # Check that sum of columns is not modified, just the order.
         self.assertAllClose(image.sum(axis=0), flipped_image.sum(axis=0))
@@ -601,7 +597,7 @@ class ImageTest(tf.test.TestCase):
         total_boxes = 10
         image, boxes = self._get_image_with_boxes((500, 250, 3), total_boxes)
         label = 3
-        height = image.shape[0]
+        width = image.shape[1]
         bboxes_w_label = tf.concat(
             [
                 boxes,
@@ -615,7 +611,7 @@ class ImageTest(tf.test.TestCase):
         for i in range(total_boxes):
             self.assertEqual(ret_bboxes[i, 4], label)
             self.assertEqual(
-                int(round(boxes[i, 0] + ret_bboxes[i, 3])), height)
+                int(round(boxes[i, 0] + ret_bboxes[i, 3])), width)
 
             self.assertEqual(boxes[i, 1], int(round(ret_bboxes[i, 0])))
             self.assertEqual(boxes[i, 3], int(round(ret_bboxes[i, 2])))
