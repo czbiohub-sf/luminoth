@@ -639,16 +639,16 @@ def _rot90_boxes(boxes, image_shape):
     normalized_x_max = x_max / height
     normalized_y_max = y_max / width
 
-    new_x_min = (tf.round(normalized_y_min * width))
-    new_y_min = (tf.round((tf.subtract(1.0, normalized_x_max)) * height))
-    new_x_max = (tf.round(normalized_y_max * width))
-    new_y_max = (tf.round((tf.subtract(1.0, normalized_x_min)) * height))
+    new_x_min = (tf.round(normalized_y_min * height))
+    new_y_min = (tf.round((tf.subtract(1.0, normalized_x_max)) * width))
+    new_x_max = (tf.round(normalized_y_max * height))
+    new_y_max = (tf.round((tf.subtract(1.0, normalized_x_min)) * width))
 
     bboxes = tf.stack(
-        [new_y_min,
-         new_x_min,
-         new_y_max,
+        [new_x_min,
+         new_y_min,
          new_x_max,
+         new_y_max,
          label],
         axis=1
     )
