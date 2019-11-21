@@ -645,10 +645,10 @@ def _rot90_boxes(boxes, image_shape):
     new_y_max = (tf.round((tf.subtract(1.0, normalized_x_min)) * height))
 
     bboxes = tf.stack(
-        [new_x_min,
-         new_y_min,
-         new_x_max,
+        [new_y_min,
+         new_x_min,
          new_y_max,
+         new_x_max,
          label],
         axis=1
     )

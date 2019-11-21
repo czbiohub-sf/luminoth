@@ -39,6 +39,7 @@ class ImageTest(tf.test.TestCase):
         tf.reset_default_graph()
 
     def _gen_image(self, *shape):
+        np.random.seed(42)
         return np.random.rand(*shape)
 
     def _get_image_with_boxes(self, image_size, total_boxes):
@@ -324,6 +325,8 @@ class ImageTest(tf.test.TestCase):
         flipped_image, flipped_boxes = self._flip_image(
             image, boxes, left_right=True
         )
+        print("left right")
+        print(flipped_boxes)
         self.assertAllClose(boxes, flipped_boxes)
         # Check that sum of columns is not modified, just the order.
         self.assertAllClose(image.sum(axis=1), flipped_image.sum(axis=1))
@@ -334,6 +337,8 @@ class ImageTest(tf.test.TestCase):
         flipped_image, flipped_boxes = self._flip_image(
             image, boxes, up_down=True
         )
+        print("up down")
+        print(flipped_boxes)
         self.assertAllClose(boxes, flipped_boxes)
         # Check that sum of columns is not modified, just the order.
         self.assertAllClose(image.sum(axis=0), flipped_image.sum(axis=0))
