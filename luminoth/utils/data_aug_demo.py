@@ -19,7 +19,7 @@ TILE_SIZE = [256, 256]
 FILL_VALUE = 128
 FONT = cv2.FONT_HERSHEY_SIMPLEX
 FONT_SCALE = 1
-FONT_COLOR = (0, 255, 255)
+FONT_COLOR = (255, 0, 255)
 LINE_TYPE = 2
 
 
@@ -36,8 +36,8 @@ def update_augmentation(
     for bboxes in augmented_dict['bboxes']:
         df = df.append(
             {'xmin': bboxes[0],
-             'xmax': bboxes[1],
-             'ymin': bboxes[2],
+             'ymin': bboxes[1],
+             'xmax': bboxes[2],
              'ymax': bboxes[3],
              'label': labels[bboxes[4]]}, ignore_index=True)
     df.base_path = base_path_wo_format
@@ -165,8 +165,8 @@ def mosaic_data_aug(
     for index, row in tmp_df.iterrows():
         bboxes.append([
             np.int32(row['xmin']),
-            np.int32(row['xmax']),
             np.int32(row['ymin']),
+            np.int32(row['xmax']),
             np.int32(row['ymax']),
             np.int32(labels.index(row['label']))])
     bboxes = np.array(bboxes, dtype=np.int32)
