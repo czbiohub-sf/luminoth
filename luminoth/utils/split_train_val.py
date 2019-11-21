@@ -80,10 +80,10 @@ def add_basename_gather_df(filenames, input_image_format):
     # Cast required columns to integers
     if type(label_name) is str:
         cols = ['x1', 'x2', 'y1', 'y2']
-        bb_labels_df[cols] = bb_labels_df[cols].applymap(np.int64)
+        bb_labels_df[cols] = bb_labels_df[cols].applymap(np.int32)
     elif type(label_name) is np.float64:
         cols = ['x1', 'x2', 'y1', 'y2', 'class_name']
-        bb_labels_df[cols] = bb_labels_df[cols].applymap(np.int64)
+        bb_labels_df[cols] = bb_labels_df[cols].applymap(np.int32)
     bb_labels_df.reset_index(drop=True, inplace=True)
     return bb_labels_df
 
@@ -146,12 +146,12 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
                 label_name_type = type(label_name)
             assert label_name_type == type(label_name)
             if label_name_type is float or label_name_type is int:
-                label_name = np.int64(label_name)
+                label_name = np.int32(label_name)
             df = df.append({'image_id': img_name,
-                            'xmin': np.int64(row['x1']),
-                            'xmax': np.int64(row['x2']),
-                            'ymin': np.int64(row['y1']),
-                            'ymax': np.int64(row['y2']),
+                            'xmin': np.int32(row['x1']),
+                            'xmax': np.int32(row['x2']),
+                            'ymin': np.int32(row['y1']),
+                            'ymax': np.int32(row['y2']),
                             'label': label_name},
                            ignore_index=True)
             count += 1
@@ -159,7 +159,7 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
         cols = ['xmin', 'xmax', 'ymin', 'ymax']
     else:
         cols = ['xmin', 'xmax', 'ymin', 'ymax', 'label']
-    df[cols] = df[cols].applymap(np.int64)
+    df[cols] = df[cols].applymap(np.int32)
     df.reset_index(drop=True, inplace=True)
     return df
 

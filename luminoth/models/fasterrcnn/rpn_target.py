@@ -168,7 +168,7 @@ class RPNTarget(snt.AbstractModule):
         # When the argmax is many items we use all of them (for consistency).
         # We set 1 at gt_argmax_overlaps_cond indices
         gt_argmax_overlaps_cond = tf.sparse_to_dense(
-            gt_argmax_overlaps, tf.shape(labels, out_type=tf.int64),
+            gt_argmax_overlaps, tf.shape(labels, out_type=tf.int32),
             True, default_value=False
         )
 
@@ -214,7 +214,7 @@ class RPNTarget(snt.AbstractModule):
                 disable_fg_inds, k=tf.shape(disable_fg_inds)[-1])
             disable_fg_inds = tf.reverse(disable_fg_inds, [0])
             disable_fg_inds = tf.sparse_to_dense(
-                disable_fg_inds, tf.shape(labels, out_type=tf.int64),
+                disable_fg_inds, tf.shape(labels, out_type=tf.int32),
                 True, default_value=False
             )
             # Put -1 to ignore the anchors in the selected indices
@@ -252,7 +252,7 @@ class RPNTarget(snt.AbstractModule):
                 disable_bg_inds, k=tf.shape(disable_bg_inds)[-1])
             disable_bg_inds = tf.reverse(disable_bg_inds, [0])
             disable_bg_inds = tf.sparse_to_dense(
-                disable_bg_inds, tf.shape(labels, out_type=tf.int64),
+                disable_bg_inds, tf.shape(labels, out_type=tf.int32),
                 True, default_value=False
             )
             # Put -1 to ignore the anchors in the selected indices

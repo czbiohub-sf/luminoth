@@ -78,10 +78,10 @@ class ConfusionMatrixTest(tf.test.TestCase):
                            ignore_index=True)
         if type(label_name) is str:
             cols = ['xmin', 'xmax', 'ymin', 'ymax']
-            df[cols] = df[cols].applymap(np.int64)
+            df[cols] = df[cols].applymap(np.int32)
         elif type(label_name) is float:
             cols = ['xmin', 'xmax', 'ymin', 'ymax', 'label']
-            df[cols] = df[cols].applymap(np.int64)
+            df[cols] = df[cols].applymap(np.int32)
         df.to_csv(csv)
         self.tempfiles_to_delete.append(csv)
         return csv

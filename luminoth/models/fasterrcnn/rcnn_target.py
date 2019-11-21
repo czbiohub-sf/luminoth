@@ -124,7 +124,7 @@ class RCNNTarget(snt.AbstractModule):
         is_best_box = tf.sparse_to_dense(
             sparse_indices=tf.reshape(best_proposals_idxs, [-1]),
             sparse_values=True, default_value=False,
-            output_shape=tf.cast(proposals_label_shape, tf.int64),
+            output_shape=tf.cast(proposals_label_shape, tf.int32),
             validate_indices=False
         )
         # We update proposals_label with the value in
@@ -141,7 +141,7 @@ class RCNNTarget(snt.AbstractModule):
             sparse_indices=tf.reshape(best_proposals_idxs, [-1]),
             sparse_values=gt_boxes[:, 4] + 1,
             default_value=0.,
-            output_shape=tf.cast(proposals_label_shape, tf.int64),
+            output_shape=tf.cast(proposals_label_shape, tf.int32),
             validate_indices=False,
             name="get_right_labels_for_bestboxes"
         )
@@ -182,7 +182,7 @@ class RCNNTarget(snt.AbstractModule):
             is_disabled = tf.sparse_to_dense(
                 sparse_indices=disable_inds,
                 sparse_values=True, default_value=False,
-                output_shape=tf.cast(proposals_label_shape, tf.int64),
+                output_shape=tf.cast(proposals_label_shape, tf.int32),
                 # We are shuffling the indices, so they may not be ordered.
                 validate_indices=False
             )
@@ -231,7 +231,7 @@ class RCNNTarget(snt.AbstractModule):
             is_disabled = tf.sparse_to_dense(
                 sparse_indices=disable_inds,
                 sparse_values=True, default_value=False,
-                output_shape=tf.cast(proposals_label_shape, tf.int64),
+                output_shape=tf.cast(proposals_label_shape, tf.int32),
                 validate_indices=False
             )
             return tf.where(
@@ -290,7 +290,7 @@ class RCNNTarget(snt.AbstractModule):
         bbox_targets = tf.scatter_nd(
             indices=proposals_with_target_idx,
             updates=bbox_targets_nonzero,
-            shape=tf.cast(tf.shape(proposals), tf.int64)
+            shape=tf.cast(tf.shape(proposals), tf.int32)
         )
 
         proposals_label = proposals_label

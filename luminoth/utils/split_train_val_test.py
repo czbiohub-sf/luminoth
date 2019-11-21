@@ -58,11 +58,11 @@ class SplitTrainValTest(tf.test.TestCase):
         for i, bbox in enumerate(bboxes):
             label_name = labels[i]
             df = df.append({'image_path': image_save_path,
-                            'x1': np.int64(bbox[0]),
-                            'x2': np.int64(bbox[2]),
-                            'y1': np.int64(bbox[1]),
-                            'y2': np.int64(bbox[3]),
-                            'class_name': np.int64(label_name)},
+                            'x1': np.int32(bbox[0]),
+                            'x2': np.int32(bbox[2]),
+                            'y1': np.int32(bbox[1]),
+                            'y2': np.int32(bbox[3]),
+                            'class_name': np.int32(label_name)},
                            ignore_index=True)
 
         df.to_csv(csv_save_path)

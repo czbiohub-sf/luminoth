@@ -6,7 +6,7 @@ import tensorflow as tf
 from .base_writer import BaseWriter
 
 from luminoth.tools.dataset.readers import ObjectDetectionReader
-from luminoth.utils.dataset import to_int64, to_string, to_bytes
+from luminoth.utils.dataset import to_int32, to_string, to_bytes
 
 REQUIRED_KEYS = set(
     ['width', 'height', 'depth', 'filename', 'image_raw', 'gt_boxes']
@@ -142,11 +142,11 @@ class ObjectDetectionWriter(BaseWriter):
         }
 
         for b in record['gt_boxes']:
-            sequence_vals['label'].append(to_int64(b['label']))
-            sequence_vals['xmin'].append(to_int64(b['xmin']))
-            sequence_vals['ymin'].append(to_int64(b['ymin']))
-            sequence_vals['xmax'].append(to_int64(b['xmax']))
-            sequence_vals['ymax'].append(to_int64(b['ymax']))
+            sequence_vals['label'].append(to_int32(b['label']))
+            sequence_vals['xmin'].append(to_int32(b['xmin']))
+            sequence_vals['ymin'].append(to_int32(b['ymin']))
+            sequence_vals['xmax'].append(to_int32(b['xmax']))
+            sequence_vals['ymax'].append(to_int32(b['ymax']))
 
         object_feature_lists = {
             'label': tf.train.FeatureList(feature=sequence_vals['label']),
@@ -161,9 +161,9 @@ class ObjectDetectionWriter(BaseWriter):
         )
 
         feature = {
-            'width': to_int64(record['width']),
-            'height': to_int64(record['height']),
-            'depth': to_int64(record['depth']),
+            'width': to_int32(record['width']),
+            'height': to_int32(record['height']),
+            'depth': to_int32(record['depth']),
             'filename': to_string(record['filename']),
             'image_raw': to_bytes(record['image_raw']),
         }

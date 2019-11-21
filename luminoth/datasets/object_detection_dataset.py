@@ -43,17 +43,17 @@ class ObjectDetectionDataset(BaseDataset):
     CONTEXT_FEATURES = {
         'image_raw': tf.FixedLenFeature([], tf.string),
         'filename': tf.FixedLenFeature([], tf.string),
-        'width': tf.FixedLenFeature([], tf.int64),
-        'height': tf.FixedLenFeature([], tf.int64),
-        'depth': tf.FixedLenFeature([], tf.int64),
+        'width': tf.FixedLenFeature([], tf.int32),
+        'height': tf.FixedLenFeature([], tf.int32),
+        'depth': tf.FixedLenFeature([], tf.int32),
     }
 
     SEQUENCE_FEATURES = {
-        'label': tf.VarLenFeature(tf.int64),
-        'xmin': tf.VarLenFeature(tf.int64),
-        'xmax': tf.VarLenFeature(tf.int64),
-        'ymin': tf.VarLenFeature(tf.int64),
-        'ymax': tf.VarLenFeature(tf.int64),
+        'label': tf.VarLenFeature(tf.int32),
+        'xmin': tf.VarLenFeature(tf.int32),
+        'xmax': tf.VarLenFeature(tf.int32),
+        'ymin': tf.VarLenFeature(tf.int32),
+        'ymax': tf.VarLenFeature(tf.int32),
     }
 
     def __init__(self, config, name='object_detection_dataset', **kwargs):

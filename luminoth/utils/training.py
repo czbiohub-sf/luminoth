@@ -45,10 +45,10 @@ def get_learning_rate(train_config, global_step=None):
     else:
         lr_config['global_step'] = global_step
 
-    # boundaries, when used, must be the same type as global_step (int64).
+    # boundaries, when used, must be the same type as global_step (int32).
     if 'boundaries' in lr_config:
         lr_config['boundaries'] = [
-            tf.cast(b, tf.int64) for b in lr_config['boundaries']
+            tf.cast(b, tf.int32) for b in lr_config['boundaries']
         ]
 
     decay_function = LEARNING_RATE_DECAY_METHODS[decay_method]

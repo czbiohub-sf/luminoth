@@ -92,7 +92,7 @@ class SSDTarget(snt.AbstractModule):
         is_best_box = tf.sparse_to_dense(
             sparse_indices=best_anchor_idxs,
             sparse_values=True, default_value=False,
-            output_shape=tf.cast(anchors_label_shape, tf.int64),
+            output_shape=tf.cast(anchors_label_shape, tf.int32),
             validate_indices=False
         )
 
@@ -103,7 +103,7 @@ class SSDTarget(snt.AbstractModule):
             sparse_indices=best_anchor_idxs,
             sparse_values=gt_boxes[:, 4] + 1,
             default_value=-1,
-            output_shape=tf.cast(anchors_label_shape, tf.int64),
+            output_shape=tf.cast(anchors_label_shape, tf.int32),
             validate_indices=False,
             name="get_right_labels_for_bestboxes"
         )
@@ -194,7 +194,7 @@ class SSDTarget(snt.AbstractModule):
         bbox_targets = tf.scatter_nd(
             indices=anchors_with_target_idx,
             updates=bbox_targets,
-            shape=tf.cast(tf.shape(all_anchors), tf.int64)
+            shape=tf.cast(tf.shape(all_anchors), tf.int32)
         )
 
         return anchors_label, bbox_targets
