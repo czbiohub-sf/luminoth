@@ -72,7 +72,7 @@ def _set_fill_value(image, fill_value):
 
 def _set_tile_size(image, tile_size):
     shape = image.shape
-    if tile_size is not None:
+    if tile_size is not None and tile_size != ():
         if type(tile_size[0]) is str:
             tile_size = [int(
                 tile_size[0].split(",")[0]), int(tile_size[0].split(",")[1])]
