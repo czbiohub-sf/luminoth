@@ -154,7 +154,11 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
                             'label': label_name},
                            ignore_index=True)
             count += 1
-
+    if type(label_name) is str:
+        cols = ['xmin', 'xmax', 'ymin', 'ymax']
+    else:
+        cols = ['xmin', 'xmax', 'ymin', 'ymax', 'label']
+    df[cols] = df[cols].applymap(np.int64)
     df.reset_index(drop=True, inplace=True)
     return df
 
