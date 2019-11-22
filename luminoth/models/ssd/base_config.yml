@@ -111,9 +111,6 @@ dataset:
     #     target_width: 60
     #     min_gaussian_stddev: 0
     #     max_gaussian_stddev: 1.0
-    # - equalize:
-    #     prob: 0.5
-    #     ignore_class: [1]
 
 model:
   type: ssd

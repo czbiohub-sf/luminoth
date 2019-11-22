@@ -16,8 +16,6 @@ def adjust_bboxes(bboxes, old_height, old_width, new_height, new_width):
         Tensor with shape (num_bboxes, 5), with the adjusted bboxes.
     """
     # We normalize bounding boxes points.
-    tf.logging.info("adjusting bboxes in image.py")
-    tf.logging.info("input data types {}".format(bboxes.dtype))
     bboxes_float = tf.to_float(bboxes)
     x_min, y_min, x_max, y_max, label = tf.unstack(bboxes_float, axis=1)
 
@@ -32,7 +30,6 @@ def adjust_bboxes(bboxes, old_height, old_width, new_height, new_width):
     x_max = tf.to_int32(x_max * new_width)
     y_max = tf.to_int32(y_max * new_height)
     label = tf.to_int32(label)  # Cast back to int.
-    tf.logging.info("input data types {}".format(bboxes.dtype))
     # Concat points and label to return a [num_bboxes, 5] tensor.
     return tf.stack([x_min, y_min, x_max, y_max, label], axis=1)
 
@@ -62,11 +59,9 @@ def resize_image(image, bboxes=None, min_size=None, max_size=None):
             scale_factor: Scale factor used to modify the image (1.0 means no
                 change).
     """
-    tf.logging.info("resizing image, bboxes in image.py")
     image_shape = tf.to_float(tf.shape(image))
     height = image_shape[0]
     width = image_shape[1]
-    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     if min_size is not None:
         # We calculate the upscale factor, the rate we need to use to end up
         # with an image with it's lowest dimension at least `image_min_size`.
@@ -109,7 +104,6 @@ def resize_image(image, bboxes=None, min_size=None, max_size=None):
             'bboxes': bboxes,
             'scale_factor': scale_factor,
         }
-        tf.logging.info("output data types {} {}".format(image.dtype, bboxes.dtype))
 
     return {
         'image': image,
@@ -118,8 +112,6 @@ def resize_image(image, bboxes=None, min_size=None, max_size=None):
 
 
 def resize_image_fixed(image, new_height, new_width, bboxes=None):
-    tf.logging.info("resizing image fixed, bboxes in image.py")
-    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     image_shape = tf.to_float(tf.shape(image))
     height = image_shape[0]
     width = image_shape[1]
@@ -144,7 +136,6 @@ def resize_image_fixed(image, new_height, new_width, bboxes=None):
             'bboxes': bboxes,
             'scale_factor': (scale_factor_height, scale_factor_width),
         }
-        tf.logging.info("output data types {} {}".format(image.dtype, bboxes.dtype))
 
     return {
         'image': image,
@@ -181,9 +172,6 @@ def patch_image(image, bboxes=None, offset_height=0, offset_width=0,
     # having an offset_height that's larger than tf.shape(image)[0], etc.)
     # As of now we only use it inside random_patch, which already makes sure
     # the arguments are legal.
-    tf.logging.info("patching image, bboxes in image.py")
-    if bboxes is not None:
-        tf.logging.info("input data types {} {} {} {}".format(image.dtype, image.shape, bboxes.dtype, bboxes.shape))
     im_shape = tf.shape(image)
     if target_height is None:
         target_height = (im_shape[0] - offset_height - 1)
@@ -320,8 +308,6 @@ def patch_image(image, bboxes=None, offset_height=0, offset_width=0,
         lambda: new_bboxes_resized,
         lambda: bboxes
     )
-    tf.logging.info("output data types {} {}".format(
-        new_image_resized.dtype, new_bboxes_resized.dtype))
     return return_dict
 
 
@@ -339,8 +325,6 @@ def flip_image(image, bboxes=None, left_right=True, up_down=False):
         image: Flipped image with the same shape.
         bboxes: Tensor with the same shape.
     """
-    tf.logging.info("flipping image, bboxes in image.py")
-    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     image_shape = tf.shape(image)
     height = image_shape[0]
     width = image_shape[1]
@@ -378,7 +362,6 @@ def flip_image(image, bboxes=None, left_right=True, up_down=False):
     return_dict = {'image': image}
     if bboxes is not None:
         return_dict['bboxes'] = bboxes
-    tf.logging.info("output data types {} {}".format(image.dtype, bboxes.dtype))
     return return_dict
 
 
@@ -407,7 +390,6 @@ def random_patch(image, bboxes=None, min_height=600, min_width=600,
     """
     # Start by normalizing the arguments.
     # Our patch can't be larger than the original image.
-    tf.logging.info("random patching, bboxes in image.py")
     im_shape = tf.shape(image)
     min_height = tf.minimum(min_height, im_shape[0] - 1)
     min_width = tf.minimum(min_width, im_shape[1] - 1)
@@ -455,7 +437,6 @@ def random_patch(image, bboxes=None, min_height=600, min_width=600,
         dtype=tf.int32,
         seed=seed
     )
-    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     return patch_image(
         image, bboxes=bboxes,
         offset_height=offset_height, offset_width=offset_width,
@@ -482,8 +463,6 @@ def random_resize(image, bboxes=None, min_size=600, max_size=980,
         bboxes: Tensor with the same shape as the input bboxes, if we had them.
             Else, this key will not be set.
     """
-    tf.logging.info("random resizing image, bboxes in image.py")
-    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     im_shape = tf.to_float(tf.shape(image))
     new_size = tf.random_uniform(
         shape=[2],
@@ -511,7 +490,6 @@ def random_resize(image, bboxes=None, min_size=600, max_size=980,
         }
     else:
         return_dict = {'image': image}
-    tf.logging.info("output data types {} {}".format(image.dtype, bboxes.dtype))
     return return_dict
 
 
@@ -541,8 +519,6 @@ def random_distortion(image, bboxes=None, brightness=None, contrast=None,
     """
     # Following Andrew Howard (2013). "Some improvements on deep convolutional
     # neural network based image classification."
-    tf.logging.info("random distortion, bboxes in image.py")
-    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     if brightness is not None:
         if 'max_delta' not in brightness:
             brightness.max_delta = 0.3
@@ -582,8 +558,6 @@ def random_distortion(image, bboxes=None, brightness=None, contrast=None,
             'image': image,
             'bboxes': bboxes,
         }
-    tf.logging.info("random distortion completed")
-    tf.logging.info("output data types {} {}".format(image.dtype, bboxes.dtype))
     return return_dict
 
 
@@ -606,8 +580,6 @@ def expand(image, bboxes=None, fill=0, min_ratio=1, max_ratio=4, seed=None):
             bboxes: Tensor with zoomed out bounding boxes with shape
                 (num_bboxes, 5).
     """
-    tf.logging.info("expanding image, bboxes in image.py")
-    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     image_shape = tf.to_float(tf.shape(image))
     height = image_shape[0]
     width = image_shape[1]
@@ -640,8 +612,6 @@ def expand(image, bboxes=None, fill=0, min_ratio=1, max_ratio=4, seed=None):
     return_dict = {'image': expanded_image}
     if bboxes is not None:
         return_dict['bboxes'] = bbox_adjusted
-    tf.logging.info("output data types {} {}".format(
-        expanded_image.dtype, bboxes.dtype))
     return return_dict
 
 
@@ -654,9 +624,6 @@ def _rot90_boxes(boxes, image_shape):
     Returns:
         Rotated boxes.
     """
-    tf.logging.info("rotating bboxes in image.py")
-    tf.logging.info("input data types {}".format(boxes.dtype))
-    boxes = tf.to_float(boxes)
     height = image_shape[0]
     width = image_shape[1]
 
@@ -679,7 +646,6 @@ def _rot90_boxes(boxes, image_shape):
          label],
         axis=1
     )
-    tf.logging.info("output data types {}".format(bboxes.dtype))
     return bboxes
 
 
@@ -695,8 +661,6 @@ def rot90(image, bboxes=None):
         image: Rotated image with the same shape.
         bboxes: Tensor with the same shape.
     """
-    tf.logging.info("rotating image, bboxes in image.py")
-    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     image_shape = tf.to_float(tf.shape(image))
     image = tf.image.rot90(image)
     if bboxes is not None:
@@ -706,8 +670,6 @@ def rot90(image, bboxes=None):
     return_dict = {'image': image}
     if bboxes is not None:
         return_dict['bboxes'] = rotated_bboxes
-    tf.logging.info(
-        "output data types {} {}".format(image.dtype, rotated_bboxes.dtype))
     return return_dict
 
 
@@ -746,8 +708,6 @@ def random_patch_gaussian(image,
         noise applied within a random patch.
         bboxes: Unchanged bboxes.
     """
-    tf.logging.info("random patch gaussian, bboxes in image.py")
-    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     original_dtype = image.dtype
     image = tf.cast(image, tf.float32)
     image_shape = tf.shape(image)
@@ -804,43 +764,4 @@ def random_patch_gaussian(image,
     return_dict = {'image': image}
     if bboxes is not None:
         return_dict['bboxes'] = bboxes
-    tf.logging.info("output data types {} {}".format(image.dtype, bboxes.dtype))
-    return return_dict
-
-
-def equalize_histogram(image, bboxes=None):
-    """Equalize image for data augmentation.
-    Args:
-        image: Tensor with image of shape (H, W, 3).
-        bboxes: Optional Tensor with bounding boxes with shape (num_bboxes, 5).
-            where we have (x_min, y_min, x_max, y_max, label) for each one.
-    Returns:
-        image: Equalized image with the same shape (H, W, 3).
-        bboxes: Unchanged bboxes
-    """
-    tf.logging.info("equalize image, bboxes in image.py")
-    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
-    image_shape = tf.shape(image)
-    original_dtype = image.dtype
-    image = tf.image.rgb_to_grayscale(image)
-    values_range = tf.constant([0., 255.], dtype=tf.float32)
-    histogram = tf.histogram_fixed_width(
-        tf.to_float(image), values_range, 256)
-    cdf = tf.cumsum(histogram)
-    cdf_min = cdf[tf.reduce_min(tf.where(tf.greater(cdf, 0)))]
-
-    pix_cnt = image_shape[0] * image_shape[1]
-    px_map = tf.round(
-        tf.to_float(cdf - cdf_min) * 255. / tf.to_float(pix_cnt - 1))
-    px_map = tf.cast(px_map, tf.uint8)
-
-    eq_hist = tf.expand_dims(tf.gather_nd(px_map, tf.cast(image, tf.int32)), 2)
-
-    eq_hist = tf.image.grayscale_to_rgb(eq_hist)
-    eq_hist = tf.cast(eq_hist, original_dtype)
-    # Return results
-    return_dict = {'image': eq_hist}
-    if bboxes is not None:
-        return_dict['bboxes'] = bboxes
-    tf.logging.info("output data types {} {}".format(eq_hist.dtype, bboxes.dtype))
     return return_dict

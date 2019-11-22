@@ -4,7 +4,7 @@ from luminoth.datasets.base_dataset import BaseDataset
 from luminoth.utils.image import (
     resize_image_fixed, resize_image, flip_image, random_patch, random_resize,
     random_distortion, expand,
-    rot90, random_patch_gaussian, equalize_histogram)
+    rot90, random_patch_gaussian)
 
 DATA_AUGMENTATION_STRATEGIES = {
     'flip': flip_image,
@@ -14,7 +14,6 @@ DATA_AUGMENTATION_STRATEGIES = {
     'expand': expand,
     'rotate': rot90,
     'gaussian': random_patch_gaussian,
-    'equalize': equalize_histogram
 }
 
 
@@ -77,11 +76,8 @@ class ObjectDetectionDataset(BaseDataset):
         Transformations are applied according to the config values.
         """
         # Resize images (if needed)
-        tf.logging.info("PREPROCESSING DATA")
         image, bboxes, applied_augmentations = self._augment(image, bboxes)
-        tf.logging.info("augmentation preprocessing done, initiated resize")
         image, bboxes, scale_factor = self._resize_image(image, bboxes)
-        tf.logging.info("resizing images after augmentation")
         return image, bboxes, {
             'scale_factor': scale_factor,
             'applied_augmentations': applied_augmentations,
@@ -108,25 +104,11 @@ class ObjectDetectionDataset(BaseDataset):
         image_raw = tf.image.decode_jpeg(
             context_example['image_raw'], channels=3
         )
-        tf.logging.info("casting image ip data types shape {} {}".format(
-            image_raw.dtype, image_raw.shape))
         image = tf.cast(image_raw, tf.float32)
-        tf.logging.info("casting image op data types shape {} {}".format(
-            image.dtype, image.shape))
-        tf.logging.info("casting height ip data types {}".format(
-            context_example['height'].dtype))
         height = tf.cast(context_example['height'], tf.int32)
-        tf.logging.info("casting height op data types {}".format(
-            height.dtype))
         width = tf.cast(context_example['width'], tf.int32)
-        tf.logging.info("casting width ip data types {}".format(
-            context_example['width'].dtype))
         image_shape = tf.stack([height, width, 3])
-        tf.logging.info("casting width op data types {}".format(
-            width.dtype))
         image = tf.reshape(image, image_shape)
-        tf.logging.info("resized in decoded op data types shape {} {}".format(
-            image.dtype, image.shape))
 
         label = self._sparse_to_tensor(sequence_example['label'])
         xmin = self._sparse_to_tensor(sequence_example['xmin'])
@@ -138,11 +120,7 @@ class ObjectDetectionDataset(BaseDataset):
         bboxes = tf.stack([xmin, ymin, xmax, ymax, label], axis=1)
 
         image, bboxes, preprocessing_details = self.preprocess(image, bboxes)
-        tf.logging.info("casting filename ip data types {}".format(
-            context_example['filename'].dtype))
         filename = tf.cast(context_example['filename'], tf.string)
-        tf.logging.info("casting filename op data types {}".format(
-            filename.dtype))
         # TODO: Send additional metadata through the queue (scale_factor,
         # applied_augmentations)
 
@@ -178,7 +156,6 @@ class ObjectDetectionDataset(BaseDataset):
             image: A Tensor of shape (height, width, 3).
             bboxes: A Tensor of shape (total_bboxes, 5) of type tf.int32.
         """
-        tf.logging.info("AUGMENTATION STARTED")
         applied_data_augmentation = []
         for aug_config in self._data_augmentation:
             if len(aug_config.keys()) != 1:
@@ -194,21 +171,14 @@ class ObjectDetectionDataset(BaseDataset):
                 continue
 
             aug_config = aug_config[aug_type]
-            tf.logging.info("AUGMENTATION TYPE {}".format(aug_type))
             aug_fn = DATA_AUGMENTATION_STRATEGIES[aug_type]
 
             random_number = tf.random_uniform([], seed=self._seed)
             prob = tf.to_float(aug_config.pop('prob', default_prob))
             ignore_class = aug_config.pop('ignore_class', -1)
-            tf.logging.info("ignore class ip data type {}".format(
-                type(ignore_class)))
             ignore_class_tensor = tf.dtypes.cast(
                 ignore_class, tf.int32)
-            tf.logging.info("ignore class tensor op data type {}".format(
-                ignore_class_tensor.dtype))
             apply_aug_strategy = tf.less(random_number, prob)
-            tf.logging.info(
-                "augmented ip image shape dtype {} {}".format(image.dtype, image.shape))
             augmented = aug_fn(image, bboxes, **aug_config)
 
             image = tf.cond(
@@ -216,10 +186,6 @@ class ObjectDetectionDataset(BaseDataset):
                 lambda: augmented['image'],
                 lambda: image
             )
-            tf.logging.info(
-                "augmented image set {}".format(apply_aug_strategy))
-            tf.logging.info(
-                "augmented op image shape dtype {} {}".format(image.dtype, image.shape))
             if bboxes is not None:
                 bboxes = tf.cond(
                     apply_aug_strategy,
@@ -231,8 +197,6 @@ class ObjectDetectionDataset(BaseDataset):
                     condition = tf.not_equal(labels, ignore_class_tensor)
                     bboxes = tf.boolean_mask(bboxes, condition)
             applied_data_augmentation.append({aug_type: apply_aug_strategy})
-            tf.logging.info("augmented bounding boxes set as well")
-        tf.logging.info("AUGMENTATION COMPLETED")
         return image, bboxes, applied_data_augmentation
 
     def _resize_image(self, image, bboxes=None):
@@ -270,11 +234,7 @@ class ObjectDetectionDataset(BaseDataset):
         return resized['image'], resized.get('bboxes'), resized['scale_factor']
 
     def _sparse_to_tensor(self, sparse_tensor, dtype=tf.int32, axis=[1]):
-        tf.logging.info("_sparse_to_tensor ip data types {}".format(
-            sparse_tensor.dtype))
         squeeze_input = tf.cast(
             tf.sparse_tensor_to_dense(sparse_tensor), dtype)
         squeeze_output = tf.squeeze(squeeze_input, axis=axis)
-        tf.logging.info("_sparse_to_tensor op data types {}".format(
-            squeeze_output.dtype))
         return squeeze_output
