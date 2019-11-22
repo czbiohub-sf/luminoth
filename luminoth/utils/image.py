@@ -682,7 +682,7 @@ def rot90(image, bboxes=None):
     image = tf.image.rot90(image)
     if bboxes is not None:
         rotated_bboxes = _rot90_boxes(bboxes, image_shape)
-        rotated_bboxes = tf.cast(rotated_bboxes, bboxes.dtype)
+        rotated_bboxes = tf.cast(rotated_bboxes, tf.int32)
 
     return_dict = {'image': image}
     if bboxes is not None:

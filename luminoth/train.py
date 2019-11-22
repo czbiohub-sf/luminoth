@@ -231,36 +231,32 @@ def run(config, target='', cluster_spec=None, is_chief=True, job_name=None,
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
-        try:
-            while not coord.should_stop():
-                before = time.time()
-                _, train_loss, step, filename = sess.run([
-                    train_op, total_loss, global_step, train_filename
-                ], options=run_options)
+        while not coord.should_stop():
+            before = time.time()
+            _, train_loss, step, filename = sess.run([
+                train_op, total_loss, global_step, train_filename
+            ], options=run_options)
 
-                # TODO: Add image summary every once in a while.
+            # TODO: Add image summary every once in a while.
 
-                tf.logging.info(
-                    '{}step: {}, file: {}, train_loss: {}, in {:.2f}s'.format(
-                        log_prefix, step, filename, train_loss,
-                        time.time() - before
-                    ))
+            tf.logging.info(
+                '{}step: {}, file: {}, train_loss: {}, in {:.2f}s'.format(
+                    log_prefix, step, filename, train_loss,
+                    time.time() - before
+                ))
 
-                if is_chief and step == 1:
-                    # We save the run after first batch to make sure everything
-                    # works properly.
-                    save_run(config, environment=environment)
+            if is_chief and step == 1:
+                # We save the run after first batch to make sure everything
+                # works properly.
+                save_run(config, environment=environment)
 
-        except tf.errors.OutOfRangeError:
             tf.logging.info(
                 '{}finished training after {} epoch limit'.format(
                     log_prefix, config.train.num_epochs
                 )
             )
 
-            # TODO: Print summary
-        finally:
-            coord.request_stop()
+        coord.request_stop()
 
         # Wait for all threads to stop.
         coord.join(threads)
