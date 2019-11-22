@@ -16,6 +16,7 @@ def adjust_bboxes(bboxes, old_height, old_width, new_height, new_width):
         Tensor with shape (num_bboxes, 5), with the adjusted bboxes.
     """
     # We normalize bounding boxes points.
+    tf.logging.info("adjusting bboxes in image.py")
     bboxes_float = tf.to_float(bboxes)
     x_min, y_min, x_max, y_max, label = tf.unstack(bboxes_float, axis=1)
 
@@ -60,6 +61,7 @@ def resize_image(image, bboxes=None, min_size=None, max_size=None):
             scale_factor: Scale factor used to modify the image (1.0 means no
                 change).
     """
+    tf.logging.info("resizing image, bboxes in image.py")
     image_shape = tf.to_float(tf.shape(image))
     height = image_shape[0]
     width = image_shape[1]
@@ -115,6 +117,7 @@ def resize_image(image, bboxes=None, min_size=None, max_size=None):
 
 
 def resize_image_fixed(image, new_height, new_width, bboxes=None):
+    tf.logging.info("resizing image fixed, bboxes in image.py")
 
     image_shape = tf.to_float(tf.shape(image))
     height = image_shape[0]
@@ -176,6 +179,7 @@ def patch_image(image, bboxes=None, offset_height=0, offset_width=0,
     # having an offset_height that's larger than tf.shape(image)[0], etc.)
     # As of now we only use it inside random_patch, which already makes sure
     # the arguments are legal.
+    tf.logging.info("patching image, bboxes in image.py")
     im_shape = tf.shape(image)
     if target_height is None:
         target_height = (im_shape[0] - offset_height - 1)
@@ -329,6 +333,7 @@ def flip_image(image, bboxes=None, left_right=True, up_down=False):
         image: Flipped image with the same shape.
         bboxes: Tensor with the same shape.
     """
+    tf.logging.info("flipping image, bboxes in image.py")
     image_shape = tf.shape(image)
     height = image_shape[0]
     width = image_shape[1]
@@ -395,6 +400,7 @@ def random_patch(image, bboxes=None, min_height=600, min_width=600,
     """
     # Start by normalizing the arguments.
     # Our patch can't be larger than the original image.
+    tf.logging.info("random patching, bboxes in image.py")
     im_shape = tf.shape(image)
     min_height = tf.minimum(min_height, im_shape[0] - 1)
     min_width = tf.minimum(min_width, im_shape[1] - 1)
@@ -468,6 +474,7 @@ def random_resize(image, bboxes=None, min_size=600, max_size=980,
         bboxes: Tensor with the same shape as the input bboxes, if we had them.
             Else, this key will not be set.
     """
+    tf.logging.info("random resizing image, bboxes in image.py")
     im_shape = tf.to_float(tf.shape(image))
     new_size = tf.random_uniform(
         shape=[2],
@@ -524,6 +531,7 @@ def random_distortion(image, bboxes=None, brightness=None, contrast=None,
     """
     # Following Andrew Howard (2013). "Some improvements on deep convolutional
     # neural network based image classification."
+    tf.logging.info("random distortion, bboxes in image.py")
     if brightness is not None:
         if 'max_delta' not in brightness:
             brightness.max_delta = 0.3
@@ -585,6 +593,7 @@ def expand(image, bboxes=None, fill=0, min_ratio=1, max_ratio=4, seed=None):
             bboxes: Tensor with zoomed out bounding boxes with shape
                 (num_bboxes, 5).
     """
+    tf.logging.info("expanding image, bboxes in image.py")
     image_shape = tf.to_float(tf.shape(image))
     height = image_shape[0]
     width = image_shape[1]
@@ -629,6 +638,7 @@ def _rot90_boxes(boxes, image_shape):
     Returns:
         Rotated boxes.
     """
+    tf.logging.info("rotating bboxes in image.py")
     boxes = tf.to_float(boxes)
     height = image_shape[0]
     width = image_shape[1]
@@ -667,6 +677,7 @@ def rot90(image, bboxes=None):
         image: Rotated image with the same shape.
         bboxes: Tensor with the same shape.
     """
+    tf.logging.info("rotating image, bboxes in image.py")
     image_shape = tf.to_float(tf.shape(image))
     image = tf.image.rot90(image)
     if bboxes is not None:
@@ -715,6 +726,7 @@ def random_patch_gaussian(image,
         noise applied within a random patch.
         bboxes: Unchanged bboxes.
     """
+    tf.logging.info("random patch gaussian, bboxes in image.py")
     original_dtype = image.dtype
     image = tf.cast(image, tf.float32)
     image_shape = tf.shape(image)
@@ -784,6 +796,7 @@ def equalize_histogram(image, bboxes=None):
         image: Equalized image with the same shape (H, W, 3).
         bboxes: Unchanged bboxes
     """
+    tf.logging.info("equalize image, bboxes in image.py")
     image_shape = tf.shape(image)
     original_dtype = image.dtype
     image = tf.image.rgb_to_grayscale(image)

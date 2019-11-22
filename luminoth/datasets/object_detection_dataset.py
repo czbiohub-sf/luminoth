@@ -77,9 +77,11 @@ class ObjectDetectionDataset(BaseDataset):
         Transformations are applied according to the config values.
         """
         # Resize images (if needed)
+        tf.logging.info("PREPROCESSING DATA")
         image, bboxes, applied_augmentations = self._augment(image, bboxes)
+        tf.logging.info("augmentation preprocessing done, initiated resize")
         image, bboxes, scale_factor = self._resize_image(image, bboxes)
-
+        tf.logging.info("resizing images after augmentation")
         return image, bboxes, {
             'scale_factor': scale_factor,
             'applied_augmentations': applied_augmentations,
@@ -162,6 +164,7 @@ class ObjectDetectionDataset(BaseDataset):
             image: A Tensor of shape (height, width, 3).
             bboxes: A Tensor of shape (total_bboxes, 5) of type tf.int32.
         """
+        tf.logging.info("AUGMENTATION STARTED")
         applied_data_augmentation = []
         for aug_config in self._data_augmentation:
             if len(aug_config.keys()) != 1:
@@ -177,6 +180,7 @@ class ObjectDetectionDataset(BaseDataset):
                 continue
 
             aug_config = aug_config[aug_type]
+            tf.logging.info("AUGMENTATION TYPE {}".format(aug_type))
             aug_fn = DATA_AUGMENTATION_STRATEGIES[aug_type]
 
             random_number = tf.random_uniform([], seed=self._seed)
@@ -194,7 +198,8 @@ class ObjectDetectionDataset(BaseDataset):
                 lambda: augmented['image'],
                 lambda: image
             )
-
+            tf.logging.info(
+                "augmented image set {}".format(apply_aug_strategy))
             if bboxes is not None:
                 bboxes = tf.cond(
                     apply_aug_strategy,
@@ -206,7 +211,8 @@ class ObjectDetectionDataset(BaseDataset):
                     condition = tf.not_equal(labels, ignore_class_tensor)
                     bboxes = tf.boolean_mask(bboxes, condition)
             applied_data_augmentation.append({aug_type: apply_aug_strategy})
-
+            tf.logging.ingo("augmented bounding boxes set as well")
+        tf.logging.info("AUGMENTATION COMPLETED")
         return image, bboxes, applied_data_augmentation
 
     def _resize_image(self, image, bboxes=None):
