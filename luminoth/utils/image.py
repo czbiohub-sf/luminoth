@@ -98,7 +98,6 @@ def resize_image(image, bboxes=None, min_size=None, max_size=None):
         image, tf.stack(tf.to_int32([new_height, new_width])),
         method=tf.image.ResizeMethod.BILINEAR
     )
-    tf.logging.info("output data types {} {}".format(image.dtype, bboxes.dtype))
     if bboxes is not None:
         bboxes = adjust_bboxes(
             bboxes,
@@ -110,6 +109,7 @@ def resize_image(image, bboxes=None, min_size=None, max_size=None):
             'bboxes': bboxes,
             'scale_factor': scale_factor,
         }
+        tf.logging.info("output data types {} {}".format(image.dtype, bboxes.dtype))
 
     return {
         'image': image,
@@ -132,7 +132,6 @@ def resize_image_fixed(image, new_height, new_width, bboxes=None):
         image, tf.stack(tf.to_int32([new_height, new_width])),
         method=tf.image.ResizeMethod.BILINEAR
     )
-    tf.logging.info("output data types {} {}".format(image.dtype, bboxes.dtype))
 
     if bboxes is not None:
         bboxes = adjust_bboxes(
@@ -145,6 +144,7 @@ def resize_image_fixed(image, new_height, new_width, bboxes=None):
             'bboxes': bboxes,
             'scale_factor': (scale_factor_height, scale_factor_width),
         }
+        tf.logging.info("output data types {} {}".format(image.dtype, bboxes.dtype))
 
     return {
         'image': image,
@@ -182,7 +182,8 @@ def patch_image(image, bboxes=None, offset_height=0, offset_width=0,
     # As of now we only use it inside random_patch, which already makes sure
     # the arguments are legal.
     tf.logging.info("patching image, bboxes in image.py")
-    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
+    if bboxes is not None:
+        tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     im_shape = tf.shape(image)
     if target_height is None:
         target_height = (im_shape[0] - offset_height - 1)
