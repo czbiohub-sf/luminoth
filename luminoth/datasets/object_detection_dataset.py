@@ -211,7 +211,7 @@ class ObjectDetectionDataset(BaseDataset):
                     condition = tf.not_equal(labels, ignore_class_tensor)
                     bboxes = tf.boolean_mask(bboxes, condition)
             applied_data_augmentation.append({aug_type: apply_aug_strategy})
-            tf.logging.ingo("augmented bounding boxes set as well")
+            tf.logging.info("augmented bounding boxes set as well")
         tf.logging.info("AUGMENTATION COMPLETED")
         return image, bboxes, applied_data_augmentation
 
