@@ -17,6 +17,7 @@ def adjust_bboxes(bboxes, old_height, old_width, new_height, new_width):
     """
     # We normalize bounding boxes points.
     tf.logging.info("adjusting bboxes in image.py")
+    tf.logging.info("input data types {}".format(bboxes.dtype))
     bboxes_float = tf.to_float(bboxes)
     x_min, y_min, x_max, y_max, label = tf.unstack(bboxes_float, axis=1)
 
@@ -31,7 +32,7 @@ def adjust_bboxes(bboxes, old_height, old_width, new_height, new_width):
     x_max = tf.to_int32(x_max * new_width)
     y_max = tf.to_int32(y_max * new_height)
     label = tf.to_int32(label)  # Cast back to int.
-
+    tf.logging.info("input data types {}".format(bboxes.dtype))
     # Concat points and label to return a [num_bboxes, 5] tensor.
     return tf.stack([x_min, y_min, x_max, y_max, label], axis=1)
 
@@ -65,7 +66,7 @@ def resize_image(image, bboxes=None, min_size=None, max_size=None):
     image_shape = tf.to_float(tf.shape(image))
     height = image_shape[0]
     width = image_shape[1]
-
+    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     if min_size is not None:
         # We calculate the upscale factor, the rate we need to use to end up
         # with an image with it's lowest dimension at least `image_min_size`.
@@ -97,7 +98,7 @@ def resize_image(image, bboxes=None, min_size=None, max_size=None):
         image, tf.stack(tf.to_int32([new_height, new_width])),
         method=tf.image.ResizeMethod.BILINEAR
     )
-
+    tf.logging.info("output data types {} {}".format(image.dtype, bboxes.dtype))
     if bboxes is not None:
         bboxes = adjust_bboxes(
             bboxes,
@@ -118,7 +119,7 @@ def resize_image(image, bboxes=None, min_size=None, max_size=None):
 
 def resize_image_fixed(image, new_height, new_width, bboxes=None):
     tf.logging.info("resizing image fixed, bboxes in image.py")
-
+    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     image_shape = tf.to_float(tf.shape(image))
     height = image_shape[0]
     width = image_shape[1]
@@ -131,6 +132,7 @@ def resize_image_fixed(image, new_height, new_width, bboxes=None):
         image, tf.stack(tf.to_int32([new_height, new_width])),
         method=tf.image.ResizeMethod.BILINEAR
     )
+    tf.logging.info("output data types {} {}".format(image.dtype, bboxes.dtype))
 
     if bboxes is not None:
         bboxes = adjust_bboxes(
@@ -180,6 +182,7 @@ def patch_image(image, bboxes=None, offset_height=0, offset_width=0,
     # As of now we only use it inside random_patch, which already makes sure
     # the arguments are legal.
     tf.logging.info("patching image, bboxes in image.py")
+    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     im_shape = tf.shape(image)
     if target_height is None:
         target_height = (im_shape[0] - offset_height - 1)
@@ -316,6 +319,8 @@ def patch_image(image, bboxes=None, offset_height=0, offset_width=0,
         lambda: new_bboxes_resized,
         lambda: bboxes
     )
+    tf.logging.info("output data types {} {}".format(
+        new_image_resized.dtype, new_bboxes_resized.dtype))
     return return_dict
 
 
@@ -334,6 +339,7 @@ def flip_image(image, bboxes=None, left_right=True, up_down=False):
         bboxes: Tensor with the same shape.
     """
     tf.logging.info("flipping image, bboxes in image.py")
+    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     image_shape = tf.shape(image)
     height = image_shape[0]
     width = image_shape[1]
@@ -371,7 +377,7 @@ def flip_image(image, bboxes=None, left_right=True, up_down=False):
     return_dict = {'image': image}
     if bboxes is not None:
         return_dict['bboxes'] = bboxes
-
+    tf.logging.info("output data types {} {}".format(image.dtype, bboxes.dtype))
     return return_dict
 
 
@@ -448,6 +454,7 @@ def random_patch(image, bboxes=None, min_height=600, min_width=600,
         dtype=tf.int32,
         seed=seed
     )
+    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     return patch_image(
         image, bboxes=bboxes,
         offset_height=offset_height, offset_width=offset_width,
@@ -475,6 +482,7 @@ def random_resize(image, bboxes=None, min_size=600, max_size=980,
             Else, this key will not be set.
     """
     tf.logging.info("random resizing image, bboxes in image.py")
+    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     im_shape = tf.to_float(tf.shape(image))
     new_size = tf.random_uniform(
         shape=[2],
@@ -502,6 +510,7 @@ def random_resize(image, bboxes=None, min_size=600, max_size=980,
         }
     else:
         return_dict = {'image': image}
+    tf.logging.info("output data types {} {}".format(image.dtype, bboxes.dtype))
     return return_dict
 
 
@@ -532,6 +541,7 @@ def random_distortion(image, bboxes=None, brightness=None, contrast=None,
     # Following Andrew Howard (2013). "Some improvements on deep convolutional
     # neural network based image classification."
     tf.logging.info("random distortion, bboxes in image.py")
+    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     if brightness is not None:
         if 'max_delta' not in brightness:
             brightness.max_delta = 0.3
@@ -571,6 +581,8 @@ def random_distortion(image, bboxes=None, brightness=None, contrast=None,
             'image': image,
             'bboxes': bboxes,
         }
+    tf.logging.info("random distortion completed")
+    tf.logging.info("output data types {} {}".format(image.dtype, bboxes.dtype))
     return return_dict
 
 
@@ -594,6 +606,7 @@ def expand(image, bboxes=None, fill=0, min_ratio=1, max_ratio=4, seed=None):
                 (num_bboxes, 5).
     """
     tf.logging.info("expanding image, bboxes in image.py")
+    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     image_shape = tf.to_float(tf.shape(image))
     height = image_shape[0]
     width = image_shape[1]
@@ -626,6 +639,8 @@ def expand(image, bboxes=None, fill=0, min_ratio=1, max_ratio=4, seed=None):
     return_dict = {'image': expanded_image}
     if bboxes is not None:
         return_dict['bboxes'] = bbox_adjusted
+    tf.logging.info("output data types {} {}".format(
+        expanded_image.dtype, bboxes.dtype))
     return return_dict
 
 
@@ -639,6 +654,7 @@ def _rot90_boxes(boxes, image_shape):
         Rotated boxes.
     """
     tf.logging.info("rotating bboxes in image.py")
+    tf.logging.info("input data types {}".format(boxes.dtype))
     boxes = tf.to_float(boxes)
     height = image_shape[0]
     width = image_shape[1]
@@ -662,6 +678,7 @@ def _rot90_boxes(boxes, image_shape):
          label],
         axis=1
     )
+    tf.logging.info("output data types {}".format(bboxes.dtype))
     return bboxes
 
 
@@ -678,6 +695,7 @@ def rot90(image, bboxes=None):
         bboxes: Tensor with the same shape.
     """
     tf.logging.info("rotating image, bboxes in image.py")
+    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     image_shape = tf.to_float(tf.shape(image))
     image = tf.image.rot90(image)
     if bboxes is not None:
@@ -687,7 +705,8 @@ def rot90(image, bboxes=None):
     return_dict = {'image': image}
     if bboxes is not None:
         return_dict['bboxes'] = rotated_bboxes
-
+    tf.logging.info(
+        "output data types {} {}".format(image.dtype, rotated_bboxes.dtype))
     return return_dict
 
 
@@ -727,6 +746,7 @@ def random_patch_gaussian(image,
         bboxes: Unchanged bboxes.
     """
     tf.logging.info("random patch gaussian, bboxes in image.py")
+    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     original_dtype = image.dtype
     image = tf.cast(image, tf.float32)
     image_shape = tf.shape(image)
@@ -783,6 +803,7 @@ def random_patch_gaussian(image,
     return_dict = {'image': image}
     if bboxes is not None:
         return_dict['bboxes'] = bboxes
+    tf.logging.info("output data types {} {}".format(image.dtype, bboxes.dtype))
     return return_dict
 
 
@@ -797,6 +818,7 @@ def equalize_histogram(image, bboxes=None):
         bboxes: Unchanged bboxes
     """
     tf.logging.info("equalize image, bboxes in image.py")
+    tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
     image_shape = tf.shape(image)
     original_dtype = image.dtype
     image = tf.image.rgb_to_grayscale(image)
@@ -819,4 +841,5 @@ def equalize_histogram(image, bboxes=None):
     return_dict = {'image': eq_hist}
     if bboxes is not None:
         return_dict['bboxes'] = bboxes
+    tf.logging.info("output data types {} {}".format(eq_hist.dtype, bboxes.dtype))
     return return_dict

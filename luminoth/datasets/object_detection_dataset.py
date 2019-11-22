@@ -108,12 +108,22 @@ class ObjectDetectionDataset(BaseDataset):
         image_raw = tf.image.decode_image(
             context_example['image_raw'], channels=3
         )
-
+        tf.logging.info("casting image ip data types {}".format(
+            image_raw.dtype))
         image = tf.cast(image_raw, tf.float32)
-
+        tf.logging.info("casting image op data types {}".format(
+            image.dtype))
+        tf.logging.info("casting height ip data types {}".format(
+            context_example['height'].dtype))
         height = tf.cast(context_example['height'], tf.int32)
+        tf.logging.info("casting height op data types {}".format(
+            height.dtype))
         width = tf.cast(context_example['width'], tf.int32)
+        tf.logging.info("casting width ip data types {}".format(
+            context_example['width'].dtype))
         image_shape = tf.stack([height, width, 3])
+        tf.logging.info("casting width op data types {}".format(
+            width.dtype))
         image = tf.reshape(image, image_shape)
 
         label = self._sparse_to_tensor(sequence_example['label'])
@@ -126,9 +136,11 @@ class ObjectDetectionDataset(BaseDataset):
         bboxes = tf.stack([xmin, ymin, xmax, ymax, label], axis=1)
 
         image, bboxes, preprocessing_details = self.preprocess(image, bboxes)
-
+        tf.logging.info("casting filename ip data types {}".format(
+            context_example['filename'].dtype))
         filename = tf.cast(context_example['filename'], tf.string)
-
+        tf.logging.info("casting filename op data types {}".format(
+            filename.dtype))
         # TODO: Send additional metadata through the queue (scale_factor,
         # applied_augmentations)
 
@@ -185,10 +197,13 @@ class ObjectDetectionDataset(BaseDataset):
 
             random_number = tf.random_uniform([], seed=self._seed)
             prob = tf.to_float(aug_config.pop('prob', default_prob))
-            ignore_class = aug_config.pop('ignore_class', 0)
+            ignore_class = aug_config.pop('ignore_class', -1)
+            tf.logging.info("ignore class ip data type {}".format(
+                type(ignore_class)))
             ignore_class_tensor = tf.dtypes.cast(
                 ignore_class, tf.int32)
-
+            tf.logging.info("ignore class tensor op data type {}".format(
+                ignore_class_tensor.dtype))
             apply_aug_strategy = tf.less(random_number, prob)
 
             augmented = aug_fn(image, bboxes, **aug_config)
@@ -207,7 +222,7 @@ class ObjectDetectionDataset(BaseDataset):
                     lambda: bboxes
                 )
                 labels = tf.gather(bboxes, 4, axis=1)
-                if ignore_class != 0:
+                if ignore_class != -1:
                     condition = tf.not_equal(labels, ignore_class_tensor)
                     bboxes = tf.boolean_mask(bboxes, condition)
             applied_data_augmentation.append({aug_type: apply_aug_strategy})
@@ -250,6 +265,11 @@ class ObjectDetectionDataset(BaseDataset):
         return resized['image'], resized.get('bboxes'), resized['scale_factor']
 
     def _sparse_to_tensor(self, sparse_tensor, dtype=tf.int32, axis=[1]):
-        return tf.squeeze(
-            tf.cast(tf.sparse_tensor_to_dense(sparse_tensor), dtype), axis=axis
-        )
+        tf.logging.info("_sparse_to_tensor ip data types {}".format(
+            sparse_tensor.dtype))
+        squeeze_input = tf.cast(
+            tf.sparse_tensor_to_dense(sparse_tensor), dtype)
+        squeeze_output = tf.squeeze(squeeze_input, axis=axis)
+        tf.logging.info("_sparse_to_tensor op data types {}".format(
+            squeeze_output.dtype))
+        return squeeze_output
