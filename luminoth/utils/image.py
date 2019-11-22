@@ -183,7 +183,7 @@ def patch_image(image, bboxes=None, offset_height=0, offset_width=0,
     # the arguments are legal.
     tf.logging.info("patching image, bboxes in image.py")
     if bboxes is not None:
-        tf.logging.info("input data types {} {}".format(image.dtype, bboxes.dtype))
+        tf.logging.info("input data types {} {} {} {}".format(image.dtype, image.shape, bboxes.dtype, bboxes.shape))
     im_shape = tf.shape(image)
     if target_height is None:
         target_height = (im_shape[0] - offset_height - 1)

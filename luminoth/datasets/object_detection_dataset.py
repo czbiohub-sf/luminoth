@@ -105,14 +105,14 @@ class ObjectDetectionDataset(BaseDataset):
         )
 
         # Decode image
-        image_raw = tf.image.decode_image(
+        image_raw = tf.image.decode_jpeg(
             context_example['image_raw'], channels=3
         )
-        tf.logging.info("casting image ip data types {}".format(
-            image_raw.dtype))
+        tf.logging.info("casting image ip data types shape {} {}".format(
+            image_raw.dtype, image_raw.shape))
         image = tf.cast(image_raw, tf.float32)
-        tf.logging.info("casting image op data types {}".format(
-            image.dtype))
+        tf.logging.info("casting image op data types shape {} {}".format(
+            image.dtype, image.shape))
         tf.logging.info("casting height ip data types {}".format(
             context_example['height'].dtype))
         height = tf.cast(context_example['height'], tf.int32)
@@ -125,6 +125,8 @@ class ObjectDetectionDataset(BaseDataset):
         tf.logging.info("casting width op data types {}".format(
             width.dtype))
         image = tf.reshape(image, image_shape)
+        tf.logging.info("resized in decoded op data types shape {} {}".format(
+            image.dtype, image.shape))
 
         label = self._sparse_to_tensor(sequence_example['label'])
         xmin = self._sparse_to_tensor(sequence_example['xmin'])
@@ -205,7 +207,8 @@ class ObjectDetectionDataset(BaseDataset):
             tf.logging.info("ignore class tensor op data type {}".format(
                 ignore_class_tensor.dtype))
             apply_aug_strategy = tf.less(random_number, prob)
-
+            tf.logging.info(
+                "augmented ip image shape dtype {} {}".format(image.dtype, image.shape))
             augmented = aug_fn(image, bboxes, **aug_config)
 
             image = tf.cond(
@@ -215,6 +218,8 @@ class ObjectDetectionDataset(BaseDataset):
             )
             tf.logging.info(
                 "augmented image set {}".format(apply_aug_strategy))
+            tf.logging.info(
+                "augmented op image shape dtype {} {}".format(image.dtype, image.shape))
             if bboxes is not None:
                 bboxes = tf.cond(
                     apply_aug_strategy,
