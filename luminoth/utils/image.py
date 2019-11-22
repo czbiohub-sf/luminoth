@@ -626,6 +626,7 @@ def _rot90_boxes(boxes, image_shape):
     """
     height = image_shape[0]
     width = image_shape[1]
+    boxes = tf.to_float(boxes)
 
     x_min, y_min, x_max, y_max, label = tf.unstack(boxes, axis=1)
     normalized_x_min = x_min / width
@@ -664,8 +665,9 @@ def rot90(image, bboxes=None):
     image_shape = tf.to_float(tf.shape(image))
     image = tf.image.rot90(image)
     if bboxes is not None:
+        original_bboxes_dtype = bboxes.dtype
         rotated_bboxes = _rot90_boxes(bboxes, image_shape)
-        rotated_bboxes = tf.cast(rotated_bboxes, tf.int32)
+        rotated_bboxes = tf.cast(rotated_bboxes, original_bboxes_dtype)
 
     return_dict = {'image': image}
     if bboxes is not None:
