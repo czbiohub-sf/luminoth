@@ -91,36 +91,34 @@ dataset:
     min_size: 600
     max_size: 1024
   # Data augmentation techniques.
-
+  # Procedures are applied sequentially on top of each other according to
+  # the order defined in the config.
+  # each data augmentation technique has a probability assigned to it
   data_augmentation:
     - flip:
         left_right: True
         up_down: False
         prob: 0.5
-        # TODO PV ignore_class and the below data augmentation techniques are currently
-        # not improving precision, recall - WIP
-        # Exclude data augmentation on one class to compensate for class imbalaces
-        # ignore_class: 0
     # Also available:
-    # # If you resize to too small images, you may end up not having any anchors
-    # # that aren't partially outside the image.
+    # Below data augmentation techniques may not improve precision, recall
+    # depending on your data. Use cli/data_aug_demo.py to determine how
+    # augmentation would look like with default parameters
+    # If you resize to too small images, you may end up not having any anchors
+    # that aren't partially outside the image.
     # - resize:
     #     min_size: 600
     #     max_size: 1024
     #     prob: 0.2
     # - rotate:
     #     prob: 0.5
-    #     ignore_class: 0
     # - gaussian:
     #     prob: 0.5
-    #     ignore_class: 0
     #     target_height: 50
     #     target_width: 60
     #     min_gaussian_stddev: 0
     #     max_gaussian_stddev: 1.0
     # - expand:
     #     prob: 0.5
-    #     ignore_class: 0
     #     fill: 0
     #     min_ratio: 1
     #     max_ratio: 4
@@ -134,6 +132,9 @@ dataset:
     #     hue:
     #       max_delta: 0.2
     #     saturation:
+    #       lower: 0.5
+    #       upper: 1.5
+    #     contrast:
     #       lower: 0.5
     #       upper: 1.5
     #     prob: 0.3

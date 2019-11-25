@@ -64,8 +64,6 @@ class RPN(snt.AbstractModule):
             self.loss_type = FOCAL
             self._focal_alpha = loss_config.pop('focal_alpha', None)
             self._focal_gamma = loss_config.pop('focal_gamma', None)
-            self.background_class = loss_config.pop('background_class', 0)
-            self.ignore_class = loss_config.pop('ignore_class', -1)
 
         # We could use normal relu without any problems.
         self._rpn_activation = get_activation_function(

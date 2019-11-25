@@ -100,18 +100,36 @@ dataset:
         prob: 0.5
     - expand:
         prob: 0.5
-    # TODO PV ignore_class and the below data augmentation techniques are currently
-    # not improving precision, recall - WIP- rotate:
+    # Also available:
+    # Below data augmentation techniques may not improve precision, recall
+    # depending on your data. Use cli/data_aug_demo.py to determine how
+    # augmentation would look like with default parameters
+    # If you resize to too small images, you may end up not having any anchors
+    # that aren't partially outside the image.
+    # - resize:
+    #     min_size: 600
+    #     max_size: 1024
+    #     prob: 0.2
+    # - rotate:
     #     prob: 0.5
-    #     ignore_class: 0
     # - gaussian:
     #     prob: 0.5
-    #     ignore_class: 0
     #     target_height: 50
     #     target_width: 60
     #     min_gaussian_stddev: 0
     #     max_gaussian_stddev: 1.0
-
+    # - distortion:
+    #     brightness:
+    #       max_delta: 0.2
+    #     hue:
+    #       max_delta: 0.2
+    #     saturation:
+    #       lower: 0.5
+    #       upper: 1.5
+    #     contrast:
+    #       lower: 0.5
+    #       upper: 1.5
+    #     prob: 0.3
 model:
   type: ssd
   network:

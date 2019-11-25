@@ -1,6 +1,7 @@
 import os
 import tempfile
 
+from easydict import EasyDict
 import click
 import cv2
 import numpy as np
@@ -10,9 +11,10 @@ import tensorflow as tf
 from luminoth.utils.mosaic import assemble_mosaic
 from luminoth.utils.overlay_bbs import overlay_bb_labels
 from luminoth.utils.split_train_val import LUMI_CSV_COLUMNS
-from luminoth.datasets.object_detection_dataset import (
-    DATA_AUGMENTATION_STRATEGIES)
-
+from luminoth.utils.image import (
+    flip_image, random_patch, random_resize,
+    random_distortion, expand,
+    rot90, random_patch_gaussian)
 
 TILE_SIZE = [256, 256]
 FILL_VALUE = 128
@@ -20,6 +22,42 @@ FONT = cv2.FONT_HERSHEY_SIMPLEX
 FONT_SCALE = 1
 FONT_COLOR = (255, 0, 255)
 LINE_TYPE = 2
+RANDOM_DISTORT_CONFIG = EasyDict(
+    {'brightness': {
+        'max_delta': 0.3,
+    }, 'contrast': {
+        'lower': 0.4,
+        'upper': 0.8,
+    }, 'hue': {
+        'max_delta': 0.2,
+    }, 'saturation': {
+        'lower': 0.5,
+        'upper': 1.5,
+    }})
+FLIP_CONFIG = EasyDict(
+    {'left_right': True,
+     'up_down': False})
+RANDOM_PATCH_CONFIG = EasyDict(
+    {'min_height': 600,
+     'min_width': 600})
+RANDOM_RESIZE_CONFIG = EasyDict(
+    {'min_size': 400,
+     'max_size': 980})
+EXPAND_CONFIG = EasyDict(
+    {'fill': 0,
+     'min_ratio': 1,
+     'max_ratio': 4})
+ROTATE90_CONFIG = EasyDict({})
+GAUSSIAN_CONFIG = EasyDict({})
+DATA_AUGMENTATION_CONFIGS = {
+    flip_image: FLIP_CONFIG,
+    random_patch: RANDOM_PATCH_CONFIG,
+    random_resize: RANDOM_RESIZE_CONFIG,
+    random_distortion: RANDOM_DISTORT_CONFIG,
+    expand: EXPAND_CONFIG,
+    rot90: ROTATE90_CONFIG,
+    random_patch_gaussian: GAUSSIAN_CONFIG,
+}
 
 
 def update_augmentation(
@@ -115,13 +153,14 @@ def get_data_aug_images(image_array, bboxes_array, labels):
     augmented_images = []
     with tf.Session() as sess:
         # run all the data augmentation
-        for aug, aug_fn in DATA_AUGMENTATION_STRATEGIES.items():
-            augmented = aug_fn(image, bboxes=bboxes)
+        for aug_fn, config in DATA_AUGMENTATION_CONFIGS.items():
+            augmented = aug_fn(image, bboxes=bboxes, **config)
             augment_dict = sess.run(augmented, feed_dict=feed_dict)
             # write all the augmented overlaid images and set their paths
             # in augmented_images list
             update_augmentation(
-                augment_dict, labels, location, aug, augmented_images)
+                augment_dict, labels, location, aug_fn.__name__,
+                augmented_images)
 
     return augmented_images
 

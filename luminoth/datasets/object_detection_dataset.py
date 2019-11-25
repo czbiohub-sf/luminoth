@@ -175,9 +175,6 @@ class ObjectDetectionDataset(BaseDataset):
 
             random_number = tf.random_uniform([], seed=self._seed)
             prob = tf.to_float(aug_config.pop('prob', default_prob))
-            ignore_class = aug_config.pop('ignore_class', -1)
-            ignore_class_tensor = tf.dtypes.cast(
-                ignore_class, tf.int32)
             apply_aug_strategy = tf.less(random_number, prob)
             augmented = aug_fn(image, bboxes, **aug_config)
 
@@ -192,10 +189,6 @@ class ObjectDetectionDataset(BaseDataset):
                     lambda: augmented.get('bboxes'),
                     lambda: bboxes
                 )
-                labels = tf.gather(bboxes, 4, axis=1)
-                if ignore_class != -1:
-                    condition = tf.not_equal(labels, ignore_class_tensor)
-                    bboxes = tf.boolean_mask(bboxes, condition)
             applied_data_augmentation.append({aug_type: apply_aug_strategy})
         return image, bboxes, applied_data_augmentation
 

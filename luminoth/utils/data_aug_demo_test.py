@@ -9,7 +9,7 @@ import tensorflow as tf
 
 from luminoth.utils.data_aug_demo import (
     update_augmentation, get_data_aug_images, mosaic_data_aug,
-    DATA_AUGMENTATION_STRATEGIES, TILE_SIZE)
+    DATA_AUGMENTATION_CONFIGS, TILE_SIZE)
 from luminoth.utils.split_train_val import LUMI_CSV_COLUMNS
 from luminoth.utils.test.gt_boxes import generate_gt_boxes
 
@@ -89,12 +89,12 @@ class DataAugDemoTest(tf.test.TestCase):
         bboxes_with_labels = np.array(bboxes_with_labels)
         augmented_images = get_data_aug_images(
             image, bboxes_with_labels, labels)
-        assert len(augmented_images) == len(DATA_AUGMENTATION_STRATEGIES)
+        assert len(augmented_images) == len(DATA_AUGMENTATION_CONFIGS)
 
     def testMosaicDataAugGray(self):
         # gray mosaic data augmentation test
         location = tempfile.mkdtemp()
-        num_images = len(DATA_AUGMENTATION_STRATEGIES)
+        num_images = len(DATA_AUGMENTATION_CONFIGS)
         image, bboxes = self._get_image_with_boxes(self.gray_image_shape, 3)
         image_save_path = os.path.join(location, "input.png")
         labels = ["bla", "foo", "bar"]
@@ -120,7 +120,7 @@ class DataAugDemoTest(tf.test.TestCase):
     def testMosaicDataAugColor(self):
         # Color mosaic data augmentation test
         location = tempfile.mkdtemp()
-        num_images = len(DATA_AUGMENTATION_STRATEGIES)
+        num_images = len(DATA_AUGMENTATION_CONFIGS)
         image, bboxes = self._get_image_with_boxes(self.color_image_shape, 3)
         image_save_path = os.path.join(location, "input.png")
         labels = ["bla", "foo", "bar"]

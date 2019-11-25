@@ -16,6 +16,20 @@ class FasterRCNNNetworkTest(tf.test.TestCase):
                 'debug': True,
                 'seed': None,
             },
+            'dataset': {
+                'dir': '',
+                'split': 'train',
+                'image_preprocessing': {
+                    'min_size': 600,
+                    'max_size': 1024,
+                },
+                'data_augmentation': {
+                    'flip':
+                        {
+                            'prob': 1
+                        }
+                }
+            },
             'model': {
                 'network': {
                     'num_classes': 20,
