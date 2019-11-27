@@ -65,7 +65,6 @@ class RCNN(snt.AbstractModule):
             self.loss_type = CROSS_ENTROPY
         elif loss_config.type == FOCAL:
             self.loss_type = FOCAL
-            self.focal_alpha = loss_config.get('focal_alpha')
             self.focal_gamma = loss_config.get('focal_gamma')
         # Debug mode makes the module return more detailed Tensors which can be
         # useful for debugging.
@@ -344,7 +343,6 @@ class RCNN(snt.AbstractModule):
                 cross_entropy_per_proposal = focal_loss(
                     cls_score_labeled,
                     tf.stop_gradient(cls_target_one_hot),
-                    self.focal_alpha,
                     self.focal_gamma)
 
             if self._debug:

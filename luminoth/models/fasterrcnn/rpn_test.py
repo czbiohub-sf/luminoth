@@ -312,7 +312,7 @@ class RPNTest(tf.test.TestCase):
         loss returns reasonable values in simple cases.
         """
         config = self.config
-        config['loss'] = {'type': 'focal'},
+        config['loss'] = {'type': 'focal'}
         model = RPN(
             self.num_anchors, config, debug=True
         )

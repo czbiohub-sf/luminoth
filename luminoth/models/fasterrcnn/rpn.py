@@ -62,7 +62,6 @@ class RPN(snt.AbstractModule):
             self.loss_type = CROSS_ENTROPY
         elif loss_config.type == FOCAL:
             self.loss_type = FOCAL
-            self.focal_alpha = loss_config.get('focal_alpha')
             self.focal_gamma = loss_config.get('focal_gamma')
 
         # We could use normal relu without any problems.
@@ -274,7 +273,7 @@ class RPN(snt.AbstractModule):
                         labels=cls_target, logits=cls_score)
             elif self.loss_type == FOCAL:
                 ce_per_anchor = focal_loss(
-                    cls_score, cls_target, self.focal_alpha, self.focal_gamma)
+                    cls_score, cls_target, self.focal_gamma)
             prediction_dict['cross_entropy_per_anchor'] = \
                 ce_per_anchor
 

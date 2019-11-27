@@ -15,6 +15,8 @@ def _logit(probability):
 class LossesTest(tf.test.TestCase):
     def setUp(self):
         tf.reset_default_graph()
+        self.all_zeros = [0., 0., 0., 0.]
+        self.all_ones = [1., 1., 1., 1.]
         self.random_prediction = [
             0.47450006, -0.80413032, -0.26595005, 0.17124325]
         self.random_target = [
@@ -46,77 +48,51 @@ class LossesTest(tf.test.TestCase):
                 })
             self.assertAlmostEqual(loss, 2, delta=0.4)
 
-    def test_focal_loss_ignore_positive_example_loss_via_alpha(self):
-
-        with tf.Session() as sess:
-
-            logits_tf = tf.constant([[[_logit(0.55)],
-                                      [_logit(0.52)],
-                                      [_logit(0.50)],
-                                      [_logit(0.48)],
-                                      [_logit(0.45)]]], tf.float32)
-            labels_tf = tf.constant([[[2],
-                                      [1],
-                                      [1],
-                                      [2],
-                                      [0]]], tf.float32)
-
-            loss = np.squeeze(sess.run(
-                focal_loss(
-                    prediction_tensor=logits_tf,
-                    target_tensor=labels_tf,
-                    gamma=2.0,
-                    alpha=0.0)))
-            print(loss)
-
-            # self.assertAllClose(loss[:3], [0., 0., 0.])
-
     def test_focal_loss_perfect_score(self):
+        logits_array = np.transpose(np.array([
+            [_logit(0.55), _logit(0.52), _logit(0.50), _logit(0.48),
+             _logit(0.45)],
+            [_logit(0.95), _logit(0.82), _logit(0.80), _logit(0.28),
+             _logit(0.35)]], dtype=np.float32))
+        labels_array = np.transpose(np.array([
+            [0, 0, 0, 1, 1], [1, 1, 1, 0, 0]], dtype=np.float32))
+        prediction_tensor = tf.placeholder(tf.float32)
+        target_tensor = tf.placeholder(tf.float32)
+        loss_tf = focal_loss(prediction_tensor, target_tensor)
 
         with tf.Session() as sess:
+            loss = sess.run(
+                loss_tf,
+                feed_dict={
+                    prediction_tensor: logits_array,
+                    target_tensor: labels_array
+                })
+            expected_loss = [
+                0.00022774, 0.00787424, 0.00892574, 0.03088996, 0.07966313]
 
-            logits_tf = tf.constant([[[_logit(0.55)],
-                                      [_logit(0.52)],
-                                      [_logit(0.50)],
-                                      [_logit(0.48)],
-                                      [_logit(0.45)]]], tf.float32)
-            labels_tf = tf.constant([[[1],
-                                      [1],
-                                      [1],
-                                      [0],
-                                      [3]]], tf.float32)
+            self.assertAllClose(loss, expected_loss)
 
-            loss = np.squeeze(sess.run(
-                focal_loss(
-                    prediction_tensor=logits_tf,
-                    target_tensor=labels_tf,
-                    gamma=2.0,
-                    alpha=0.0)))
-            print(loss)
+    def test_focal_loss_imperfect_score(self):
 
-            # self.assertAllClose(loss[:3], [0., 0., 0])
-
-    def test_focal_loss_ignore_negative_example_loss_via_alpha(self):
+        logits_array = np.transpose(np.array([
+            [_logit(0.55), _logit(0.52), _logit(0.50), _logit(0.48),
+             _logit(0.45)],
+            [_logit(0.95), _logit(0.82), _logit(0.80), _logit(0.28),
+             _logit(0.35)]], dtype=np.float32))
+        labels_array = np.transpose(np.array([
+            [1, 1, 1, 0, 0], [0, 0, 0, 1, 1]], dtype=np.float32))
+        prediction_tensor = tf.placeholder(tf.float32)
+        target_tensor = tf.placeholder(tf.float32)
+        loss_tf = focal_loss(prediction_tensor, target_tensor)
 
         with tf.Session() as sess:
+            loss = sess.run(
+                loss_tf,
+                feed_dict={
+                    prediction_tensor: logits_array,
+                    target_tensor: labels_array
+                })
+            expected_loss = [
+                2.4771614, 1.0766783, 1.0300404, 0.60194975, 0.33609733]
 
-            logits_tf = tf.constant([[[_logit(0.55)],
-                                      [_logit(0.52)],
-                                      [_logit(0.50)],
-                                      [_logit(0.48)],
-                                      [_logit(0.45)]]], tf.float32)
-            labels_tf = tf.constant([[[1],
-                                      [1],
-                                      [1],
-                                      [0],
-                                      [2]]], tf.float32)
-
-            loss = np.squeeze(sess.run(
-                focal_loss(
-                    prediction_tensor=logits_tf,
-                    target_tensor=labels_tf,
-                    gamma=2.0,
-                    alpha=1.0)))
-            print(loss)
-
-            # self.assertAllClose(loss[3:], [0., 0.])
+            self.assertAllClose(loss, expected_loss)

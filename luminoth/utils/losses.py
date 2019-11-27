@@ -36,38 +36,33 @@ def smooth_l1_loss(bbox_prediction, bbox_target, sigma=3.0):
     return bbox_loss
 
 
-def focal_loss(prediction_tensor, target_tensor, alpha=None, gamma=None):
+def focal_loss(prediction_tensor, target_tensor, gamma=None):
     """Compute the focal loss between `logits` and the golden `target` values.
     Focal loss = -(1-pt)^gamma * log(pt)
     where pt is the probability of being classified to the true class.
 
     Args:
         prediction_tensor: A float tensor of shape [num_anchors, num_classes]
-            representing per-label activations, typically a linear output.
+            representing per-label activations/logits,typically a linear output
             These activation energies are interpreted
             as unnormalized log probabilities
         target_tensor: A float tensor of shape [num_anchors, num_classes]
             representing one-hot encoded classification targets/labels
-        alpha: A float32 scalar multiplying
-            alpha to the loss from positive examples
-          and (1-alpha) to the loss from negative examples.
         gamma: A float32 scalar modulating
             loss from hard and easy examples.
 
     Returns:
     loss: A float32 Tensor of size
         [num_anchors]
-        representing normalized loss on the prediction map.
+        representing loss on the prediction map.
     """
-    if alpha is None:
-        alpha = 0.25
     if gamma is None:
         gamma = 2.0
     epsilon = 1e-9
-
     y_pred = tf.nn.softmax(prediction_tensor)  # [batch_size,num_classes]
 
-    loss = -alpha * target_tensor * \
+    loss = -target_tensor * \
         ((1 - y_pred) ** gamma) * \
         tf.math.log(y_pred + epsilon)
+    loss = tf.reduce_sum(loss, axis=1)
     return loss

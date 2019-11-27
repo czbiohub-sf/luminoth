@@ -38,7 +38,6 @@ class SSD(snt.AbstractModule):
             self.loss_type = CROSS_ENTROPY
         elif loss_config.type == FOCAL:
             self.loss_type = FOCAL
-            self.focal_alpha = loss_config.focal_alpha
             self.focal_gamma = loss_config.focal_gamma
         self._losses_collections = ['ssd_losses']
 
@@ -240,7 +239,7 @@ class SSD(snt.AbstractModule):
                         labels=cls_target_one_hot, logits=cls_pred)
             elif self.loss_type == FOCAL:
                 classification_loss_per_proposal = focal_loss(
-                    cls_pred, cls_target_one_hot)
+                    cls_pred, cls_target_one_hot, self.focal_gamma)
             # Second we need to calculate the smooth l1 loss between
             # `bbox_offsets` and `bbox_offsets_targets`.
             bbox_offsets = prediction_dict['loc_pred']
