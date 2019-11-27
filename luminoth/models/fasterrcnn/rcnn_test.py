@@ -52,6 +52,9 @@ class RCNNTest(tf.test.TestCase):
             },
             'l2_regularization_scale': 0.0005,
             'l1_sigma': 3.0,
+            'loss': {
+                'type': 'cross_entropy',
+            },
             'roi': {
                 'pooling_mode': 'crop',
                 'pooled_width': 7,
@@ -380,16 +383,17 @@ class RCNNTest(tf.test.TestCase):
 
                 bbox_offsets[i][class_place + j] = this_coord
                 bbox_offsets_target[i][j] = this_coord
+        feed_dict = {
+            cls_score_ph: cls_score,
+            cls_prob_ph: cls_prob,
+            cls_target_ph: cls_target,
+            bbox_offsets_ph: bbox_offsets,
+            bbox_offsets_target_ph: bbox_offsets_target,
+        }
         # Now get the loss dict using the values we just generated.
         loss_dict = self._run_net_with_feed_dict(
             loss_graph,
-            feed_dict={
-                cls_score_ph: cls_score,
-                cls_prob_ph: cls_prob,
-                cls_target_ph: cls_target,
-                bbox_offsets_ph: bbox_offsets,
-                bbox_offsets_target_ph: bbox_offsets_target,
-            }
+            feed_dict=feed_dict
         )
         # Assertions
         self.assertAlmostEqual(

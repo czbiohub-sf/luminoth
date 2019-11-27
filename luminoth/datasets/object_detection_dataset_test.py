@@ -61,7 +61,7 @@ class ObjectDetectionDatasetTest(tf.test.TestCase):
             {'flip': {'prob': 1}}]
 
         image_aug, bboxes_aug, aug = self._run_augment(config, image, bboxes)
-        self.assertEqual(len(bboxes_aug), 3)
+        self.assertEqual(len(bboxes_aug), 4)
         self.assertEqual(aug[0], {'flip': False})
         self.assertEqual(aug[1], {'flip': True})
 
@@ -70,7 +70,7 @@ class ObjectDetectionDatasetTest(tf.test.TestCase):
             {'flip': {'prob': 0}}]
 
         image_aug, bboxes_aug, aug = self._run_augment(config, image, bboxes)
-        self.assertEqual(len(bboxes_aug), 1)
+        self.assertEqual(len(bboxes_aug), 4)
         self.assertEqual(aug[0], {'flip': True})
         self.assertEqual(aug[1], {'flip': False})
 
@@ -109,7 +109,7 @@ class ObjectDetectionDatasetTest(tf.test.TestCase):
             {'rotate': {'prob': 0}}]
 
         image_aug, bboxes_aug, aug = self._run_augment(config, image, bboxes)
-        self.assertEqual(len(bboxes_aug), 1)
+        self.assertEqual(len(bboxes_aug), 4)
         self.assertEqual(aug[0], {'rotate': True})
         self.assertEqual(aug[1], {'rotate': False})
 
@@ -129,7 +129,7 @@ class ObjectDetectionDatasetTest(tf.test.TestCase):
             {'gaussian': {'prob': 0}}]
 
         image_aug, bboxes_aug, aug = self._run_augment(config, image, bboxes)
-        self.assertEqual(len(bboxes_aug), 1)
+        self.assertEqual(len(bboxes_aug), 4)
         self.assertEqual(aug[0], {'gaussian': True})
         self.assertEqual(aug[1], {'gaussian': False})
 

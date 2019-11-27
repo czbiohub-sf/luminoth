@@ -101,7 +101,7 @@ class ObjectDetectionDataset(BaseDataset):
         )
 
         # Decode image
-        image_raw = tf.image.decode_jpeg(
+        image_raw = tf.image.decode_image(
             context_example['image_raw'], channels=3
         )
         image = tf.cast(image_raw, tf.float32)

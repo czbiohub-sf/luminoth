@@ -153,6 +153,12 @@ model:
   loss:
     # Loss weights for calculating the total loss
     localization_loss_weight: 1.0
+    # Classification loss for object as one of the classes
+    _replace: True
+    type: cross_entropy
+    # TODO PV Also available but not tested in production
+    #   _replace: True
+    #   type: focal
 
   anchors:
     # Number of anchors per point in each feature map. This anchors must be in order

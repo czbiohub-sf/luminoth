@@ -198,14 +198,16 @@ model:
     activation_function: relu6
     l2_regularization_scale: 0.0005  # Disable using 0.
     # Sigma for the smooth L1 regression loss.
+    l1_sigma: 3.0
+    # Classification loss for object as background vs foreground
     loss:
       _replace: True
-      type: smooth_l1
-      l1_sigma: 3.0
+      type: cross_entropy
     # TODO PV Also available but not tested
     # loss:
     #   _replace: True
     #   type: focal
+    # Use average pooling before the last fully-connected layer.
     # Number of filters for the RPN conv layer.
     num_channels: 512
     # Kernel shape for the RPN conv layer.
@@ -266,7 +268,15 @@ model:
     activation_function: relu6
     l2_regularization_scale: 0.0005
     # Sigma for the smooth L1 regression loss.
-    l1_sigma: 1.0
+    l1_sigma: 3.0
+    # Classification loss for object as background vs foreground
+    loss:
+      _replace: True
+      type: cross_entropy
+    # TODO PV Also available but not tested
+    # loss:
+    #   _replace: True
+    #   type: focal
     # Use average pooling before the last fully-connected layer.
     use_mean: True
     # Variances to normalize encoded targets with.

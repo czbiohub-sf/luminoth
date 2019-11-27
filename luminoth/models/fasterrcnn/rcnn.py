@@ -4,7 +4,8 @@ import tensorflow as tf
 from luminoth.models.fasterrcnn.rcnn_proposal import RCNNProposal
 from luminoth.models.fasterrcnn.rcnn_target import RCNNTarget
 from luminoth.models.fasterrcnn.roi_pool import ROIPoolingLayer
-from luminoth.utils.losses import smooth_l1_loss
+from luminoth.utils.losses import (
+    smooth_l1_loss, focal_loss, CROSS_ENTROPY, FOCAL)
 from luminoth.utils.vars import (
     get_initializer, layer_summaries, variable_summaries,
     get_activation_function
@@ -59,6 +60,13 @@ class RCNN(snt.AbstractModule):
         self.regularizer = tf.contrib.layers.l2_regularizer(
             scale=config.l2_regularization_scale)
         self._l1_sigma = config.l1_sigma
+        loss_config = config.loss
+        if loss_config.type == CROSS_ENTROPY:
+            self.loss_type = CROSS_ENTROPY
+        elif loss_config.type == FOCAL:
+            self.loss_type = FOCAL
+            self.focal_alpha = loss_config.get('focal_alpha')
+            self.focal_gamma = loss_config.get('focal_gamma')
         # Debug mode makes the module return more detailed Tensors which can be
         # useful for debugging.
         self._debug = debug
@@ -322,17 +330,26 @@ class RCNN(snt.AbstractModule):
                 name='cls_target_one_hot'
             )
 
-            # We get cross entropy loss of each proposal.
-            cross_entropy_per_proposal = (
-                tf.nn.softmax_cross_entropy_with_logits_v2(
-                    labels=tf.stop_gradient(cls_target_one_hot),
-                    logits=cls_score_labeled
+            if self.loss_type == CROSS_ENTROPY:
+
+                # We get cross entropy loss of each proposal.
+                cross_entropy_per_proposal = (
+                    tf.nn.softmax_cross_entropy_with_logits_v2(
+                        labels=tf.stop_gradient(cls_target_one_hot),
+                        logits=cls_score_labeled
+                    )
                 )
-            )
+            elif self.loss_type == FOCAL:
+
+                cross_entropy_per_proposal = focal_loss(
+                    cls_score_labeled,
+                    tf.stop_gradient(cls_target_one_hot),
+                    self.focal_alpha,
+                    self.focal_gamma)
 
             if self._debug:
                 prediction_dict['_debug']['losses'] = {}
-                # Save the cross entropy per proposal to be able to
+                # Save the classification loss per proposal to be able to
                 # visualize proposals with high and low error.
                 prediction_dict['_debug']['losses'][
                     'cross_entropy_per_proposal'
@@ -404,6 +421,7 @@ class RCNN(snt.AbstractModule):
                 )
 
             return {
-                'rcnn_cls_loss': tf.reduce_mean(cross_entropy_per_proposal),
+                'rcnn_cls_loss': tf.reduce_mean(
+                    cross_entropy_per_proposal),
                 'rcnn_reg_loss': tf.reduce_mean(reg_loss_per_proposal),
             }
