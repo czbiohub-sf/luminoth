@@ -39,8 +39,9 @@ INSTALL_REQUIRES = [
     'pillow==5.1.0',
     'lxml==4.3.5',
     'requests==2.18.4',
-    'pandas>=0.19.0',
-    'numpy>=1.11.2',
+    'pandas>=0.19.2;python_version>="3.5"',
+    'pandas<0.21;python_version<"3.5"'
+    'numpy>=1.14.5',
     'scikit-learn==0.19.2',
     'scikit-video==1.1.10',
     'Flask>=0.12',
