@@ -21,6 +21,8 @@ FONT = cv2.FONT_HERSHEY_SIMPLEX
 FONT_SCALE = 1
 FONT_COLOR = (255, 0, 255)
 LINE_TYPE = 2
+
+# TODO PV Move below config to a config file that can be given as input for cli
 RANDOM_DISTORT_CONFIG = EasyDict(
     {'brightness': {
         'max_delta': 0.3,

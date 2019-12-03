@@ -270,12 +270,15 @@ class RPN(snt.AbstractModule):
 
             # Equivalent to log loss
             if self.loss_type == CROSS_ENTROPY:
+                # TODO PV make this a loss function in losses.py
                 ce_per_anchor = \
                     tf.nn.softmax_cross_entropy_with_logits_v2(
                         labels=cls_target, logits=cls_score)
             elif self.loss_type == FOCAL:
                 ce_per_anchor = focal_loss(
                     cls_score, cls_target, self.focal_gamma)
+            # TODO PV Rename cross entropy per anchor to reflect focal loss is
+            # calculated
             prediction_dict['cross_entropy_per_anchor'] = \
                 ce_per_anchor
 
@@ -318,7 +321,6 @@ class RPN(snt.AbstractModule):
                 'foreground_samples', tf.shape(rpn_bbox_target)[0], ['rpn'])
 
             return {
-                'rpn_cls_loss': tf.reduce_mean(
-                    ce_per_anchor),
+                'rpn_cls_loss': tf.reduce_mean(ce_per_anchor),
                 'rpn_reg_loss': tf.reduce_mean(reg_loss_per_anchor),
             }

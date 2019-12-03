@@ -13,7 +13,7 @@ The ``lumi confusion_matrix`` CLI tool provides the following options related to
 
 * ``--predicted_csv``: Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label,prob and several rows corresponding to the predicted bounding box objects
 
-* ``--output_txt``: Output txt file containing confusion matrix, normalized confusion matrxi, precision, recall per class.
+* ``--output_txt``: Output txt file containing confusion matrix, normalized confusion matrix, precision, recall per class, defaults to None which means it prints the results to the terminal/stdout
 
 * ``--classes_json``: Path to a json file containing list of class label for the objects
 

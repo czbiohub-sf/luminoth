@@ -78,6 +78,7 @@ class ObjectDetectionDataset(BaseDataset):
         # Resize images (if needed)
         image, bboxes, applied_augmentations = self._augment(image, bboxes)
         image, bboxes, scale_factor = self._resize_image(image, bboxes)
+
         return image, bboxes, {
             'scale_factor': scale_factor,
             'applied_augmentations': applied_augmentations,
@@ -104,7 +105,9 @@ class ObjectDetectionDataset(BaseDataset):
         image_raw = tf.image.decode_image(
             context_example['image_raw'], channels=3
         )
+
         image = tf.cast(image_raw, tf.float32)
+
         height = tf.cast(context_example['height'], tf.int32)
         width = tf.cast(context_example['width'], tf.int32)
         image_shape = tf.stack([height, width, 3])
@@ -120,7 +123,9 @@ class ObjectDetectionDataset(BaseDataset):
         bboxes = tf.stack([xmin, ymin, xmax, ymax, label], axis=1)
 
         image, bboxes, preprocessing_details = self.preprocess(image, bboxes)
+
         filename = tf.cast(context_example['filename'], tf.string)
+
         # TODO: Send additional metadata through the queue (scale_factor,
         # applied_augmentations)
 
@@ -176,6 +181,7 @@ class ObjectDetectionDataset(BaseDataset):
             random_number = tf.random_uniform([], seed=self._seed)
             prob = tf.to_float(aug_config.pop('prob', default_prob))
             apply_aug_strategy = tf.less(random_number, prob)
+
             augmented = aug_fn(image, bboxes, **aug_config)
 
             image = tf.cond(
@@ -190,6 +196,7 @@ class ObjectDetectionDataset(BaseDataset):
                     lambda: bboxes
                 )
             applied_data_augmentation.append({aug_type: apply_aug_strategy})
+
         return image, bboxes, applied_data_augmentation
 
     def _resize_image(self, image, bboxes=None):
@@ -227,7 +234,6 @@ class ObjectDetectionDataset(BaseDataset):
         return resized['image'], resized.get('bboxes'), resized['scale_factor']
 
     def _sparse_to_tensor(self, sparse_tensor, dtype=tf.int32, axis=[1]):
-        squeeze_input = tf.cast(
-            tf.sparse_tensor_to_dense(sparse_tensor), dtype)
-        squeeze_output = tf.squeeze(squeeze_input, axis=axis)
-        return squeeze_output
+        return tf.squeeze(
+            tf.cast(tf.sparse_tensor_to_dense(sparse_tensor), dtype), axis=axis
+        )

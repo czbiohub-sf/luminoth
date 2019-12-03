@@ -106,6 +106,8 @@ dataset:
     # augmentation would look like with default parameters
     # If you resize to too small images, you may end up not having any anchors
     # that aren't partially outside the image.
+    # To understand and set your own params below, go to luminoth/utils/image.py and read up
+    # on docstrings to find sane size params etc for your case of image sizes
     # - resize:
     #     min_size: 600
     #     max_size: 1024
@@ -156,7 +158,7 @@ model:
     # Classification loss for object as one of the classes
     _replace: True
     type: cross_entropy
-    # TODO PV Also available but not tested in production
+    # TODO PV Also available but not tested in production for SSD, Faster RCNN Focal loss functionality tested
     #   _replace: True
     #   type: focal
 

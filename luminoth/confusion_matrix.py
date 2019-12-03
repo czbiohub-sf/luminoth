@@ -62,31 +62,33 @@ def get_matched_gt_predict(
     confidence_threshold
 
     Args:
-        gt_csv: Absolute path to csv
-            containing image_id,xmin,ymin,xmax,ymax,label"
+        gt_csv: str Absolute path to csv
+            containing image_id,xmin,ymin,xmax,ymax,label as header
             and several rows corresponding to the groundtruth
-            bounding box objects
-        predicted_csv: Absolute path to csv
+            bounding boxes, labels, image in which they are present
+        predicted_csv: str Absolute path to csv
             containing image_id,xmin,ymin,xmax,ymax,label,prob"
             and several rows corresponding to the predicted
-            bounding box objects
-        labels: list of names of the objects detected
+            bounding boxes, labels, image in which they are present
+        labels: list of unqiue names of the objects present
         iou_threshold: float, IOU threshold below which the
-            bounding box is invalid
+            match of the predicted bounding box with the
+            ground truth box is invalid
         confidence_threshold: flot Confidence score threshold below which
             bounding box detection is of low confidence and
-            is ignored while considering true positives for a class
+            is ignored while considering true positives in predicted data
 
     Returns:
-        gt_classes: List of all the annotations/labels in groundtruth
-        predicted_classes: List of all the annotation/labels in predicted
-        gt_matched_classes: List of bounding box's annotations that
-            match the predicted with
-            greater than iou_threshold and confidence_threshold
-        predicted_matched_classes: List of bounding box's annotations
-            that match the groundtruth with
-            greater than iou_threshold and confidence_threshold
+        gt_classes: list of all the annotations/labels in groundtruth
+        predicted_classes: list of all the annotation/labels in predicted
+        gt_matched_classes: list of gt bounding boxs annotations that
+            match the predicted of greater than confidence_threshold with
+            greater than iou_threshold
+        predicted_matched_classes: list of predicted bounding box annotations
+            greater than confidence_threshold annotations
+            that match the groundtruth with greater than iou_threshold
     """
+    # Collect the bboxes, labels in 2 lists for ground truth
     df = pd.read_csv(gt_csv)
     gt_boxes = []
     gt_classes = []
@@ -94,6 +96,8 @@ def get_matched_gt_predict(
         gt_boxes.append([row.xmin, row.ymin, row.xmax, row.ymax])
         gt_classes.append(row.label)
 
+    # Collect the bboxes, labels in 2 lists for predicted only if their
+    # prob is greater than confidence_threshold
     df = pd.read_csv(predicted_csv)
     predicted_boxes = []
     predicted_classes = []
@@ -104,6 +108,7 @@ def get_matched_gt_predict(
             predicted_classes.append(row.label)
             predicted_scores.append(row.prob)
 
+    # Find IOU Matches
     matches = []
 
     for i in range(len(gt_boxes)):
@@ -115,6 +120,7 @@ def get_matched_gt_predict(
             if iou > iou_threshold:
                 matches.append([i, j, iou])
 
+    # Remove redundant IOU matches with different labels
     matches = np.array(matches)
     if matches.shape[0] > 0:
         # Sort list of matches by descending IOU
@@ -134,8 +140,10 @@ def get_matched_gt_predict(
 
     matches_list = matches.tolist()
 
+    # Get the list of gt classses that matched with prediction
     gt_matched_classes = [
         gt_classes[int(match[0])] for match in matches_list]
+    # Get the list of predicted classses that matched with ground truth
     predicted_matched_classes = [
         predicted_classes[int(match[1])] for match in matches_list]
     return (
@@ -156,46 +164,53 @@ def append_unmatched_gt_predict(
     Returns confusion matrix of shape (len(labels) + 2, len(labels) + 2)
 
     Args:
-        confusion_matrix: numpy array of (labels, labels) shape,
-            includes total groundtruth, predicted pers
-            class in the last row, column
-            respectively
-        labels: list of names of the objects detected
-        gt_matched_classes: List of annotations that match the predicted with
-            greater than iou_threshold and confidence_threshold
-        predicted_matched_classes: List of annotations that match the
-            groundtruth with
-            greater than iou_threshold and confidence_threshold
-        gt_classes: List of all the annotations/labels in groundtruth
-        predicted_classes: List of all the annotation/labels in predicted
+        confusion_matrix: numpy array of (labels, labels) shape
+        labels: list of unique names of the objects detected
+        gt_matched_classes: list of gt bounding boxs annotations that
+            match the predicted of greater than confidence_threshold with
+            greater than iou_threshold
+        predicted_matched_classes: list of predicted bounding box annotations
+            greater than confidence_threshold annotations
+            that match the groundtruth with greater than iou_threshold
+        gt_classes: list of all the annotations/labels in groundtruth
+        predicted_classes: list of all the annotation/labels in predicted
 
     Returns:
         complete_confusion_matrix: numpy array of
         (len(labels) + 2, len(labels) + 2) shape,
         includes total groundtruth, predicted per class in the last row, column
-        respectively
+        and umatched groundtruth, unmatched predicted per class
+        in the last row - 1, column -1 respectively. Look at the text in the
+        beginning of the program to understand by example
     """
+
+    # Allocate & set first labels-1,labels-1 row, colums as confusion matrix
     number_classes = len(labels)
     complete_confusion_matrix = np.zeros(
         (number_classes + 2, number_classes + 2), dtype=np.uint32)
     complete_confusion_matrix[
         :number_classes, :number_classes] = confusion_matrix
+
+    # Set labels,labels + 1 rows,columns in the confusion matrix for each class
     for i, label in enumerate(sorted(labels)):
         predicteds_per_label = predicted_classes.count(label)
         matched_predicteds_per_label = predicted_matched_classes.count(label)
 
-        complete_confusion_matrix[i, number_classes] = \
-            predicteds_per_label - matched_predicteds_per_label
-
         gts_per_label = gt_classes.count(label)
         matched_gts_per_label = gt_matched_classes.count(label)
 
+        # Number of unmatched predicted objects are set at labels column
+        complete_confusion_matrix[i, number_classes] = \
+            predicteds_per_label - matched_predicteds_per_label
+        # Number of unmatched groundtruth objects are set at labels row
         complete_confusion_matrix[number_classes, i] = \
             gts_per_label - matched_gts_per_label
 
+        # Number of total predicted objects are set at labels + 1 column
+        complete_confusion_matrix[i, number_classes + 1] = predicteds_per_label
+        # Number of total groundtruth objects are set at labels + 1 row
         complete_confusion_matrix[number_classes + 1, i] = gts_per_label
 
-        complete_confusion_matrix[i, number_classes + 1] = predicteds_per_label
     return complete_confusion_matrix
 
 
@@ -209,25 +224,29 @@ def get_confusion_matrix(
     Returns confusion matrix of shape (len(labels) + 2, len(labels) + 2)
 
     Args:
-        gt_csv: Absolute path to csv
-            containing image_id,xmin,ymin,xmax,ymax,label"
+        gt_csv: str Absolute path to csv
+            containing image_id,xmin,ymin,xmax,ymax,label as header
             and several rows corresponding to the groundtruth
-            bounding box objects
-        predicted_csv: Absolute path to csv
+            bounding boxes, labels, image in which they are present
+        predicted_csv: str Absolute path to csv
             containing image_id,xmin,ymin,xmax,ymax,label,prob"
             and several rows corresponding to the predicted
-            bounding box objects
-        labels: list of names of the objects detected
-        iou_threshold: IOU threshold below which the bounding box is invalid
-        confidence_threshold: Confidence score threshold below which
+            bounding boxes, labels, image in which they are present
+        labels: list of unqiue names of the objects present
+        iou_threshold: float, IOU threshold below which the
+            match of the predicted bounding box with the
+            ground truth box is invalid
+        confidence_threshold: flot Confidence score threshold below which
             bounding box detection is of low confidence and
-            is ignored while considering true positives for a class
+            is ignored while considering true positives in predicted data
 
     Returns:
-        confusion_matrix: numpy array of (len(labels) + 2, len(labels) + 2)
-        shape,
+        complete_confusion_matrix: numpy array of
+        (len(labels) + 2, len(labels) + 2) shape,
         includes total groundtruth, predicted per class in the last row, column
-        respectively
+        and umatched groundtruth, unmatched predicted per class
+        in the last row - 1, column -1 respectively. Look at the text in the
+        beginning of the program to understand by example
     """
     (gt_classes,
      predicted_classes,
@@ -263,15 +282,16 @@ def print_cm(confusion_matrix, labels, confidence_threshold):
     Prints confusion matrix
 
     Args:
-        confusion_matrix: numpy array
-        labels: list of names of the objects detected
+        confusion_matrix: numpy array of symmetrical (x, x) shape
+        labels: list of names of the symmetrical headers for rows, columns
         confidence_threshold: Confidence score threshold below which
             bounding box detection is of low confidence and
             is ignored while considering true positives for a class
 
     Returns:
         Prints confusion matrix with class headers, groundtruth, predicted
-        headers
+        headers. Look at the text in the
+        beginning of the program to understand by example
     """
     num_classes = len(labels)
     data_type = confusion_matrix.dtype
@@ -316,30 +336,34 @@ def print_precision_recall(
     ground truth but not detected in predicted and viceversa
 
     Args:
-        gt_csv: Absolute path to csv
-            containing image_id,xmin,ymin,xmax,ymax,label"
-            and several rows corresponding to the
-            groundtruth bounding box objects
-        predicted_csv: Absolute path to csv
+        gt_csv: str Absolute path to csv
+            containing image_id,xmin,ymin,xmax,ymax,label as header
+            and several rows corresponding to the groundtruth
+            bounding boxes, labels, image in which they are present
+        predicted_csv: str Absolute path to csv
             containing image_id,xmin,ymin,xmax,ymax,label,prob"
-            and several rows corresponding
-            to the predicted bounding box objects
-        labels: list of names of the objects detected
-        iou_threshold: float IOU threshold below which
-            the bounding box is invalid
-        confidence_threshold: float Confidence score threshold below which
+            and several rows corresponding to the predicted
+            bounding boxes, labels, image in which they are present
+        labels: list of unqiue names of the objects present
+        iou_threshold: float, IOU threshold below which the
+            match of the predicted bounding box with the
+            ground truth box is invalid
+        confidence_threshold: flot Confidence score threshold below which
             bounding box detection is of low confidence and
-            is ignored while considering true positives for a class
+            is ignored while considering true positives in predicted data
 
     Returns:
         Prints precision, recall, f1_score, support per class (number of
         elements in each class in groundtruth that were matched with
         prediction)
     """
+    # TODO PV Calculate actual precision, recall, & remove the below note
     print(
         "Note: Precision and recall here doesnt include the bounding boxes "
         "that were present in ground truth but not detected in predicted "
         "and viceversa")
+
+    # Getting list of matched GT, Predicted classes
     (gt_classes,
      predicted_classes,
      gt_matched_classes,
@@ -349,6 +373,7 @@ def print_precision_recall(
         labels,
         iou_threshold,
         confidence_threshold)
+    # Using sklearn to get precision, recall etc
     print(sklearn.metrics.classification_report(
         gt_matched_classes,
         predicted_matched_classes))
@@ -357,8 +382,8 @@ def print_precision_recall(
 def normalize_confusion_matrix(confusion_matrix):
     """
     Returns normalized confusion matrix of shape (len(labels), len(labels))
-    after normalizing with the support (number of elements in each class in all
-    groundtruth, includes both matched and unmatched)
+    after normalizing with the total number of elements in each class in
+    groundtruth, includes both matched and unmatched
 
     Args:
         confusion_matrix: numpy array of (len(labels) + 2, len(labels) + 2)
@@ -392,28 +417,29 @@ def display(
         output_path):
     """
     Save and display confusion matrix, precision, recall scores of each of
-    the labels of objects detected.
+    the unique labels
 
     Args:
-        gt_csv: Absolute path to csv
-            containing image_id,xmin,ymin,xmax,ymax,label"
-            and several rows corresponding to the
-            groundtruth bounding box objects
-        predicted_csv: Absolute path to csv
+        gt_csv: str Absolute path to csv
+            containing image_id,xmin,ymin,xmax,ymax,label as header
+            and several rows corresponding to the groundtruth
+            bounding boxes, labels, image in which they are present
+        predicted_csv: str Absolute path to csv
             containing image_id,xmin,ymin,xmax,ymax,label,prob"
-            and several rows corresponding
-            to the predicted bounding box objects
-        labels: list of names of the objects detected
-        iou_threshold: float IOU threshold below which
-            the bounding box is invalid
-        confidence_threshold: float Confidence score threshold below which
+            and several rows corresponding to the predicted
+            bounding boxes, labels, image in which they are present
+        labels: list of unqiue names of the objects present
+        iou_threshold: float, IOU threshold below which the
+            match of the predicted bounding box with the
+            ground truth box is invalid
+        confidence_threshold: flot Confidence score threshold below which
             bounding box detection is of low confidence and
-            is ignored while considering true positives for a class
-        output_path: Redirect stdout to file in path
+            is ignored while considering true positives in predicted data
 
     Returns:
-        Prints precision, recall, f1_score, support per class, confusion matrix
-        normalized confusion matrix either to stdout or to a text file as
+        Prints confusion matrix, normalized confusion matrix
+        precision, recall, f1_score, support per class,
+        either to stdout or to a text file as
         specified in output_path
     """
     # Redirect printing output to
@@ -466,7 +492,7 @@ def confusion_matrix(
         iou_threshold,
         confidence_threshold,
         classes_json):
-    # Attempt to get class names, if available.
+    # Read class labels as a list
     with open(classes_json, "r") as f:
         class_labels = json.load(f)
     display(

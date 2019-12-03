@@ -549,6 +549,8 @@ class FasterRCNNNetworkTest(tf.test.TestCase):
             'rcnn_cls_loss': 114.66851,
             'rcnn_reg_loss': 5.030902
         }
+
+        # Test result loss comparable with expected loss within a tolerance
         tol = 1e-3
         for loss in loss_random:
             assert (
@@ -587,8 +589,9 @@ class FasterRCNNNetworkTest(tf.test.TestCase):
             'rcnn_cls_loss': 20.723267,
             'rcnn_reg_loss': 5.030902
         }
-        tol = 1e-3
 
+        # Test result loss comparable with expected loss within a tolerance
+        tol = 1e-3
         for loss in loss_random:
             assert (
                 loss_random_compare[loss] - tol < loss_random[loss]
@@ -626,8 +629,9 @@ class FasterRCNNNetworkTest(tf.test.TestCase):
             'rcnn_cls_loss': 114.66851,
             'rcnn_reg_loss': 5.030902
         }
-        tol = 1e-3
 
+        # Test result loss comparable with expected loss within a tolerance
+        tol = 1e-3
         for loss in loss_random:
             assert (
                 loss_random_compare[loss] - tol < loss_random[loss]
@@ -664,6 +668,8 @@ class FasterRCNNNetworkTest(tf.test.TestCase):
             'rcnn_cls_loss': 20.723267,
             'rcnn_reg_loss': 5.030902
         }
+
+        # Test result loss comparable with expected loss within a tolerance
         tol = 1e-3
         for loss in loss_random:
             assert (

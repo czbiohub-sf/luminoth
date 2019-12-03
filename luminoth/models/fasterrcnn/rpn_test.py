@@ -266,8 +266,8 @@ class RPNTest(tf.test.TestCase):
         )
 
     def testCEL1Loss(self):
-        """Tests that smooth l1 and cross entropy
-        loss returns reasonable values in simple cases.
+        """Tests that cross entropy & smooth l1 for classification, regression
+        loss respectively returns reasonable values in simple cases.
         """
         model = RPN(
             self.num_anchors, self.config, debug=True
@@ -308,8 +308,8 @@ class RPNTest(tf.test.TestCase):
             self.assertAllClose(tuple(loss_dict.values()), (0, 0))
 
     def testFocalL1Loss(self):
-        """Tests that smooth l1 and focal
-        loss returns reasonable values in simple cases.
+        """Tests that focal & smooth l1 for classification, regression
+        loss respectively returns reasonable values in simple cases.
         """
         config = self.config
         config['loss'] = {'type': 'focal'}

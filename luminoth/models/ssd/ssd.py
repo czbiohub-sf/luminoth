@@ -39,6 +39,8 @@ class SSD(snt.AbstractModule):
         elif loss_config.type == FOCAL:
             self.loss_type = FOCAL
             self.focal_gamma = loss_config.focal_gamma
+        tf.logging.info(
+            "Classification loss type in SSD is {}".format(self.loss_type))
         self._losses_collections = ['ssd_losses']
 
     def _build(self, image, gt_boxes=None, is_training=False):

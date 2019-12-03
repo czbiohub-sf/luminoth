@@ -13,6 +13,8 @@ class ConfusionMatrixTest(tf.test.TestCase):
     """Tests for confusion_matrix
     """
     def setUp(self):
+
+        # Set up common input parameters, expected results
         self.tempfiles_to_delete = []
         self.iou_threshold = 0.5
         self.confidence_threshold = 0.9
@@ -40,11 +42,14 @@ class ConfusionMatrixTest(tf.test.TestCase):
         self.expected_predicted_classes = predicted_bboxes[:, 4]
         self.expected_gt_matched_classes = [0, 2, 1, 2]
         self.expected_predicted_matched_classes = [0, 2, 2, 2]
+
         self.gt_csv = self.get_test_data(
             gt_bboxes, self.expected_gt_classes)
         self.predicted_csv = self.get_test_data(
             predicted_bboxes, self.expected_predicted_classes)
+
         self.labels = [0, 1, 2]
+
         self.expected_cm = np.array(([
             [1, 0, 0, 0, 1],
             [0, 0, 1, 3, 3],
@@ -83,7 +88,9 @@ class ConfusionMatrixTest(tf.test.TestCase):
             cols = ['xmin', 'xmax', 'ymin', 'ymax', 'label']
             df[cols] = df[cols].applymap(np.int64)
         df.to_csv(csv)
+
         self.tempfiles_to_delete.append(csv)
+
         return csv
 
     def testGetMatchedGTPredict(self):
