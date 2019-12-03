@@ -372,8 +372,8 @@ def normalize_confusion_matrix(confusion_matrix):
 
     total_gt = confusion_matrix[-1, :-2]
     confusion_matrix = confusion_matrix[:-2, :-2]
-    confusion_matrix = confusion_matrix.astype(np.float32)
-    total_gt = total_gt.astype(np.float32)
+    confusion_matrix = confusion_matrix.astype(np.float64)
+    total_gt = total_gt.astype(np.float64)
     normalized_confusion_matrix = confusion_matrix / total_gt
     assert all(
         i <= 1.0 for i in normalized_confusion_matrix.flatten().tolist()
