@@ -30,6 +30,7 @@ def adjust_bboxes(bboxes, old_height, old_width, new_height, new_width):
     x_max = tf.to_int32(x_max * new_width)
     y_max = tf.to_int32(y_max * new_height)
     label = tf.to_int32(label)  # Cast back to int.
+
     # Concat points and label to return a [num_bboxes, 5] tensor.
     return tf.stack([x_min, y_min, x_max, y_max, label], axis=1)
 
@@ -62,6 +63,7 @@ def resize_image(image, bboxes=None, min_size=None, max_size=None):
     image_shape = tf.to_float(tf.shape(image))
     height = image_shape[0]
     width = image_shape[1]
+
     if min_size is not None:
         # We calculate the upscale factor, the rate we need to use to end up
         # with an image with it's lowest dimension at least `image_min_size`.
@@ -93,6 +95,7 @@ def resize_image(image, bboxes=None, min_size=None, max_size=None):
         image, tf.stack(tf.to_int32([new_height, new_width])),
         method=tf.image.ResizeMethod.BILINEAR
     )
+
     if bboxes is not None:
         bboxes = adjust_bboxes(
             bboxes,
@@ -112,6 +115,7 @@ def resize_image(image, bboxes=None, min_size=None, max_size=None):
 
 
 def resize_image_fixed(image, new_height, new_width, bboxes=None):
+
     image_shape = tf.to_float(tf.shape(image))
     height = image_shape[0]
     width = image_shape[1]
@@ -362,6 +366,7 @@ def flip_image(image, bboxes=None, left_right=True, up_down=False):
     return_dict = {'image': image}
     if bboxes is not None:
         return_dict['bboxes'] = bboxes
+
     return return_dict
 
 
@@ -624,9 +629,9 @@ def _rot90_boxes(boxes, image_shape):
     Returns:
         Rotated boxes.
     """
+    boxes = tf.to_float(boxes)
     height = image_shape[0]
     width = image_shape[1]
-    boxes = tf.to_float(boxes)
 
     x_min, y_min, x_max, y_max, label = tf.unstack(boxes, axis=1)
     normalized_x_min = x_min / width
@@ -672,6 +677,7 @@ def rot90(image, bboxes=None):
     return_dict = {'image': image}
     if bboxes is not None:
         return_dict['bboxes'] = rotated_bboxes
+
     return return_dict
 
 
