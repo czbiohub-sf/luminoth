@@ -293,7 +293,7 @@ def print_cm(confusion_matrix, labels, confidence_threshold):
             (num_classes) / 2) else " " * 12
         content += "[%*s] " % (length_name, labels[i])
         for j in range(num_classes):
-            if data_type == np.float:
+            if data_type == np.dtype(float).type:
                 content += "%*.3f " % (length_name + 2, confusion_matrix[i, j])
             else:
                 content += "%*.d " % (length_name + 2, confusion_matrix[i, j])
