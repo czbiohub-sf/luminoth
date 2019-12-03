@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-from luminoth.utils.mosaic import assemble_mosaic
+from luminoth.utils.mosaic import assemble_mosaic, _set_fill_value
 from luminoth.utils.overlay_bbs import overlay_bb_labels
 from luminoth.utils.split_train_val import LUMI_CSV_COLUMNS
 from luminoth.utils.image import (
@@ -17,7 +17,6 @@ from luminoth.utils.image import (
     rot90, random_patch_gaussian)
 
 TILE_SIZE = [256, 256]
-FILL_VALUE = 128
 FONT = cv2.FONT_HERSHEY_SIMPLEX
 FONT_SCALE = 1
 FONT_COLOR = (255, 0, 255)
@@ -211,7 +210,7 @@ def mosaic_data_aug(
     bboxes = np.array(bboxes, dtype=np.int32)
     augmented_images = get_data_aug_images(image, bboxes, labels)
     mosaiced_image = assemble_mosaic(
-        augmented_images, TILE_SIZE, int(fill_value))
+        augmented_images, TILE_SIZE, _set_fill_value(image, fill_value))
     shape = mosaiced_image.shape
     cv2.imwrite(output_png, mosaiced_image)
 
@@ -223,7 +222,7 @@ def mosaic_data_aug(
 @click.option("--input_image_format", help="Input image format", required=True, type=str) # noqa
 @click.option("--csv_path", help="Csv containing image_id,xmin,xmax,ymin,ymax,label.Bounding boxes in the input png to augment", required=True, type=str) # noqa
 @click.option("--image_path_column", help="Name of the image path column, it is often image_id for lumi output, or could be image_path if saved outside of lumi", required=True, type=str) # noqa
-@click.option("--fill_value", help="fill the tiles in mosaic image that are not filled by the small tiles with this value", required=False, type=int, default=FILL_VALUE) # noqa
+@click.option("--fill_value", help="fill the image with zeros or the first intensity at [0,0] in the image", required=False, type=str) # noqa
 @click.option("--output_png", help="Absolute path to folder name to save the data aug mosaiced images to", required=True, type=str) # noqa
 def data_aug_demo(
         input_image, input_image_format, csv_path,

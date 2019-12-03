@@ -11,11 +11,11 @@ The ``lumi overlay_bbs`` CLI tool provides the following options related to over
 
 * ``--im_dir``: Directory containing images to overlay on
 
-* ``--csv_path``: Path to the data frame that contains bounding boxes, labels to overlay with
+* ``--csv_path``: Path to the data frame that contains bounding boxes, labels to overlay the images with
 
-* ``--image_path_column``: Column in the dataframe that has the image path on disk
+* ``--image_path_column``: Column in the dataframe that has the image path on disk that indicates the bounding box, label's presence in that image
 
-* ``--output_dir``: Save the overlaid images ot this directory
+* ``--output_dir``: Save the overlaid images to this directory
 
-* ``--input_image_format``: Format of images in input directory
+* ``--input_image_format``: Format of images in input directory to read and overlay
 

@@ -9,8 +9,8 @@ from luminoth.utils.bbox_overlap import bbox_overlap
 
 
 """
-Output from the cli would as below:
-lumi confusion_matrix --groundtruth_csv /val.csv --predicted_csv objects.csv --classes_json classes.json
+Output from this cli tool would as below:
+lumi confusion_matrix --groundtruth_csv val.csv --predicted_csv preds_val.csv --classes_json classes.json
 
 Confusion matrix before normalization
 
@@ -57,7 +57,9 @@ def get_matched_gt_predict(
         confidence_threshold):
     """
     Returns all groundtruth classes, predicted classes, matched groundtruth
-    classes, matched predicted classes
+    classes, matched predicted classes with iou greater than iou_threshold,
+    after filtering the predicted classes with confidence greater than
+    confidence_threshold
 
     Args:
         gt_csv: Absolute path to csv
@@ -454,8 +456,8 @@ def display(
 @click.option("--groundtruth_csv", help="Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label and several rows corresponding to the groundtruth bounding box objects", required=True, type=str) # noqa
 @click.option("--predicted_csv", help="Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label,prob and several rows corresponding to the predicted bounding box objects", required=True, type=str) # noqa
 @click.option("--output_txt", help="output txt file containing confusion matrix, precision, recall per class", type=str) # noqa
-@click.option('--iou_threshold', type=float, default=0.5, help='IOU threshold below which the bounding box is invalid')  # noqa
-@click.option('--confidence_threshold', type=float, default=0.9, help='Confidence score threshold below which bounding box detection is of low confidence and is ignored while considering true positives')  # noqa
+@click.option('--iou_threshold', type=float, required=False, default=0.5, help='IOU threshold below which the bounding box is invalid')  # noqa
+@click.option('--confidence_threshold', type=float, required=False, default=0.9, help='Confidence score threshold below which bounding box detection is of low confidence and is ignored while considering true positives')  # noqa
 @click.option('--classes_json', required=True, help='path to a json file containing list of class label for the objects, labels are alphabetically sorted')  # noqa
 def confusion_matrix(
         groundtruth_csv,

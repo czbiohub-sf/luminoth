@@ -66,6 +66,8 @@ class RCNN(snt.AbstractModule):
         elif loss_config.type == FOCAL:
             self.loss_type = FOCAL
             self.focal_gamma = loss_config.get('focal_gamma')
+        tf.logging.info(
+            "Classification loss type in RCNN is {}".format(self.loss_type))
         # Debug mode makes the module return more detailed Tensors which can be
         # useful for debugging.
         self._debug = debug

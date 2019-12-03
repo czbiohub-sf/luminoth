@@ -8,6 +8,8 @@ import cv2
 import natsort
 import numpy as np
 
+FILL_VALUE = 128
+
 
 def assemble_mosaic(images_in_path, tile_size, fill_value):
     """
@@ -64,7 +66,7 @@ def _set_fill_value(image, fill_value):
     if fill_value == "first":
         fill_value = image[0, 0]
     elif fill_value is None:
-        fill_value = 128
+        fill_value = FILL_VALUE
     else:
         fill_value = int(fill_value)
     return fill_value

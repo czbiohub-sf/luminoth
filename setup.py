@@ -39,6 +39,8 @@ INSTALL_REQUIRES = [
     'pillow==5.1.0',
     'lxml==4.3.5',
     'requests==2.18.4',
+    # pandas errors for versions less than python 3.4
+    # https://github.com/pandas-dev/pandas/issues/20723
     'pandas>=0.19.2;python_version>="3.5"',
     'pandas<0.21;python_version<"3.5"',
     'numpy>=1.14.5',

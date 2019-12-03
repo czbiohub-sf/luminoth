@@ -64,6 +64,8 @@ class RPN(snt.AbstractModule):
             self.loss_type = FOCAL
             self.focal_gamma = loss_config.get('focal_gamma')
 
+        tf.logging.info(
+            "Classification loss type in RPN is {}".format(self.loss_type))
         # We could use normal relu without any problems.
         self._rpn_activation = get_activation_function(
             config.activation_function

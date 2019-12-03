@@ -319,8 +319,8 @@ def split_data_to_train_val(
 @click.command(help="Split and arrange images into 2 folders for grayscale jpgs for train, and validation, save bounding boxes and labels for the corresponding images in train.csv and val.csv")  # noqa
 @click.argument("filenames", nargs=-1) # noqa
 @click.option("--percentage", help="Percentage of images to split into training folder, rest of the images are saved to validation, default 0.8", required=False, type=float, default=0.8) # noqa
-@click.option("--random_seed", help="Random seed to split data into training, validation images, defaykt 43", required=False, type=int, default=43) # noqa
-@click.option('--filter_dense_anns', help="Filter out images with only the dense class annotations", required=False, default=False)  # noqa
+@click.option("--random_seed", help="Random seed to split data into training, validation images, default 43", required=False, type=int, default=43) # noqa
+@click.option('--filter_dense_anns', help="Filter out images with only the dense class annotations, default they are not filtered", required=False, default=False)  # noqa
 @click.option('--input_image_format', help="input image data format", required=True, type=str)  # noqa
 @click.option('--output_dir', help="Absolute path to folder containing train, validation scaled uint8 jpg images and their annotations in csv file", required=True, type=str)  # noqa
 def split_train_val(

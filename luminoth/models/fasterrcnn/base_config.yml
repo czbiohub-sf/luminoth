@@ -268,7 +268,7 @@ model:
     activation_function: relu6
     l2_regularization_scale: 0.0005
     # Sigma for the smooth L1 regression loss.
-    l1_sigma: 3.0
+    l1_sigma: 1.0
     # Classification loss for object as background vs foreground
     loss:
       _replace: True

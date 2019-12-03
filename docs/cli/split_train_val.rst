@@ -9,13 +9,12 @@ Assuming you already have both your dataset and their bounding box, labeled anno
 
 The ``lumi split_train_val`` CLI tool provides the following options related to splitting and organizing the data.
 
-* ``filenames``: List of all the bounding box annotation files, can be 1 to n
+* ``filenames``: List of all the bounding box annotation files, can be 1 to n, can be text or csv files
 
-* ``--percentage``: Percentage of total images to add to the training directory, 1 - percentage is added to the val directory
+* ``--percentage``: Percentage of total images to add to the train directory, 1 - percentage is added to the val directory, defaults to 0.8
 
-* ``--random_seed``: Random seed for shuffling the images
+* ``--random_seed``: Random seed for shuffling the images, defaults to 43
 
-* ``--filter_dense_anns``: If this flag is set to True, images with class that has more annotations
-  are completely ignored
+* ``--filter_dense_anns``: If this flag is set to True, images with class that has more annotations are completely ignored, this flag defaults to false
 
 * ``--input_image_format``: Format of images in input directory
