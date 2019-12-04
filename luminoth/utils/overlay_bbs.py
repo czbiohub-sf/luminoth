@@ -1,4 +1,3 @@
-"""Overlay bounding boxes with labels on an image in a given directory"""
 import glob
 import os
 
@@ -6,6 +5,7 @@ import click
 import cv2
 import pandas as pd
 
+# Constants for bounding box and label overlays
 FONT = cv2.FONT_HERSHEY_SIMPLEX
 FONT_SCALE = 1
 FONT_COLOR = (0, 0, 255)
@@ -17,20 +17,20 @@ BB_LINE_WIDTH = 2
 def add_base_path(csv_path, input_image_format, image_path_column):
     """
     Returns a dataframe with all the bounding boxes & labels
-    from all the image paths in csv_path. Also adds a column base_path which
-    is just the basename of a fullpath, e.g /data/bla/img.tif's
-    base_path would be img
+    from all the image paths reading from csv_path.
+    Also adds a column base_path which is just the basename of a fullpath,
+    e.g /data/bla/img.tif's base_path would be img
 
     Args:
-        csv_path: Path to comma separated txt/csv file with
-            image_path,x1,y1,x2,y2,class_name or
-            image_id,xmin,ymin,xmax,ymax,label
-        input_image_format: remove this format tag from the basename of the
+        csv_path: str Path to comma separated txt/csv file with
+            [image_path,x1,y1,x2,y2,class_name] or
+            [image_id,xmin,ymin,xmax,ymax,label]
+        input_image_format: str remove this format tag from the basename of the
             image_path while adding base_path column
         image_path_column: str name of the image_path_column
 
     Returns:
-        bb_labels_df: Returns a dataframe with all the bounding boxes & labels
+        bb_labels_df: pandas.DataFrame df with all the bounding boxes & labels
             from all the paths in filenames. Also adds a column base_path which
             is just the basename of a fullpath, e.g /data/bla/img.tif's
             base_path would be img
@@ -52,24 +52,24 @@ def overlay_bb_labels(
         color=BB_COLOR,
         line_width=BB_LINE_WIDTH):
     """
-    Given a image load given position and overlay
-    with bounding boxes
+    Return an image overlaid with bounding box rectangles and the annotations
 
     Args:
         im_path: str Path of an image to overlay on
-        input_image_format: str Format of the input images
-        df: pandas.DataFrame df with image_path,x1,y1,x2,y2,class_name or
-            image_path,xmin,ymin,xmax,ymax,label
-        pos: int Position index (FOV)
-        color: tuple RGB color tuple for bounding box
-            Default green (0, 255, 0)
+        input_image_format: str Format of the input image
+        df: pandas.DataFrame df with [image_path,x1,y1,x2,y2,class_name] or
+            [image_path,xmin,ymin,xmax,ymax,label]
+        color: tuple RGB color tuple for rectangle drawn around an object in
+            bounding box, Default green (0, 255, 0)
         line_width: int Bounding box line width, Default 2
 
     Returns:
-        im_rgb: overlaid_image with same shape and 3 channels
+        im_rgb: np.array overlaid_image with same shape and 3 channels
     """
     im_rgb = cv2.imread(im_path, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
     shape = im_rgb.shape
+
+    # Convert Gray to RGB image to overlay bounding box, labels text in color
     if len(shape) == 2:
         im_rgb = cv2.cvtColor(im_rgb, cv2.COLOR_GRAY2RGB)
     elif len(shape) == 3:
@@ -78,6 +78,7 @@ def overlay_bb_labels(
 
     basename = os.path.basename(im_path).replace(input_image_format, "")
     tmp_df = df[df.base_path == basename]
+
     # Plot bounding boxes, annotation label
     for index, row in tmp_df.iterrows():
         label = str(row.label)
@@ -99,6 +100,7 @@ def overlay_bb_labels(
             color,
             line_width,
         )
+
     return im_rgb
 
 
@@ -106,14 +108,14 @@ def overlay_bbs_on_all_images(
         im_dir, csv_path, image_path_column, output_dir, input_image_format):
     """
     Save the bounding boxes and their annotations overlaid
-     on the input image in the given dir as a png image
+     on all the input images in the given dir as a png image
      in the output_dir
 
     Args:
         im_dir: str Directory with images to overlay on
-        csv_path: Path to comma separated txt/csv file with
-            image_path,x1,y1,x2,y2,class_name or
-            image_idh,xmin,ymin,xmax,ymax,label
+        csv_path: str Path to comma separated txt/csv file with
+            [image_path,x1,y1,x2,y2,class_name] or
+            [image_id,xmin,ymin,xmax,ymax,label]
         image_path_column: str name of the image_path_column
         output_dir: str Directory to save overlaid images to
         input_image_format: str Format of the input images

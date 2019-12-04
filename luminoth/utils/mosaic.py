@@ -16,38 +16,44 @@ def assemble_mosaic(images_in_path, tile_size, fill_value):
     Returns image after stitiching image in "images_in_path"
     after resizing them to tile_size. Returned image is of
     shape
-    tile_size[0] * sqrt(len(images_in_path)) * tile_size[1] * sqrt(
-        len(images_in_path)).
-    All the pixels that are not filled in the symmetrical mosaic image
-    by the resized tiles are filled with fill_value
+    [tile_size[0] * sqrt(len(images_in_path)),
+     tile_size[1] * sqrt(len(images_in_path))]
 
     Args:
         images_in_path: str List of images to mosaic
-        tile_size: tuple that each image in the mosaic is resized to
-        fill_value: fill the tiles that couldn't be filled with the images in
-        im_dir for the symmetrical mosaic image.
+        tile_size: tuple size each image in the mosaic is resized to
+        fill_value: int Set the intensity of the pixels in the tiles
+         that couldn't be filled with images
 
     Returns:
         Returned stitched image of shape
-        tile_size[0] * sqrt(len(images_in_path)),
-        tile_size[1] * sqrt(len(images_in_path)).
+        [tile_size[0] * sqrt(len(images_in_path)),
+         tile_size[1] * sqrt(len(images_in_path))]
     """
+    # Set number of tiles
     x_tiles = y_tiles = int(math.ceil(np.sqrt(len(images_in_path))))
     shape = cv2.imread(
         images_in_path[0], cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR).shape
+
+    # Set number of channels
     if len(shape) > 2:
         channels = shape[2]
     else:
         channels = 1
+
+    # Initialize resulting mosaic image
     tile_size_x, tile_size_y = tile_size[0], tile_size[1]
     mosaiced_im = np.ones(
         (x_tiles * tile_size_x, y_tiles * tile_size_y, channels),
         dtype=np.uint8)
     mosaiced_im = mosaiced_im * fill_value
 
+    # Set each of the tiles with an image in images_in_path
     indices = list(itertools.product(range(x_tiles), range(y_tiles)))
     for index, im_path in enumerate(images_in_path):
         image = cv2.imread(im_path, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
+
+        # Resize the image to tile_size
         if tile_size is not None:
             resized = cv2.resize(image, (tile_size_y, tile_size_x))
         else:
@@ -63,6 +69,7 @@ def assemble_mosaic(images_in_path, tile_size, fill_value):
 
 
 def _set_fill_value(image, fill_value):
+    # Set the fill value
     if fill_value == "first":
         fill_value = image[0, 0]
     elif fill_value is None:
@@ -73,6 +80,7 @@ def _set_fill_value(image, fill_value):
 
 
 def _set_tile_size(image, tile_size):
+    # Set the tile size
     shape = image.shape
     if tile_size is not None and tile_size != ():
         if type(tile_size[0]) is str:
@@ -87,20 +95,20 @@ def mosaic_images(im_dir, tile_size, fill_value, output_png, fmt):
     """
     Mosaic images in im_dir after resizing them to tile_size.
     all the pixels that don't fit in the stitched image shape
-    by the resized tiles
-    are filled with fill_value
+    by the resized tiles are filled with fill_value
 
     Args:
         im_dir: str Directory with images to mosaic with
         tile_size: tuple that each image in the mosaic is resized to
-        fill_value: fill the tiles that couldn't be filled with the images
-        output_png: write the stitched mosaic image to
-        fmt: format of input images in im_dir
+        fill_value: str Set the intensity of the pixels in the tiles
+         that couldn't be filled with images
+        output_png: str write the stitched mosaic image to
+        fmt: str format of input images in im_dir
 
     Returns:
         Write stitched image of shape
-        tile_size[0] * sqrt(len(images_in_path)),
-        tile_size[1] * sqrt(len(images_in_path)).
+        [tile_size[0] * sqrt(len(images_in_path)),
+         tile_size[1] * sqrt(len(images_in_path))]
     """
     images_in_path = natsort.natsorted(
         glob.glob(os.path.join(im_dir, "*" + fmt)))

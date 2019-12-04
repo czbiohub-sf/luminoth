@@ -17,7 +17,8 @@ from luminoth.utils.test.gt_boxes import generate_gt_boxes
 
 
 class OverlayBbsTest(tf.test.TestCase):
-    """Tests for overlay_bbs
+    """
+    Tests for overlay_bbs
     """
     def setUp(self):
         self.tempfiles_to_delete = []
@@ -80,64 +81,86 @@ class OverlayBbsTest(tf.test.TestCase):
             df = self.get_test_data(
                 image, image_save_path, bboxes,
                 labels, df, image_path_column)
+
         df.to_csv(csv_filename)
         return csv_filename
 
     def testAddBasename(self):
-        # add base_path col test
+        # Test add base_path col
+        # Set inputs to add_base_path
         image_path_column = "image_path"
         csv = self.get_ann_filename(7, INPUT_CSV_COLUMNS, image_path_column)
         df = add_base_path(
             csv, self.input_image_format, image_path_column)
+
+        # Assert base path exists and is as expected
         for index, row in df.iterrows():
             assert row["base_path"] == (
                 os.path.basename(row[image_path_column]).replace(
                     self.input_image_format, ""))
 
     def testAddBasenameCol(self):
-        # add base_path col test
+        # Test add base_path col
+        # Set inputs to add_base_path
         image_path_column = "image_id"
         csv = self.get_ann_filename(5, INPUT_CSV_COLUMNS, image_path_column)
         df = add_base_path(
             csv, self.input_image_format, image_path_column)
+
+        # Assert base path exists and is as expected
         for index, row in df.iterrows():
             assert row["base_path"] == (
                 os.path.basename(row[image_path_column]).replace(
                     self.input_image_format, ""))
 
     def testOverlayBBsOnImage(self):
-        # Overlay bb on a single image
+        # Test overlay bb on a single image with different dataframe where
+        # image path is at image_id column
+        # Set inputs to overlay_bb_labels
         image_path_column = "image_id"
         csv = self.get_ann_filename(1, LUMI_CSV_COLUMNS, image_path_column)
         df = pd.read_csv(csv)
         df['base_path'] = self.im_path.replace(self.input_image_format, "")
         image = overlay_bb_labels(
             df[image_path_column].tolist()[0], self.input_image_format, df)
+
+        # Assert overlaid image is as expected shape
         assert image.shape == self.output_image_shape
+        assert image.sum() != 0
 
     def testOverlayBBsOnImageCol(self):
-        # Overlay bb on a single image
+        # Test overlay bb on a single image with different dataframe where
+        # image path is at image_path column
+        # Set inputs to overlay_bb_labels
         image_path_column = "image_path"
         csv = self.get_ann_filename(1, INPUT_CSV_COLUMNS, image_path_column)
         df = pd.read_csv(csv)
         df['base_path'] = self.im_path.replace(self.input_image_format, "")
         image = overlay_bb_labels(
             df[image_path_column].tolist()[0], self.input_image_format, df)
+
+        # Assert overlaid image is as expected shape
         assert image.shape == self.output_image_shape
+        assert image.sum() != 0
 
     def testOverlayBBsOnAllImage(self):
-        # Test overlaid bounding box on all images
+        # Test overlay bb on multiple images with different dataframe where
+        # image path is at image_id column
+        # Set inputs to overlay_bbs_on_all_images
         output_dir = tempfile.mkdtemp() + os.sep
         num_images = 7
         image_path_column = "image_id"
         csv = self.get_ann_filename(
             num_images, LUMI_CSV_COLUMNS, image_path_column)
+
         overlay_bbs_on_all_images(
             os.path.dirname(csv),
             csv,
             image_path_column,
             output_dir,
             self.input_image_format)
+
+        # Assert overlaid images are as expected
         images = natsort.natsorted(
             glob.glob(
                 os.path.join(
@@ -145,18 +168,25 @@ class OverlayBbsTest(tf.test.TestCase):
         for path in images:
             image = cv2.imread(path)
             assert image.shape == self.output_image_shape
+            assert image.sum() != 0
         assert len(images) == num_images
 
     def testOverlayBBsOnAllImageCol(self):
+        # Test overlay bb on multiple images with different dataframe where
+        # image path is at image_path column
+        # Set inputs to overlay_bbs_on_all_images
         output_dir = tempfile.mkdtemp()
         num_images = 13
         csv = self.get_ann_filename(num_images, LUMI_CSV_COLUMNS, "image_path")
+
         overlay_bbs_on_all_images(
             os.path.dirname(csv),
             csv,
             "image_path",
             output_dir,
             self.input_image_format)
+
+        # Assert overlaid images are as expected
         images = natsort.natsorted(
             glob.glob(
                 os.path.join(
@@ -164,6 +194,7 @@ class OverlayBbsTest(tf.test.TestCase):
         for path in images:
             image = cv2.imread(path)
             assert image.shape == self.output_image_shape
+            assert image.sum() != 0
         assert len(images) == num_images
 
 

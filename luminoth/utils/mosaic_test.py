@@ -13,7 +13,8 @@ from luminoth.utils.mosaic import assemble_mosaic, mosaic_images
 
 
 class MosiacTest(tf.test.TestCase):
-    """Tests for mosaic
+    """
+    Tests for mosaic
     """
     def setUp(self):
         self.tempfiles_to_delete = []
@@ -27,10 +28,12 @@ class MosiacTest(tf.test.TestCase):
             os.remove(file)
 
     def _gen_image(self, *shape):
+        # Generate an image
         np.random.seed(43)
         return np.random.rand(*shape)
 
     def write_test_data(self, num_images, shape):
+        # Write input image to test
         location = tempfile.mkdtemp()
         for i in range(num_images):
             im_filename = "test_bb_labels_{}{}".format(
@@ -41,7 +44,9 @@ class MosiacTest(tf.test.TestCase):
         return location
 
     def testAssembleGrayMosaic(self):
-        # gray mosaic test
+        # Test asssemble gray mosaic returns a valid image
+
+        # Set inputs for assemble_mosaic
         num_images = 7
         im_dir = self.write_test_data(num_images, self.gray_image_shape)
         images_in_path = natsort.natsorted(
@@ -49,17 +54,23 @@ class MosiacTest(tf.test.TestCase):
         num_images = len(images_in_path)
         tile_size = [10, 12]
         fill_value = 1
+
         mosaiced_image = assemble_mosaic(
             images_in_path,
             tile_size,
             fill_value)
+
+        # Assert mosaiced_image expected shape
         assert mosaiced_image.shape == (
             math.ceil(np.sqrt(num_images)) * tile_size[0],
             math.ceil(np.sqrt(num_images)) * tile_size[1],
             1)
+        assert mosaiced_image.sum() != 0
 
     def testAssembleColorMosaic(self):
-        # color mosaic test
+        # Test asssemble color mosaic returns a valid image
+
+        # Set inputs for assemble_mosaic
         num_images = 13
         im_dir = self.write_test_data(num_images, self.color_image_shape)
         images_in_path = natsort.natsorted(
@@ -67,27 +78,36 @@ class MosiacTest(tf.test.TestCase):
         num_images = len(images_in_path)
         tile_size = [7, 9]
         fill_value = 1
+
         mosaiced_image = assemble_mosaic(
             images_in_path,
             tile_size,
             fill_value)
+
+        # Assert mosaiced_image expected shape
         assert mosaiced_image.shape == (
             math.ceil(np.sqrt(num_images)) * tile_size[0],
             math.ceil(np.sqrt(num_images)) * tile_size[1],
             3)
+        assert mosaiced_image.sum() != 0
 
     def testGrayMosaic(self):
-        # gray mosaic test
+        # Test gray mosaic exists in the expected path with expected shape
+
+        # Set inputs for mosaic_images
         num_images = 7
         im_dir = self.write_test_data(num_images, self.gray_image_shape)
         output_png = os.path.join(im_dir, "mosaic.png")
         tile_size = self.gray_image_shape
+
         mosaic_images(
             im_dir,
             None,
             "first",
             output_png,
             self.input_image_format)
+
+        # Assert mosaiced image is as expected
         assert os.path.exists(output_png)
         assert os.path.getsize(output_png) != 0
         mosaiced_image = cv2.imread(
@@ -95,19 +115,25 @@ class MosiacTest(tf.test.TestCase):
         assert mosaiced_image.shape == (
             math.ceil(np.sqrt(num_images)) * tile_size[0],
             math.ceil(np.sqrt(num_images)) * tile_size[1])
+        assert mosaiced_image.sum() != 0
 
     def testColorMosaic(self):
-        # Color mosaic test
+        # Test color mosaic exists in the expected path with expected shape
+
+        # Set inputs for mosaic_images
         num_images = 12
         im_dir = self.write_test_data(num_images, self.color_image_shape)
         output_png = os.path.join(im_dir, "mosaic.png")
         tile_size = self.color_image_shape
+
         mosaic_images(
             im_dir,
             None,
             12,
             output_png,
             self.input_image_format)
+
+        # Assert mosaiced image is as expected
         assert os.path.exists(output_png)
         assert os.path.getsize(output_png) != 0
         mosaiced_image = cv2.imread(output_png)
@@ -115,6 +141,7 @@ class MosiacTest(tf.test.TestCase):
             math.ceil(np.sqrt(num_images)) * tile_size[0],
             math.ceil(np.sqrt(num_images)) * tile_size[1],
             3)
+        assert mosaiced_image.sum() != 0
 
 
 if __name__ == '__main__':

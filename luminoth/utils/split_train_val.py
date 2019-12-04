@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+# Added above statement to avoid encoding errors resulting from line 18
 import glob
 import math
 import os
@@ -41,71 +41,80 @@ sample_1/ch1_p1_t1.png, sample_2/ch1_p1_t1.png, sample_3/ch1_p1_t1.png
 So, please do not import any functions from here to another module
 unless you explicitly know the behaviour and need it
 """
-LUMI_CSV_COLUMNS = ['image_id', 'xmin', 'xmax', 'ymin', 'ymax', 'label']
-# TODO make the columns match
-INPUT_CSV_COLUMNS = ['image_path', 'x1', 'x2', 'y1', 'y2', 'class_name']
 
+# Constants for dataframe lumi csv headers
+LUMI_CSV_COLUMNS = ['image_id', 'xmin', 'xmax', 'ymin', 'ymax', 'label']
+# TODO PV Redo so all the columns match for the input
+INPUT_CSV_COLUMNS = ['image_path', 'x1', 'x2', 'y1', 'y2', 'class_name']
+# Constant for luminoth accepted images for training/validation
 OUTPUT_IMAGE_FORMAT = ".jpg"
 
 
 def add_basename_gather_df(filenames, input_image_format):
     """
     Returns a dataframe with all the bounding boxes & labels
-    from all the paths in filenames. Also adds a column undersore_path which
+    from all the paths in filenames. Also adds a column base_path which
     is just the base_path of a fullpath, e.g /data/bla/img.tif's
     base_path would be _data_bla_img
 
     Args:
-        filenames: List of paths to comma separated txt/csv file with
+        filenames: list of paths to comma separated txt/csv file with
             image_path,x1,y1,x2,y2,class_name
         input_image_format: str image format in the path
 
     Returns:
-        bb_labels_df: Returns a dataframe with all the bounding boxes & labels
+        bb_labels_df: pandas.DataFrame with all the bounding boxes & labels
             from all the paths in filenames. Also adds a
-            column undersore_path which
+            column base_path which
             is just the base_path of a fullpath, e.g /data/bla/img.tif's
-            base_path would be _data_bla
+            base_path would be _data_bla_img
     """
+    # Collect all the dataframes from list of all filenames
     dfs = []
     for filename in filenames:
         dfs.append(pd.read_csv(filename))
     bb_labels_df = pd.concat(dfs, ignore_index=True)
+
+    # Add base_path columns
     base_names = [
         os.path.dirname(row["image_path"]).replace(os.sep, "_") + "_" +
         os.path.basename(row["image_path"]).replace(input_image_format, "")
         for index, row in bb_labels_df.iterrows()]
     bb_labels_df["base_path"] = pd.Series(base_names)
-    label_name = bb_labels_df['class_name'].iloc[0]
+
+    label_name_type = type(bb_labels_df['class_name'].iloc[0])
+
     # Cast required columns to integers
-    if type(label_name) is str:
+    if label_name_type is str:
         cols = ['x1', 'x2', 'y1', 'y2']
         bb_labels_df[cols] = bb_labels_df[cols].applymap(np.int64)
-    elif type(label_name) is np.float64:
+    elif label_name_type is np.float64:
         cols = ['x1', 'x2', 'y1', 'y2', 'class_name']
         bb_labels_df[cols] = bb_labels_df[cols].applymap(np.int64)
+
     bb_labels_df.reset_index(drop=True, inplace=True)
+
     return bb_labels_df
 
 
 def get_image_paths_per_class(bb_labels_df):
     """
-    Returns dict containing class name as the key and the
-    list of image paths containing the class annotation as values
+    Returns dict containing label as the key and the
+    list of image paths containing the label annotation as values
 
     Args:
-        bb_labels: dataframe with all the bounding boxes and labels
+        bb_labels: pandas.DataFrame with all the bounding boxes and labels
             from all the paths
 
     Returns:
-        image_paths_per_class: dict containing class name as the key and the
-        list of image paths containing the class annotation as values
+        image_paths_per_class: dict containing label as the key and the
+            list of image paths containing the label annotation as values
     """
-    # Print meta for each unique class
+    # Print meta for each unique label
     class_labels = np.unique(bb_labels_df.class_name)
     image_paths_per_class = {}
     for class_name in class_labels:
-        # This dict collects all the unique images of a class
+        # This dict collects all the unique images that contains a label
         filtered_df = bb_labels_df[bb_labels_df['class_name'] == class_name]
         images = np.unique(filtered_df['image_path']).tolist()
         image_paths_per_class[class_name] = images
@@ -119,8 +128,7 @@ def get_image_paths_per_class(bb_labels_df):
 
 def get_lumi_csv_df(bb_labels, images, output_image_format):
     """
-    Filters out the list of images given from bb_labels and
-    formats it to a csv dataformat required by luminoth
+    Return a csv as required by luminoth with image_id,x1,y1,x2,y2,label
 
     Args:
         bb_labels: Dataframe with image_path,x1,y1,x2,y2,class_name
@@ -133,20 +141,24 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
     """
     df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
     label_name = ""
+
     # Find boxes in each image and put them in a dataframe
     for img_name in images:
         # Filter out the df for all the bounding boxes in one image
         basename = os.path.basename(img_name).replace(output_image_format, "")
         tmp_df = bb_labels[bb_labels.base_path == basename]
+
         # Add all the bounding boxes for the images to the dataframe
         count = 0
         for index, row in tmp_df.iterrows():
             label_name = row['class_name']
+
             if count == 0:
                 label_name_type = type(label_name)
             assert label_name_type == type(label_name)
             if label_name_type is float or label_name_type is int:
                 label_name = np.int64(label_name)
+
             df = df.append({'image_id': img_name,
                             'xmin': np.int64(row['x1']),
                             'xmax': np.int64(row['x2']),
@@ -155,10 +167,12 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
                             'label': label_name},
                            ignore_index=True)
             count += 1
+
     if type(label_name) is str:
         cols = ['xmin', 'xmax', 'ymin', 'ymax']
     else:
         cols = ['xmin', 'xmax', 'ymin', 'ymax', 'label']
+
     df[cols] = df[cols].applymap(np.int64)
     df.reset_index(drop=True, inplace=True)
     return df
@@ -172,73 +186,84 @@ def write_lumi_images_csv(
         bb_labels,
         output_csv_path):
     """
-    Copies images to path with a output_image_format
+    Write images to 'path' with 'output_image_format'
     and writes a csv containing LUMI_CSV_COLUMNS
     listing out the images and annotations for the same images
 
     Args:
         images: list of images to copy to path
-        path: Directory to output the scaled uint8 jpg files or files
-            of output_image_format to
-        input_image_format: raw input image data format
-        output_image_format: output image format,
-            lumi currently accepts only jpg for inputs, so the train and
-            val folders created would be saving input images as uint8 jpgs to
-            the output_dir. In that case the output_image_format would be .jpg
-        bb_labels: Returns a dataframe with all the bounding boxes and labels
+        path: str Directory to output the scaled uint8 file to
+        input_image_format: str input image data format
+        output_image_format: str output image format
+        bb_labels: pandas.DataFrame with all the bounding boxes and labels
             from all the paths in filenames. Also adds a column
             base_path which
             is just the basename of a fullpath, e.g /data/bla/img.tif's
-            base_path would be img
+            base_path would be _data_bla_img
 
     Returns:
         Writes images to path and writes a csv file containing LUMI_CSV_COLUMNS
         to output_csv_path
     """
-    # Save each classes' images to given path as output_image_format
+    # Create a folder to save images to
     if not os.path.exists(path):
         os.makedirs(path)
     else:
         print("Path {} already exists, might be overwriting data".format(path))
+
+    # Iterate through images, rename them to include whole absolute path in
+    # base_path. For example original image /data/bar/image.tif would be
+    # saved in path + _data_bar_image.jpg. This is to prevent images with
+    # similar basenames wouldn't be clobbered. Example if there is another
+    # image at /data/foo/image.tif
     for index, original_path in enumerate(images):
+
         base_path = os.path.dirname(original_path).replace(os.sep, "_")
         basename = os.path.basename(original_path).replace(
             input_image_format, output_image_format)
         basename = base_path + "_" + basename
         new_path = os.path.join(path, basename)
+
         image = cv2.imread(original_path, cv2.IMREAD_ANYDEPTH)
         image = (image / image.max() * 255).astype(np.uint8)
+
         cv2.imwrite(new_path, image)
+
     images = natsort.natsorted(
         glob.glob(os.path.join(path, "*" + output_image_format)))
     print(
         'number of images in path {} : {}'.format(
             path, len(images)))
+
+    # Write to csv
     df = get_lumi_csv_df(bb_labels, images, output_image_format)
     df.to_csv(output_csv_path, index=False)
 
 
 def filter_dense_annotation(image_paths_per_class):
     """
-    Returns dict containing class name as the key and the
+    Returns dict containing label as the key and the
     list of image paths containing the class annotation as values
     after deleting the key:value pair, for the label that contains
     the highest number of annotations
 
     Args:
-        image_paths_per_class: dict containing class name as the key and the
+        image_paths_per_class: dict containing label as the key and the
         list of image paths containing the class annotation as values
 
     Returns:
-        image_paths_per_class: dict containing class name as the key and the
+        image_paths_per_class: dict containing label as the key and the
         list of image paths containing the class annotation as values
-        after suppressing the dense annotation of a class
+        after removing the key,value pair with dense annotation class
     """
+    # Get highest number of classes/labels/annotations in images
     max_class_count = max(
         [len(value) for key, value in image_paths_per_class.items()])
     max_class_count_name = [
         key for key, value in image_paths_per_class.items() if len(
             value) == max_class_count][0]
+
+    # Remove the dense annotation class
     image_paths_per_class.pop(max_class_count_name)
     return image_paths_per_class
 
@@ -256,26 +281,21 @@ def split_data_to_train_val(
     train.csv, val.csv
 
     Args:
-        filenames: List of paths to comma separated txt file with
+        filenames: list of paths to comma separated txt file with
             image_path,x1,y1,x2,y2,class_name
-        output_dir: Full path to save the train,
-            val folders and their csv files
-        random_seed: Randomize the images so no
+        random_seed: int Randomize the images so no
             two continuous slices go to the train or validation directory
-        percentage: Percentage of data for training
+        percentage: float Percentage of data for training
             and 1 - percentage images are copied to validation directory
-        filter_dense_anns: It is assumed that an image
+        filter_dense_anns: bool If a dataset
             consists of one densely annotated class and sparsely
             annotated other class labels.
             So, images with just dense classes are filtered out if this flag
             is set to True
-        input_image_format: raw input image data format
-        output_dir: Directory to output the scaled uint8 jpg files or files
-            of output_image_format to
-        output_image_format: lumi output image format,
-            lumi currently accepts only jpg for inputs, so the train and
-            val folders created would be saving input images as uint8 jpgs to
-            the output_dir
+        input_image_format: str input image data format
+        output_dir: str Full path to save the train,val folders and
+            their csv files
+        output_image_format: str output image format,
     """
     random.seed(random_seed)
     bb_labels = add_basename_gather_df(filenames, input_image_format)
@@ -294,11 +314,13 @@ def split_data_to_train_val(
         for im_path in images:
             all_imgs.append(im_path)
 
+    # Get all the unique images and randomize them
     all_imgs = np.unique(all_imgs).tolist()
     all_imgs_length = len(all_imgs)
     print("total unique images are {}".format(all_imgs_length))
     random.shuffle(all_imgs)
 
+    # Get unique images until training_image_index to train and rest to val
     training_image_index = int(math.floor(percentage * all_imgs_length))
     write_lumi_images_csv(
         all_imgs[0:training_image_index],
@@ -307,6 +329,7 @@ def split_data_to_train_val(
         output_image_format,
         bb_labels,
         os.path.join(output_dir, 'train.csv'))
+
     write_lumi_images_csv(
         all_imgs[training_image_index:all_imgs_length],
         os.path.join(output_dir, "val"),

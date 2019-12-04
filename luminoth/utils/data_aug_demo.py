@@ -16,7 +16,9 @@ from luminoth.utils.image import (
     random_distortion, expand,
     rot90, random_patch_gaussian)
 
+# Constant for tile_size of an image in the mosaic
 TILE_SIZE = [256, 256]
+# Constants for bounding box and label overlays
 FONT = cv2.FONT_HERSHEY_SIMPLEX
 FONT_SCALE = 1
 FONT_COLOR = (255, 0, 255)
@@ -65,29 +67,30 @@ def update_augmentation(
         augmented_dict, labels, location, augmentation, augmented_images):
     """
     Updates list augmented_images with the path to the image
-    afer overlaying the image in augmented_dict
-    and the bboxes dict in the same
+    containing overlaid image with bboxes in augmented_dict
+    bboxes is of shape (N, 5) containing n rows of [xmin,ymin,xmax,ymax,label]
 
     Args:
         augmented_dict: dict 2 keys bboxes, image containing numpy arrays of
-            images and bboxes in the image
-        labels: list List of sorted unique labels of the image
+            images and bounding boxes with the label in the image as values
+        labels: list List of sorted unique labels for the
+            bounding box objects in  the image
         location: str directory to save the augmented image in
-        augmentation: str augmentation technique string text
+        augmentation: str augmentation technique text
             to write on the augmented bounding box overlaid image
-        augmented_images: list list of full path to augmented image
+        augmented_images: list list of full path to augmented images
 
     Returns:
        Update list of full path to augmented image overlaid with bounding box
     """
-    # Write image to the path to input to overlay_bb_labels
+    # Write augmented image to a path to input to overlay_bb_labels
     image = augmented_dict['image']
     base_path = "input_{}_image.png".format(augmentation)
     base_path_wo_format = "input_{}_image".format(augmentation)
     im_filename = os.path.join(location, base_path)
     cv2.imwrite(im_filename, image)
 
-    # Form a dataframe with the bounding boxes, labels
+    # Form dataframe with bounding boxes, labels to input to overlay_bb_labels
     df = pd.DataFrame(columns=LUMI_CSV_COLUMNS + ['base_path'])
     for bboxes in augmented_dict['bboxes']:
         label = labels[bboxes[4]]
@@ -131,7 +134,9 @@ def get_data_aug_images(image_array, bboxes_array, labels):
     Args:
         image_array: np.array Image of shape [h, w, 3]
         bboxes_array: np.array bboxes of shape [N, 5]
-        labels: list List of sorted unique labels of the image
+            containing n rows of [xmin,ymin,xmax,ymax,label]
+        labels: list List of sorted unique labels for the
+            bounding box objects in  the image
 
     Returns:
         augmented_images: list
@@ -181,25 +186,29 @@ def mosaic_data_aug(
     Args:
         input_image: str Input png to augment
         input_image_format: str Format of the input images
-        csv_path: csv containing image_id,xmin,xmax,ymin,ymax,label
+        csv_path: str csv containing image_id,xmin,xmax,ymin,ymax,label
             for the input_png. Bounding boxes in the csv are augmented
         image_path_column: str name of the image_path_column
-        fill_value: fill the tiles that couldn't be filled with the images
-        output_png: write the stitched mosaic image to
+        fill_value: str fill the tiles that couldn't be filled with the images
+        output_png: str write the stitched mosaic image to
 
     Returns:
-        Write stitched data augmentation combo image of shape
+        Write stitched data augmentation mosaic image of shape
         tile_size[0] * sqrt(len(DATA_AUGMENTATION_STRATEGIES)),
         tile_size[1] * sqrt(len(DATA_AUGMENTATION_STRATEGIES)).
     """
     image = cv2.imread(input_image, cv2.IMREAD_COLOR)
 
+    # Filter out rows containing bounding boxes and annotations
+    # for the input_image path above
     df = pd.read_csv(csv_path)
     basename = os.path.basename(input_image).replace(input_image_format, "")
     tmp_df = df[
         [True if os.path.basename(row[image_path_column]).replace(
             input_image_format, "").endswith(
             basename) else False for index, row in df.iterrows()]]
+
+    # Get the list of bboxes for one input_image
     bboxes = []
     labels = sorted(df['label'].unique().tolist())
     for index, row in tmp_df.iterrows():
@@ -210,7 +219,10 @@ def mosaic_data_aug(
             np.int32(row['ymax']),
             np.int32(labels.index(row['label']))])
     bboxes = np.array(bboxes, dtype=np.int32)
+
     augmented_images = get_data_aug_images(image, bboxes, labels)
+
+    # Save the mosaiced image
     mosaiced_image = assemble_mosaic(
         augmented_images, TILE_SIZE, _set_fill_value(image, fill_value))
     shape = mosaiced_image.shape
