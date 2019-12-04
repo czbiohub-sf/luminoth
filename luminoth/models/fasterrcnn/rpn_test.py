@@ -33,9 +33,9 @@ class RPNTest(tf.test.TestCase):
                 'stddev': 0.01,
             },
             'l2_regularization_scale': 0.0005,
+            'l1_sigma': 3.0,
             'loss': {
-                'type': 'smooth_l1',
-                'l1_sigma': 3.0,
+                'type': 'cross_entropy',
             },
             'activation_function': 'relu6',
             'proposals': {
@@ -265,8 +265,9 @@ class RPNTest(tf.test.TestCase):
 
         )
 
-    def testL1Loss(self):
-        """Tests that smooth l1 loss returns reasonable values in simple cases.
+    def testCEL1Loss(self):
+        """Tests that cross entropy & smooth l1 for classification, regression
+        loss respectively returns reasonable values in simple cases.
         """
         model = RPN(
             self.num_anchors, self.config, debug=True
@@ -306,15 +307,14 @@ class RPNTest(tf.test.TestCase):
             # Assert close since cross-entropy could return very small value.
             self.assertAllClose(tuple(loss_dict.values()), (0, 0))
 
-    def testFocalLoss(self):
-        """Tests that smooth l1 loss returns reasonable values in simple cases.
+    def testFocalL1Loss(self):
+        """Tests that focal & smooth l1 for classification, regression
+        loss respectively returns reasonable values in simple cases.
         """
-        loss = {
-            'type': 'focal',
-            'l1_sigma': 3.0}
-        self.config.loss = loss
+        config = self.config
+        config['loss'] = {'type': 'focal'}
         model = RPN(
-            self.num_anchors, self.config, debug=True
+            self.num_anchors, config, debug=True
         )
 
         # Define placeholders that are used inside the loss method.

@@ -100,15 +100,17 @@ tensorboard --logdir path/to/jobs
 > -- [Dark Visor - Wikitroid](http://metroid.wikia.com/wiki/Dark_Visor)
 >
 
-## Dataset to model to prediction in 5 steps
+## Dataset to model to prediction in a few steps
 
 ``` bash
+lumi split_train_val annotated_bounding_boxes.txt annotated_bounding_boxes_1.txt annotated_bounding_boxes_2.txt --output_dir all_data_lumi_csv --percentage 0.9 --random_seed 42 --input_image_format .tif
 lumi dataset transform --type csv --data-dir /lumi_csv/ --output-dir /tfdata/ --split train --split val --only-classes=table
 lumi train -c config.yml
-lumi eval -c config.yml --no-watch
+lumi eval --split train -c config.yml --no-watch
+lumi eval --split val -c config.yml --no-watch
 lumi checkpoint create config.yml -e name='Faster RCNN' -e alias=cnn_trial
 lumi predict val/ -d preds_val/ --checkpoint trial -f objects.csv
-lumi confusion_matrix --groundtruth_csv val.csv --predicted_csv objects.csv --output_txt output.txt --classes_json classes.json
+lumi confusion_matrix --groundtruth_csv val.csv --predicted_csv pred_val.csv --output_txt output.txt --classes_json classes.json
 ```
 
 # License

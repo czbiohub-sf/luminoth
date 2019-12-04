@@ -39,13 +39,18 @@ INSTALL_REQUIRES = [
     'pillow==5.1.0',
     'lxml==4.3.5',
     'requests==2.18.4',
-    'pandas==0.19.2',
-    'numpy==1.14.5',
+    # pandas errors for versions less than python 3.4
+    # https://github.com/pandas-dev/pandas/issues/20723
+    'pandas>=0.19.2;python_version>="3.5"',
+    'pandas<0.21;python_version<"3.5"',
+    'numpy>=1.14.5',
     'scikit-learn==0.19.2',
     'scikit-video==1.1.10',
     'Flask>=0.12',
     'PyYAML>=3.12,<4',
     'click>=6.7,<7',
+    'natsort==6.2.0',
+    'opencv-python==4.1.0.25',
     # Sonnet 1.25+ requires tensorflow_probability which we do not need here.
     'dm-sonnet>=1.12,<=1.23',
     # Can remove easydict <=1.8 pin after

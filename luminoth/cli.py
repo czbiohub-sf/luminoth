@@ -16,6 +16,7 @@ from luminoth.eval import eval
 from luminoth.predict import predict
 from luminoth.tools import checkpoint, cloud, dataset, server
 from luminoth.train import train
+from luminoth.utils import split_train_val, mosaic, overlay_bbs, data_aug_demo
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -34,3 +35,7 @@ cli.add_command(eval)
 cli.add_command(predict)
 cli.add_command(server)
 cli.add_command(train)
+cli.add_command(split_train_val)
+cli.add_command(mosaic)
+cli.add_command(overlay_bbs)
+cli.add_command(data_aug_demo)

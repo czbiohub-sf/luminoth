@@ -1,6 +1,7 @@
 import tensorflow as tf
 
 SMOOTH_L1 = "smooth_l1"
+CROSS_ENTROPY = "cross_entropy"
 FOCAL = "focal"
 
 
@@ -35,80 +36,39 @@ def smooth_l1_loss(bbox_prediction, bbox_target, sigma=3.0):
     return bbox_loss
 
 
-def focal_loss(logits, targets, alpha=None, gamma=None, normalizer=1.0):
-    """Compute the focal loss between `logits` and the golden `target` values.
-    Focal loss = -(1-pt)^gamma * log(pt)
+def focal_loss(prediction_tensor, target_tensor, gamma=None):
+    """
+    Return Focal Loss for classification of labels
+
+    Focal loss is defined as = -(1-pt)^gamma * log(pt)
     where pt is the probability of being classified to the true class.
 
     Args:
-        logits: A float32 tensor of size
-          [batch, height_in, width_in, num_predictions].
-        targets: A float32 tensor of size
-          [batch, height_in, width_in, num_predictions].
-        alpha: A float32 scalar multiplying
-        alpha to the loss from positive examples
-          and (1-alpha) to the loss from negative examples.
-        gamma: A float32 scalar modulating
-        loss from hard and easy examples.
-        normalizer: A float32 scalar normalizes
-        the total loss from all examples.
+        prediction_tensor: shape [num_anchors, num_classes] float tensor
+            representing per-label activations/logits,typically a linear output
+            These activation energies are interpreted
+            as unnormalized log probabilities
+        target_tensor: shape [num_anchors, num_classes] float tensor
+            representing one-hot encoded classification targets/labels
+        gamma: A float32 scalar modulating loss from hard and easy examples.
 
     Returns:
-    loss: A float32 Tensor of size
-        [batch, height_in, width_in, num_predictions]
-        representing normalized loss on the prediction map.
-    """
-    with tf.name_scope('focal_loss'):
-        if alpha is None:
-            alpha = 0.25
-        if gamma is None:
-            gamma = 2.0
+        loss: shape [num_anchors] float tensor representing focal loss
+            between `logits` and the golden `target` values
 
-        positive_label_mask = tf.math.equal(targets, 1.0)
-        cross_entropy = (
-            tf.nn.sigmoid_cross_entropy_with_logits(
-                labels=targets, logits=logits))
-        # Below are comments/derivations for computing modulator.
-        # For brevity,
-        # let x = logits,  z = targets, r = gamma, and p_t = sigmod(x)
-        # for positive samples and 1 - sigmoid(x) for negative examples.
-        #
-        # The modulator, defined as (1 - P_t)^r,
-        # is a critical part in focal loss
-        # computation. For r > 0,
-        # it puts more weights on hard examples, and less
-        # weights on easier ones. However if
-        # it is directly computed as (1 - P_t)^r,
-        # its back-propagation is not stable when r < 1.
-        # The implementation here
-        # resolves the issue.
-        #
-        # For positive samples (labels being 1),
-        #    (1 - p_t)^r
-        #  = (1 - sigmoid(x))^r
-        #  = (1 - (1 / (1 + exp(-x))))^r
-        #  = (exp(-x) / (1 + exp(-x)))^r
-        #  = exp(log((exp(-x) / (1 + exp(-x)))^r))
-        #  = exp(r * log(exp(-x)) - r * log(1 + exp(-x)))
-        #  = exp(- r * x - r * log(1 + exp(-x)))
-        #
-        # For negative samples (labels being 0),
-        #    (1 - p_t)^r
-        #  = (sigmoid(x))^r
-        #  = (1 / (1 + exp(-x)))^r
-        #  = exp(log((1 / (1 + exp(-x)))^r))
-        #  = exp(-r * log(1 + exp(-x)))
-        #
-        # Therefore one unified form for positive (z = 1) and negative (z = 0)
-        # samples is:
-        #      (1 - p_t)^r = exp(-r * z * x - r * log(1 + exp(-x))).
-        neg_logits = -1.0 * logits
-        modulator = tf.math.exp(
-            gamma * targets * neg_logits -
-            gamma * tf.math.log1p(tf.math.exp(neg_logits)))
-        loss = modulator * cross_entropy
-        weighted_loss = tf.where(positive_label_mask, alpha * loss,
-                                 (1.0 - alpha) * loss)
-        weighted_loss /= normalizer
-        weighted_loss = tf.reduce_sum(weighted_loss)
-    return weighted_loss
+    """
+    # Default gamma according to the paper - https://arxiv.org/abs/1708.02002
+    if gamma is None:
+        gamma = 2.0
+    # Epsilon to prevent log0 = undefined errors leading to unstable losses
+    epsilon = 1e-9
+    y_pred = tf.nn.softmax(prediction_tensor)  # [num_anchors, num_classes]
+
+    loss = -target_tensor * \
+        ((1 - y_pred) ** gamma) * \
+        tf.math.log(y_pred + epsilon)
+
+    # Reducing the loss across classes dimensions to [num_anchors]
+    loss = tf.reduce_sum(loss, axis=1)
+
+    return loss

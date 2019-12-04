@@ -10,7 +10,8 @@ from luminoth.models.ssd.target import SSDTarget
 from luminoth.models.ssd.utils import (
     generate_raw_anchors, adjust_bboxes
 )
-from luminoth.utils.losses import smooth_l1_loss
+from luminoth.utils.losses import (
+    smooth_l1_loss, CROSS_ENTROPY, FOCAL, focal_loss)
 from luminoth.utils.bbox_transform import clip_boxes
 
 
@@ -32,6 +33,14 @@ class SSD(snt.AbstractModule):
         self._anchors_per_point = config.model.anchors.anchors_per_point
         self._loc_loss_weight = config.model.loss.localization_loss_weight
         # TODO: Why not use the default LOSSES collection?
+        loss_config = config.loss
+        if loss_config.type == CROSS_ENTROPY:
+            self.loss_type = CROSS_ENTROPY
+        elif loss_config.type == FOCAL:
+            self.loss_type = FOCAL
+            self.focal_gamma = loss_config.focal_gamma
+        tf.logging.info(
+            "Classification loss type in SSD is {}".format(self.loss_type))
         self._losses_collections = ['ssd_losses']
 
     def _build(self, image, gt_boxes=None, is_training=False):
@@ -226,11 +235,13 @@ class SSD(snt.AbstractModule):
             # TODO: Optimization opportunity: We calculate the probabilities
             #       earlier in the program, so if we used those instead of the
             #       logits we would not have the need to do softmax here too.
-            cross_entropy_per_proposal = (
-                tf.nn.softmax_cross_entropy_with_logits(
-                    labels=cls_target_one_hot, logits=cls_pred
-                )
-            )
+            if self.loss_type == CROSS_ENTROPY:
+                classification_loss_per_proposal = \
+                    tf.nn.softmax_cross_entropy_with_logits_v2(
+                        labels=cls_target_one_hot, logits=cls_pred)
+            elif self.loss_type == FOCAL:
+                classification_loss_per_proposal = focal_loss(
+                    cls_pred, cls_target_one_hot, self.focal_gamma)
             # Second we need to calculate the smooth l1 loss between
             # `bbox_offsets` and `bbox_offsets_targets`.
             bbox_offsets = prediction_dict['loc_pred']
@@ -252,7 +263,7 @@ class SSD(snt.AbstractModule):
             reg_loss_per_proposal = smooth_l1_loss(
                 bbox_offsets_positives, bbox_offsets_target_positives)
 
-            cls_loss = tf.reduce_sum(cross_entropy_per_proposal)
+            cls_loss = tf.reduce_sum(classification_loss_per_proposal)
             bbox_loss = tf.reduce_sum(reg_loss_per_proposal)
 
             # Following the paper, set loss to 0 if there are 0 bboxes
@@ -273,7 +284,7 @@ class SSD(snt.AbstractModule):
 
             prediction_dict['reg_loss_per_proposal'] = reg_loss_per_proposal
             prediction_dict['cls_loss_per_proposal'] = (
-                cross_entropy_per_proposal
+                classification_loss_per_proposal
             )
 
             tf.summary.scalar(

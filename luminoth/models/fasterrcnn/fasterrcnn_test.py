@@ -16,6 +16,20 @@ class FasterRCNNNetworkTest(tf.test.TestCase):
                 'debug': True,
                 'seed': None,
             },
+            'dataset': {
+                'dir': '',
+                'split': 'train',
+                'image_preprocessing': {
+                    'min_size': 600,
+                    'max_size': 1024,
+                },
+                'data_augmentation': {
+                    'flip':
+                        {
+                            'prob': 1
+                        }
+                }
+            },
             'model': {
                 'network': {
                     'num_classes': 20,
@@ -52,6 +66,9 @@ class FasterRCNNNetworkTest(tf.test.TestCase):
                     'activation_function': 'relu6',
                     'l2_regularization_scale': 0.0005,
                     'l1_sigma': 3.0,
+                    'loss': {
+                        'type': 'cross_entropy',
+                    },
                     'use_mean': False,
                     'target_normalization_variances': [1., 1.],
                     'rcnn_initializer': {
@@ -113,9 +130,9 @@ class FasterRCNNNetworkTest(tf.test.TestCase):
                     },
                     'activation_function': 'relu6',
                     'l2_regularization_scale': 0.0005,
+                    'l1_sigma': 3.0,
                     'loss': {
-                        'type': 'smooth_l1',
-                        'l1_sigma': 3.0,
+                        'type': 'cross_entropy',
                     },
                     'proposals': {
                         'pre_nms_top_n': 12000,
@@ -304,11 +321,7 @@ class FasterRCNNNetworkTest(tf.test.TestCase):
         self._assert_sequential_values(anchors[:, 2], stride)
         self._assert_sequential_values(anchors[:, 3], stride)
 
-    def testLoss(self):
-        """
-        Tests the loss of the FasterRCNN
-        """
-
+    def set_prediction_dicts(self):
         # Create prediction_dict's structure
         prediction_dict_random = {
             'rpn_prediction': {},
@@ -511,6 +524,16 @@ class FasterRCNNNetworkTest(tf.test.TestCase):
             'rcnn']['cls_score'] = rcnn_cls_perf_score
         prediction_dict_perf['classification_prediction'][
             'rcnn']['bbox_offsets'] = rcnn_bbox_perf_offsets
+        return config, prediction_dict_perf, prediction_dict_random, image_size
+
+    def testCECELoss(self):
+        """
+        Tests cross entropy, cross entropy classification
+        losses of the FasterRCNN (RPN, RCNN layers) and
+        regression, total losses as well
+        """
+        config, prediction_dict_perf, prediction_dict_random, image_size = \
+            self.set_prediction_dicts()
 
         loss_perfect = self._get_losses(
             config, prediction_dict_perf, image_size)
@@ -518,22 +541,145 @@ class FasterRCNNNetworkTest(tf.test.TestCase):
             config, prediction_dict_random, image_size)
 
         loss_random_compare = {
-            'rcnn_cls_loss': 5,
-            'rcnn_reg_loss': 3,
-            'rpn_cls_loss': 5,
-            'rpn_reg_loss': 3,
-            'no_reg_loss': 16,
-            'regularization_loss': 0,
-            'total_loss': 22,
+            'total_loss': 136.41496,
+            'no_reg_loss': 136.41496,
+            'regularization_loss': 0.0,
+            'rpn_cls_loss': 10.000055,
+            'rpn_reg_loss': 3.7720358,
+            'rcnn_cls_loss': 114.66851,
+            'rcnn_reg_loss': 5.030902
         }
+
+        # Test result loss comparable with expected loss within a tolerance
+        tol = 1e-3
         for loss in loss_random:
-            self.assertGreaterEqual(
-                loss_random[loss],
-                loss_random_compare[loss],
-                loss
+            assert (
+                loss_random_compare[loss] - tol < loss_random[loss]
+            )
+            assert (
+                loss_random_compare[loss] + tol > loss_random[loss]
             )
             self.assertEqual(
                 loss_perfect[loss],
+                0, loss
+            )
+
+    def testFocalFocalLoss(self):
+        """
+        Tests focal, focal classification
+        losses of the FasterRCNN (RPN, RCNN layers) respectively and
+        regression, total losses as well
+        """
+        config, prediction_dict_perf, prediction_dict_random, image_size = \
+            self.set_prediction_dicts()
+
+        config["model"]["rpn"]["loss"]["type"] = "focal"
+        config["model"]["rcnn"]["loss"]["type"] = "focal"
+
+        loss_perfect = self._get_losses(
+            config, prediction_dict_perf, image_size)
+        loss_random = self._get_losses(
+            config, prediction_dict_random, image_size)
+        loss_random_compare = {
+            'total_loss': 42.46877,
+            'no_reg_loss': 42.46877,
+            'regularization_loss': 0,
+            'rpn_cls_loss': 9.999104,
+            'rpn_reg_loss': 3.7720358,
+            'rcnn_cls_loss': 20.723267,
+            'rcnn_reg_loss': 5.030902
+        }
+
+        # Test result loss comparable with expected loss within a tolerance
+        tol = 1e-3
+        for loss in loss_random:
+            assert (
+                loss_random_compare[loss] - tol < loss_random[loss]
+            )
+            assert (
+                loss_random_compare[loss] + tol > loss_random[loss]
+            )
+            self.assertEqual(
+                float(loss_perfect[loss]),
+                0, loss
+            )
+
+    def testFocalCELoss(self):
+        """
+        Tests focal, cross entropy classification
+        losses of the FasterRCNN (RPN, RCNN layers) respectively and
+        regression, total losses as well
+        """
+        config, prediction_dict_perf, prediction_dict_random, image_size = \
+            self.set_prediction_dicts()
+
+        config["model"]["rpn"]["loss"]["type"] = "focal"
+        config["model"]["rcnn"]["loss"]["type"] = "cross_entropy"
+
+        loss_perfect = self._get_losses(
+            config, prediction_dict_perf, image_size)
+        loss_random = self._get_losses(
+            config, prediction_dict_random, image_size)
+        loss_random_compare = {
+            'total_loss': 136.41402,
+            'no_reg_loss': 136.41402,
+            'regularization_loss': 0.0,
+            'rpn_cls_loss': 9.999104,
+            'rpn_reg_loss': 3.7720358,
+            'rcnn_cls_loss': 114.66851,
+            'rcnn_reg_loss': 5.030902
+        }
+
+        # Test result loss comparable with expected loss within a tolerance
+        tol = 1e-3
+        for loss in loss_random:
+            assert (
+                loss_random_compare[loss] - tol < loss_random[loss]
+            )
+            assert (
+                loss_random_compare[loss] + tol > loss_random[loss]
+            )
+            self.assertEqual(
+                float(loss_perfect[loss]),
+                0, loss
+            )
+
+    def testCEFocalLoss(self):
+        """
+        Tests cross entropy, focal classification
+        losses of the FasterRCNN (RPN, RCNN layers) respectively and
+        regression, total losses as well
+        """
+        config, prediction_dict_perf, prediction_dict_random, image_size = \
+            self.set_prediction_dicts()
+        config["model"]["rpn"]["loss"]["type"] = "cross_entropy"
+        config["model"]["rcnn"]["loss"]["type"] = "focal"
+
+        loss_perfect = self._get_losses(
+            config, prediction_dict_perf, image_size)
+        loss_random = self._get_losses(
+            config, prediction_dict_random, image_size)
+        loss_random_compare = {
+            'total_loss': 42.469723,
+            'no_reg_loss': 42.469723,
+            'regularization_loss': 0.0,
+            'rpn_cls_loss': 10.000055,
+            'rpn_reg_loss': 3.7720358,
+            'rcnn_cls_loss': 20.723267,
+            'rcnn_reg_loss': 5.030902
+        }
+
+        # Test result loss comparable with expected loss within a tolerance
+        tol = 1e-3
+        for loss in loss_random:
+            assert (
+                loss_random_compare[loss] - tol < loss_random[loss]
+            )
+            assert (
+                loss_random_compare[loss] + tol > loss_random[loss]
+            )
+            self.assertEqual(
+                float(loss_perfect[loss]),
                 0, loss
             )
 

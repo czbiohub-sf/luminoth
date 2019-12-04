@@ -5,7 +5,7 @@ from easydict import EasyDict
 
 from luminoth.utils.image import (
     resize_image, flip_image, random_patch, random_resize, random_distortion,
-    patch_image, rot90, random_patch_gaussian, equalize_histogram
+    patch_image, rot90, random_patch_gaussian
 )
 from luminoth.utils.test.gt_boxes import generate_gt_boxes
 
@@ -39,6 +39,7 @@ class ImageTest(tf.test.TestCase):
         tf.reset_default_graph()
 
     def _gen_image(self, *shape):
+        np.random.seed(44)
         return np.random.rand(*shape)
 
     def _get_image_with_boxes(self, image_size, total_boxes):
@@ -83,14 +84,6 @@ class ImageTest(tf.test.TestCase):
             gaussian = random_patch_gaussian(
                 image_array, bboxes=boxes_array)
             return_dict = sess.run(gaussian)
-            ret_bboxes = return_dict.get('bboxes')
-            return return_dict['image'], ret_bboxes
-
-    def _equalize_histogram(self, image_array, boxes_array):
-        with self.test_session() as sess:
-            equalize = equalize_histogram(
-                image_array, bboxes=boxes_array)
-            return_dict = sess.run(equalize)
             ret_bboxes = return_dict.get('bboxes')
             return return_dict['image'], ret_bboxes
 
@@ -596,7 +589,7 @@ class ImageTest(tf.test.TestCase):
         total_boxes = 10
         image, boxes = self._get_image_with_boxes((500, 250, 3), total_boxes)
         label = 3
-        height = image.shape[0]
+        width = image.shape[1]
         bboxes_w_label = tf.concat(
             [
                 boxes,
@@ -610,7 +603,7 @@ class ImageTest(tf.test.TestCase):
         for i in range(total_boxes):
             self.assertEqual(ret_bboxes[i, 4], label)
             self.assertEqual(
-                int(round(boxes[i, 0] + ret_bboxes[i, 3])), height)
+                int(round(boxes[i, 0] + ret_bboxes[i, 3])), width)
 
             self.assertEqual(boxes[i, 1], int(round(ret_bboxes[i, 0])))
             self.assertEqual(boxes[i, 3], int(round(ret_bboxes[i, 2])))
@@ -629,30 +622,6 @@ class ImageTest(tf.test.TestCase):
             axis=1
         )
         ret_image, ret_bboxes = self._random_patch_gaussian(
-            image, tf.to_int32(bboxes_w_label))
-        # Assertions
-        self.assertEqual(ret_image.shape, image.shape)
-
-        self.assertAllEqual(
-            boxes, ret_bboxes[:, :4]
-        )
-        for i in range(total_boxes):
-            self.assertEqual(ret_bboxes[i, 4], label)
-
-    def testEqualizeHistogram(self):
-        """Tests the integrity of the return values of equalize histogram.
-        """
-        total_boxes = 10
-        image, boxes = self._get_image_with_boxes((500, 250, 3), total_boxes)
-        label = 3
-        bboxes_w_label = tf.concat(
-            [
-                boxes,
-                tf.fill((boxes.shape[0], 1), label)
-            ],
-            axis=1
-        )
-        ret_image, ret_bboxes = self._equalize_histogram(
             image, tf.to_int32(bboxes_w_label))
         # Assertions
         self.assertEqual(ret_image.shape, image.shape)

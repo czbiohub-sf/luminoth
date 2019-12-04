@@ -4,7 +4,7 @@ from luminoth.datasets.base_dataset import BaseDataset
 from luminoth.utils.image import (
     resize_image_fixed, resize_image, flip_image, random_patch, random_resize,
     random_distortion, expand,
-    rot90, random_patch_gaussian, equalize_histogram)
+    rot90, random_patch_gaussian)
 
 DATA_AUGMENTATION_STRATEGIES = {
     'flip': flip_image,
@@ -14,7 +14,6 @@ DATA_AUGMENTATION_STRATEGIES = {
     'expand': expand,
     'rotate': rot90,
     'gaussian': random_patch_gaussian,
-    'equalize': equalize_histogram
 }
 
 
@@ -181,10 +180,6 @@ class ObjectDetectionDataset(BaseDataset):
 
             random_number = tf.random_uniform([], seed=self._seed)
             prob = tf.to_float(aug_config.pop('prob', default_prob))
-            ignore_class = aug_config.pop('ignore_class', 0)
-            ignore_class_tensor = tf.dtypes.cast(
-                ignore_class, tf.int32)
-
             apply_aug_strategy = tf.less(random_number, prob)
 
             augmented = aug_fn(image, bboxes, **aug_config)
@@ -194,17 +189,12 @@ class ObjectDetectionDataset(BaseDataset):
                 lambda: augmented['image'],
                 lambda: image
             )
-
             if bboxes is not None:
                 bboxes = tf.cond(
                     apply_aug_strategy,
                     lambda: augmented.get('bboxes'),
                     lambda: bboxes
                 )
-                labels = tf.gather(bboxes, 4, axis=1)
-                if ignore_class != 0:
-                    condition = tf.not_equal(labels, ignore_class_tensor)
-                    bboxes = tf.boolean_mask(bboxes, condition)
             applied_data_augmentation.append({aug_type: apply_aug_strategy})
 
         return image, bboxes, applied_data_augmentation

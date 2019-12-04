@@ -91,42 +91,39 @@ dataset:
     min_size: 600
     max_size: 1024
   # Data augmentation techniques.
-
+  # Procedures are applied sequentially on top of each other according to
+  # the order defined in the config.
+  # each data augmentation technique has a probability assigned to it
   data_augmentation:
     - flip:
         left_right: True
         up_down: False
         prob: 0.5
-        # TODO PV ignore_class and the below data augmentation techniques are currently
-        # not improving precision, recall - WIP
-        # Exclude data augmentation on one class to compensate for class imbalaces
-        # ignore_class: [1]
     # Also available:
-    # # If you resize to too small images, you may end up not having any anchors
-    # # that aren't partially outside the image.
+    # Below data augmentation techniques may not improve precision, recall
+    # depending on your data. Use cli/data_aug_demo.py to determine how
+    # augmentation would look like with default parameters
+    # If you resize to too small images, you may end up not having any anchors
+    # that aren't partially outside the image.
+    # To understand and set your own params below, go to luminoth/utils/image.py and read up
+    # on docstrings to find sane size params etc for your case of image sizes
     # - resize:
     #     min_size: 600
     #     max_size: 1024
     #     prob: 0.2
     # - rotate:
     #     prob: 0.5
-    #     ignore_class: [1]
     # - gaussian:
     #     prob: 0.5
-    #     ignore_class: [1]
     #     target_height: 50
     #     target_width: 60
     #     min_gaussian_stddev: 0
     #     max_gaussian_stddev: 1.0
     # - expand:
     #     prob: 0.5
-    #     ignore_class: [1]
     #     fill: 0
     #     min_ratio: 1
     #     max_ratio: 4
-    # - equalize:
-    #     prob: 0.5
-    #     ignore_class: [1]
     # - patch:
     #     min_height: 600
     #     min_width: 600
@@ -137,6 +134,9 @@ dataset:
     #     hue:
     #       max_delta: 0.2
     #     saturation:
+    #       lower: 0.5
+    #       upper: 1.5
+    #     contrast:
     #       lower: 0.5
     #       upper: 1.5
     #     prob: 0.3
@@ -200,14 +200,15 @@ model:
     activation_function: relu6
     l2_regularization_scale: 0.0005  # Disable using 0.
     # Sigma for the smooth L1 regression loss.
+    l1_sigma: 3.0
+    # Classification loss for object as background vs foreground
     loss:
       _replace: True
-      type: smooth_l1
-      l1_sigma: 3.0
-    # TODO PV Also available but not tested
+      type: cross_entropy
     # loss:
     #   _replace: True
     #   type: focal
+    # Use average pooling before the last fully-connected layer.
     # Number of filters for the RPN conv layer.
     num_channels: 512
     # Kernel shape for the RPN conv layer.
@@ -269,6 +270,13 @@ model:
     l2_regularization_scale: 0.0005
     # Sigma for the smooth L1 regression loss.
     l1_sigma: 1.0
+    # Classification loss for object as background vs foreground
+    loss:
+      _replace: True
+      type: cross_entropy
+    # loss:
+    #   _replace: True
+    #   type: focal
     # Use average pooling before the last fully-connected layer.
     use_mean: True
     # Variances to normalize encoded targets with.

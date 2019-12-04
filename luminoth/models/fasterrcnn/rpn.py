@@ -10,7 +10,7 @@ from sonnet.python.modules.conv import Conv2D
 from .rpn_target import RPNTarget
 from .rpn_proposal import RPNProposal
 from luminoth.utils.losses import (
-    smooth_l1_loss, focal_loss, SMOOTH_L1, FOCAL)
+    smooth_l1_loss, focal_loss, FOCAL, CROSS_ENTROPY)
 from luminoth.utils.vars import (
     get_initializer, layer_summaries, variable_summaries,
     get_activation_function
@@ -55,18 +55,17 @@ class RPN(snt.AbstractModule):
         self._regularizer = tf.contrib.layers.l2_regularizer(
             scale=config.l2_regularization_scale
         )
+        self._l1_sigma = config.l1_sigma
 
         loss_config = config.loss
-        if loss_config.type == SMOOTH_L1:
-            self.loss_type = SMOOTH_L1
-            self._l1_sigma = loss_config.l1_sigma
-        elif config.loss.type == FOCAL:
+        if loss_config.type == CROSS_ENTROPY:
+            self.loss_type = CROSS_ENTROPY
+        elif loss_config.type == FOCAL:
             self.loss_type = FOCAL
-            self._focal_alpha = loss_config.pop('focal_alpha', None)
-            self._focal_gamma = loss_config.pop('focal_gamma', None)
-            self.background_class = loss_config.pop('background_class', 0)
-            self.ignore_class = loss_config.pop('ignore_class', -1)
+            self.focal_gamma = loss_config.get('focal_gamma')
 
+        tf.logging.info(
+            "Classification loss type in RPN is {}".format(self.loss_type))
         # We could use normal relu without any problems.
         self._rpn_activation = get_activation_function(
             config.activation_function
@@ -270,10 +269,18 @@ class RPN(snt.AbstractModule):
             cls_target = tf.one_hot(labels, depth=2)
 
             # Equivalent to log loss
-            ce_per_anchor = tf.nn.softmax_cross_entropy_with_logits_v2(
-                labels=cls_target, logits=cls_score
-            )
-            prediction_dict['cross_entropy_per_anchor'] = ce_per_anchor
+            if self.loss_type == CROSS_ENTROPY:
+                # TODO PV make this a loss function in losses.py
+                ce_per_anchor = \
+                    tf.nn.softmax_cross_entropy_with_logits_v2(
+                        labels=cls_target, logits=cls_score)
+            elif self.loss_type == FOCAL:
+                ce_per_anchor = focal_loss(
+                    cls_score, cls_target, self.focal_gamma)
+            # TODO PV Rename cross entropy per anchor to reflect focal loss is
+            # calculated
+            prediction_dict['cross_entropy_per_anchor'] = \
+                ce_per_anchor
 
             # Finally, we need to calculate the regression loss over
             # `rpn_bbox_target` and `rpn_bbox_pred`.
@@ -288,14 +295,9 @@ class RPN(snt.AbstractModule):
             rpn_bbox_pred = tf.boolean_mask(rpn_bbox_pred, positive_labels)
 
             # We apply smooth l1 loss as described by the Fast R-CNN paper.
-            if self.loss_type == SMOOTH_L1:
-                reg_loss_per_anchor = smooth_l1_loss(
-                    rpn_bbox_pred, rpn_bbox_target, sigma=self._l1_sigma
-                )
-            else:
-                reg_loss_per_anchor = focal_loss(
-                    cls_score, cls_target, self._focal_alpha, self._focal_gamma
-                )
+            reg_loss_per_anchor = smooth_l1_loss(
+                rpn_bbox_pred, rpn_bbox_target, sigma=self._l1_sigma
+            )
 
             prediction_dict['reg_loss_per_anchor'] = reg_loss_per_anchor
 

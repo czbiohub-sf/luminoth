@@ -57,20 +57,20 @@ class ObjectDetectionDatasetTest(tf.test.TestCase):
             [19, 30, 31, 33, 2],
         ])
         config = [
-            {'flip': {'prob': 0, 'ignore_class': 2}},
-            {'flip': {'prob': 1, 'ignore_class': 2}}]
+            {'flip': {'prob': 0}},
+            {'flip': {'prob': 1}}]
 
         image_aug, bboxes_aug, aug = self._run_augment(config, image, bboxes)
-        self.assertEqual(len(bboxes_aug), 3)
+        self.assertEqual(len(bboxes_aug), 4)
         self.assertEqual(aug[0], {'flip': False})
         self.assertEqual(aug[1], {'flip': True})
 
         config = [
-            {'flip': {'prob': 1, 'ignore_class': 1}},
-            {'flip': {'prob': 0, 'ignore_class': 1}}]
+            {'flip': {'prob': 1}},
+            {'flip': {'prob': 0}}]
 
         image_aug, bboxes_aug, aug = self._run_augment(config, image, bboxes)
-        self.assertEqual(len(bboxes_aug), 1)
+        self.assertEqual(len(bboxes_aug), 4)
         self.assertEqual(aug[0], {'flip': True})
         self.assertEqual(aug[1], {'flip': False})
 
@@ -105,11 +105,11 @@ class ObjectDetectionDatasetTest(tf.test.TestCase):
             [19, 30, 31, 33, 2],
         ])
         config = [
-            {'rotate': {'prob': 1, 'ignore_class': 1}},
-            {'rotate': {'prob': 0, 'ignore_class': 1}}]
+            {'rotate': {'prob': 1}},
+            {'rotate': {'prob': 0}}]
 
         image_aug, bboxes_aug, aug = self._run_augment(config, image, bboxes)
-        self.assertEqual(len(bboxes_aug), 1)
+        self.assertEqual(len(bboxes_aug), 4)
         self.assertEqual(aug[0], {'rotate': True})
         self.assertEqual(aug[1], {'rotate': False})
 
@@ -125,33 +125,13 @@ class ObjectDetectionDatasetTest(tf.test.TestCase):
             [19, 30, 31, 33, 2],
         ])
         config = [
-            {'gaussian': {'prob': 1, 'ignore_class': 1}},
-            {'gaussian': {'prob': 0, 'ignore_class': 1}}]
+            {'gaussian': {'prob': 1}},
+            {'gaussian': {'prob': 0}}]
 
         image_aug, bboxes_aug, aug = self._run_augment(config, image, bboxes)
-        self.assertEqual(len(bboxes_aug), 1)
+        self.assertEqual(len(bboxes_aug), 4)
         self.assertEqual(aug[0], {'gaussian': True})
         self.assertEqual(aug[1], {'gaussian': False})
-
-    def testEqualize(self):
-        """
-        Tests that the equalize augmentation is applied in order
-        """
-        image = np.random.randint(low=0, high=255, size=(600, 800, 3))
-        bboxes = np.array([
-            [10, 10, 26, 28, 1],
-            [10, 10, 20, 22, 1],
-            [10, 11, 20, 21, 1],
-            [19, 30, 31, 33, 2],
-        ])
-        config = [
-            {'equalize': {'prob': 1, 'ignore_class': 1}},
-            {'equalize': {'prob': 0, 'ignore_class': 1}}]
-
-        image_aug, bboxes_aug, aug = self._run_augment(config, image, bboxes)
-        self.assertEqual(len(bboxes_aug), 1)
-        self.assertEqual(aug[0], {'equalize': True})
-        self.assertEqual(aug[1], {'equalize': False})
 
 
 if __name__ == '__main__':

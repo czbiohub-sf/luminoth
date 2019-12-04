@@ -52,6 +52,9 @@ class RCNNTest(tf.test.TestCase):
             },
             'l2_regularization_scale': 0.0005,
             'l1_sigma': 3.0,
+            'loss': {
+                'type': 'cross_entropy',
+            },
             'roi': {
                 'pooling_mode': 'crop',
                 'pooled_width': 7,

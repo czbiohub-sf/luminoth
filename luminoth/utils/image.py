@@ -634,15 +634,15 @@ def _rot90_boxes(boxes, image_shape):
     width = image_shape[1]
 
     x_min, y_min, x_max, y_max, label = tf.unstack(boxes, axis=1)
-    normalized_x_min = x_min / height
-    normalized_y_min = y_min / width
-    normalized_x_max = x_max / height
-    normalized_y_max = y_max / width
+    normalized_x_min = x_min / width
+    normalized_y_min = y_min / height
+    normalized_x_max = x_max / width
+    normalized_y_max = y_max / height
 
-    new_x_min = (tf.round(normalized_y_min * width))
-    new_y_min = (tf.round((tf.subtract(1.0, normalized_x_max)) * height))
-    new_x_max = (tf.round(normalized_y_max * width))
-    new_y_max = (tf.round((tf.subtract(1.0, normalized_x_min)) * height))
+    new_x_min = (tf.round(normalized_y_min * height))
+    new_y_min = (tf.round((tf.subtract(1.0, normalized_x_max)) * width))
+    new_x_max = (tf.round(normalized_y_max * height))
+    new_y_max = (tf.round((tf.subtract(1.0, normalized_x_min)) * width))
 
     bboxes = tf.stack(
         [new_x_min,
@@ -670,8 +670,9 @@ def rot90(image, bboxes=None):
     image_shape = tf.to_float(tf.shape(image))
     image = tf.image.rot90(image)
     if bboxes is not None:
+        original_bboxes_dtype = bboxes.dtype
         rotated_bboxes = _rot90_boxes(bboxes, image_shape)
-        rotated_bboxes = tf.cast(rotated_bboxes, bboxes.dtype)
+        rotated_bboxes = tf.cast(rotated_bboxes, original_bboxes_dtype)
 
     return_dict = {'image': image}
     if bboxes is not None:
@@ -769,41 +770,6 @@ def random_patch_gaussian(image,
     # Return results
     image = tf.cast(gaussian_patched_image, original_dtype)
     return_dict = {'image': image}
-    if bboxes is not None:
-        return_dict['bboxes'] = bboxes
-    return return_dict
-
-
-def equalize_histogram(image, bboxes=None):
-    """Equalize image for data augmentation.
-    Args:
-        image: Tensor with image of shape (H, W, 3).
-        bboxes: Optional Tensor with bounding boxes with shape (num_bboxes, 5).
-            where we have (x_min, y_min, x_max, y_max, label) for each one.
-    Returns:
-        image: Equalized image with the same shape (H, W, 3).
-        bboxes: Unchanged bboxes
-    """
-    image_shape = tf.shape(image)
-    original_dtype = image.dtype
-    image = tf.image.rgb_to_grayscale(image)
-    values_range = tf.constant([0., 255.], dtype=tf.float32)
-    histogram = tf.histogram_fixed_width(
-        tf.to_float(image), values_range, 256)
-    cdf = tf.cumsum(histogram)
-    cdf_min = cdf[tf.reduce_min(tf.where(tf.greater(cdf, 0)))]
-
-    pix_cnt = image_shape[0] * image_shape[1]
-    px_map = tf.round(
-        tf.to_float(cdf - cdf_min) * 255. / tf.to_float(pix_cnt - 1))
-    px_map = tf.cast(px_map, tf.uint8)
-
-    eq_hist = tf.expand_dims(tf.gather_nd(px_map, tf.cast(image, tf.int32)), 2)
-
-    eq_hist = tf.image.grayscale_to_rgb(eq_hist)
-    eq_hist = tf.cast(eq_hist, original_dtype)
-    # Return results
-    return_dict = {'image': eq_hist}
     if bboxes is not None:
         return_dict['bboxes'] = bboxes
     return return_dict
