@@ -109,18 +109,18 @@ def get_image_paths_per_class(bb_labels_df):
             list of image paths containing the label annotation as values
     """
     # Print meta for each unique label
-    class_labels = np.unique(bb_labels_df.class_name)
+    class_labels = np.unique(bb_labels_df['label'])
     image_paths_per_class = {}
-    for class_name in class_labels:
+    for label in class_labels:
         # This dict collects all the unique images that contains a label
-        filtered_df = bb_labels_df[bb_labels_df['label'] == class_name]
+        filtered_df = bb_labels_df[bb_labels_df['label'] == label]
         images = np.unique(filtered_df['image_id']).tolist()
-        image_paths_per_class[class_name] = images
+        image_paths_per_class[label] = images
         print(
             'There are {} images with {} {} labeled classes in dataset'.format(
-                len(image_paths_per_class[class_name]),
+                len(image_paths_per_class[label]),
                 len(filtered_df),
-                class_name))
+                label))
     return image_paths_per_class
 
 
