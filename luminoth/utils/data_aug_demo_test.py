@@ -118,7 +118,6 @@ class DataAugDemoTest(tf.test.TestCase):
             input_image,
             ".png",
             csv_path,
-            "image_id",
             fill_value,
             output_png)
 
@@ -152,7 +151,6 @@ class DataAugDemoTest(tf.test.TestCase):
             input_image,
             ".png",
             csv_path,
-            "image_id",
             fill_value,
             output_png)
 

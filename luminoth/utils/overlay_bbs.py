@@ -63,17 +63,7 @@ def overlay_bb_labels(
     Returns:
         im_rgb: np.array overlaid_image with same shape and 3 channels
     """
-    im_rgb = cv2.imread(im_path, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
-    shape = im_rgb.shape
-    print(shape)
-
-    # Convert Gray to RGB image to overlay bounding box, labels text in color
-    if len(shape) == 2:
-        im_rgb = cv2.cvtColor(im_rgb, cv2.COLOR_GRAY2RGB)
-    elif len(shape) == 3:
-        if shape[2] != 3:
-            im_rgb = cv2.cvtColor(im_rgb, cv2.COLOR_GRAY2RGB)
-    print(im_rgb.shape)
+    im_rgb = cv2.imread(im_path, cv2.IMREAD_COLOR)
 
     basename = os.path.basename(im_path).replace(input_image_format, "")
     tmp_df = df[df.base_path == basename]
@@ -133,7 +123,6 @@ def overlay_bbs_on_all_images(
     for im_path in images_in_path:
         im_rgb = overlay_bb_labels(im_path, input_image_format, df)
         png = os.path.basename(im_path).replace(input_image_format, ".png")
-        print(im_rgb.shape)
         cv2.imwrite(os.path.join(output_dir, png), im_rgb)
     print("Overlaid bounding box labeled images are at: {}".format(output_dir))
 

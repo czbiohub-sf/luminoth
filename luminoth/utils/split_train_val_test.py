@@ -97,8 +97,8 @@ class SplitTrainValTest(tf.test.TestCase):
         # Assert base_path column exists and is as expected
         for index, row in df.iterrows():
             assert row["base_path"] == (
-                os.path.dirname(row["image_path"]).replace(os.sep, "_") + "_" +
-                os.path.basename(row["image_path"]).replace(
+                os.path.dirname(row["image_id"]).replace(os.sep, "_") + "_" +
+                os.path.basename(row["image_id"]).replace(
                     self.input_image_format, ""))
 
     def testAddBasenameGatherDfTxt(self):
@@ -110,8 +110,8 @@ class SplitTrainValTest(tf.test.TestCase):
         # Assert base_path column exists and is as expected
         for index, row in df.iterrows():
             assert row["base_path"] == (
-                os.path.dirname(row["image_path"]).replace(os.sep, "_") + "_" +
-                os.path.basename(row["image_path"]).replace(
+                os.path.dirname(row["image_id"]).replace(os.sep, "_") + "_" +
+                os.path.basename(row["image_id"]).replace(
                     self.input_image_format, ""))
 
     def testGetImagePathsPerClass(self):

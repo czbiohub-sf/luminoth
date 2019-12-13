@@ -238,8 +238,7 @@ def mosaic_data_aug(
 def data_aug_demo(
         input_image, input_image_format, csv_path, fill_value, output_png):
     mosaic_data_aug(
-        input_image, input_image_format,
-        csv_path, fill_value, output_png)
+        input_image, input_image_format, csv_path, fill_value, output_png)
 
 
 if __name__ == '__main__':
