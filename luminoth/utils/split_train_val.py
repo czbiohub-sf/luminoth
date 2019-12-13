@@ -75,19 +75,19 @@ def add_basename_gather_df(filenames, input_image_format):
 
     # Add base_path columns
     base_names = [
-        os.path.dirname(row["image_path"]).replace(os.sep, "_") + "_" +
-        os.path.basename(row["image_path"]).replace(input_image_format, "")
+        os.path.dirname(row["image_id"]).replace(os.sep, "_") + "_" +
+        os.path.basename(row["image_id"]).replace(input_image_format, "")
         for index, row in bb_labels_df.iterrows()]
     bb_labels_df["base_path"] = pd.Series(base_names)
 
-    label_name_type = type(bb_labels_df['class_name'].iloc[0])
+    label_name_type = type(bb_labels_df['label'].iloc[0])
 
     # Cast required columns to integers
     if label_name_type is str:
-        cols = ['x1', 'x2', 'y1', 'y2']
+        cols = ['xmin', 'xmax', 'ymin', 'ymax']
         bb_labels_df[cols] = bb_labels_df[cols].applymap(np.int64)
     elif label_name_type is np.float64:
-        cols = ['x1', 'x2', 'y1', 'y2', 'class_name']
+        cols = ['xmin', 'xmax', 'ymin', 'ymax', 'label']
         bb_labels_df[cols] = bb_labels_df[cols].applymap(np.int64)
 
     bb_labels_df.reset_index(drop=True, inplace=True)
@@ -113,8 +113,8 @@ def get_image_paths_per_class(bb_labels_df):
     image_paths_per_class = {}
     for class_name in class_labels:
         # This dict collects all the unique images that contains a label
-        filtered_df = bb_labels_df[bb_labels_df['class_name'] == class_name]
-        images = np.unique(filtered_df['image_path']).tolist()
+        filtered_df = bb_labels_df[bb_labels_df['label'] == class_name]
+        images = np.unique(filtered_df['image_id']).tolist()
         image_paths_per_class[class_name] = images
         print(
             'There are {} images with {} {} labeled classes in dataset'.format(
@@ -126,7 +126,7 @@ def get_image_paths_per_class(bb_labels_df):
 
 def get_lumi_csv_df(bb_labels, images, output_image_format):
     """
-    Return a csv as required by luminoth with image_id,x1,y1,x2,y2,label
+    Return csv as required by luminoth with image_id,xmin,xmax,ymin,ymax,label
 
     Args:
         bb_labels: Dataframe with image_id, xmin, xmax, ymin, ymax, label
