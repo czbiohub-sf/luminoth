@@ -44,8 +44,6 @@ unless you explicitly know the behaviour and need it
 
 # Constants for dataframe lumi csv headers
 LUMI_CSV_COLUMNS = ['image_id', 'xmin', 'xmax', 'ymin', 'ymax', 'label']
-# TODO PV Redo so all the columns match for the input
-INPUT_CSV_COLUMNS = ['image_path', 'x1', 'x2', 'y1', 'y2', 'class_name']
 # Constant for luminoth accepted images for training/validation
 OUTPUT_IMAGE_FORMAT = ".jpg"
 
@@ -59,7 +57,7 @@ def add_basename_gather_df(filenames, input_image_format):
 
     Args:
         filenames: list of paths to comma separated txt/csv file with
-            image_path,x1,y1,x2,y2,class_name
+            image_id, xmin, xmax, ymin, ymax, label
         input_image_format: str image format in the path
 
     Returns:
@@ -131,7 +129,7 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
     Return a csv as required by luminoth with image_id,x1,y1,x2,y2,label
 
     Args:
-        bb_labels: Dataframe with image_path,x1,y1,x2,y2,class_name
+        bb_labels: Dataframe with image_id, xmin, xmax, ymin, ymax, label
         images: List of images to filter by
         output_image_format: Defaults to jpg
 
@@ -151,7 +149,7 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
         # Add all the bounding boxes for the images to the dataframe
         count = 0
         for index, row in tmp_df.iterrows():
-            label_name = row['class_name']
+            label_name = row['label']
 
             if count == 0:
                 label_name_type = type(label_name)
@@ -160,10 +158,10 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
                 label_name = np.int64(label_name)
 
             df = df.append({'image_id': img_name,
-                            'xmin': np.int64(row['x1']),
-                            'xmax': np.int64(row['x2']),
-                            'ymin': np.int64(row['y1']),
-                            'ymax': np.int64(row['y2']),
+                            'xmin': np.int64(row['xmin']),
+                            'xmax': np.int64(row['xmax']),
+                            'ymin': np.int64(row['ymin']),
+                            'ymax': np.int64(row['ymax']),
                             'label': label_name},
                            ignore_index=True)
             count += 1
@@ -282,7 +280,7 @@ def split_data_to_train_val(
 
     Args:
         filenames: list of paths to comma separated txt file with
-            image_path,x1,y1,x2,y2,class_name
+             image_id, xmin, xmax, ymin, ymax, label
         random_seed: int Randomize the images so no
             two continuous slices go to the train or validation directory
         percentage: float Percentage of data for training

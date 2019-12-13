@@ -10,7 +10,7 @@ import pandas as pd
 import tensorflow as tf
 
 from luminoth.utils.split_train_val import (
-    add_basename_gather_df, get_image_paths_per_class, INPUT_CSV_COLUMNS,
+    add_basename_gather_df, get_image_paths_per_class,
     get_lumi_csv_df, LUMI_CSV_COLUMNS, split_data_to_train_val,
     write_lumi_images_csv, filter_dense_annotation)
 from luminoth.utils.test.gt_boxes import generate_gt_boxes
@@ -52,18 +52,18 @@ class SplitTrainValTest(tf.test.TestCase):
     def get_test_data(self, image, image_path, bboxes, labels, ann_path):
         # Write test images, csv/txt files
         location = tempfile.mkdtemp()
-        df = pd.DataFrame(columns=INPUT_CSV_COLUMNS)
+        df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
         image_save_path = os.path.join(location, image_path)
         csv_save_path = os.path.join(location, ann_path)
         cv2.imwrite(image_save_path, image)
         for i, bbox in enumerate(bboxes):
             label_name = labels[i]
-            df = df.append({'image_path': image_save_path,
-                            'x1': np.int64(bbox[0]),
-                            'x2': np.int64(bbox[2]),
-                            'y1': np.int64(bbox[1]),
-                            'y2': np.int64(bbox[3]),
-                            'class_name': np.int64(label_name)},
+            df = df.append({'image_id': image_save_path,
+                            'xmin': np.int64(bbox[0]),
+                            'xmax': np.int64(bbox[2]),
+                            'ymin': np.int64(bbox[1]),
+                            'ymax': np.int64(bbox[3]),
+                            'label': np.int64(label_name)},
                            ignore_index=True)
 
         df.to_csv(csv_save_path)
