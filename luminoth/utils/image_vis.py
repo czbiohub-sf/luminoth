@@ -1168,12 +1168,12 @@ def recalculate_objects(pred_dict, image):
     return bboxes, proposals_target
 
 
-def draw_object_prediction(pred_dict, image, topn=50):
+def draw_object_prediction(pred_dict, image):
     logger.debug('Display top scored objects with label.')
     objects = pred_dict['classification_prediction']['objects']
     objects_labels = pred_dict['classification_prediction']['labels']
     objects_labels_prob = pred_dict['classification_prediction']['probs']
-
+    logger.debug("number of objects predicted {}".format(len(objects)))
     if len(objects_labels) == 0:
         logger.debug(
             'No objects detected. Probably all classified as background.')
