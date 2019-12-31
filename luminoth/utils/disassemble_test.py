@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 
 
-from luminoth.utils.disassemble import split_mosaic, disassemble_image
+from luminoth.utils.disassemble import split_mosaic, disassemble_images
 
 
 class DisassembleTest(tf.test.TestCase):
@@ -47,7 +47,7 @@ class DisassembleTest(tf.test.TestCase):
 
         # Set inputs for split_mosaic
         tile_size = [10, 8]
-        im_dir = self.write_test_data(1, self.gray_image_shape)
+        im_dir = self.write_test_data(2, self.gray_image_shape)
         images = natsort.natsorted(
             glob.glob(os.path.join(im_dir, "*" + self.input_image_format)))
 
@@ -85,19 +85,18 @@ class DisassembleTest(tf.test.TestCase):
 
         # Set inputs for mosaic_images
         tile_size = [10, 8]
-        im_dir = self.write_test_data(1, self.gray_image_shape)
-        images = natsort.natsorted(
-            glob.glob(os.path.join(im_dir, "*" + self.input_image_format)))
+        im_dir = self.write_test_data(2, self.gray_image_shape)
         output_dir = tempfile.mkdtemp()
 
-        disassemble_image(
-            images[0],
+        disassemble_images(
+            im_dir,
+            self.input_image_format,
             tile_size,
             output_dir)
         split_images = natsort.natsorted(
             glob.glob(os.path.join(output_dir, "*" + self.input_image_format)))
         # Assert mosaiced_image expected shape
-        assert len(split_images) == 25
+        assert len(split_images) == 50
         for path in split_images:
             image = cv2.imread(path, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
             assert image.sum() != 0
@@ -108,19 +107,18 @@ class DisassembleTest(tf.test.TestCase):
 
         # Set inputs for mosaic_images
         tile_size = [10, 8]
-        im_dir = self.write_test_data(1, self.color_image_shape)
-        images = natsort.natsorted(
-            glob.glob(os.path.join(im_dir, "*" + self.input_image_format)))
+        im_dir = self.write_test_data(3, self.color_image_shape)
         output_dir = tempfile.mkdtemp()
 
-        disassemble_image(
-            images[0],
+        disassemble_images(
+            im_dir,
+            self.input_image_format,
             tile_size,
             output_dir)
         split_images = natsort.natsorted(
             glob.glob(os.path.join(output_dir, "*" + self.input_image_format)))
         # Assert mosaiced_image expected shape
-        assert len(split_images) == 25
+        assert len(split_images) == 75
         for path in split_images:
             image = cv2.imread(path, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
             assert image.sum() != 0

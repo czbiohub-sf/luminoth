@@ -1,8 +1,10 @@
+import glob
 import itertools
 import os
 
 import click
 import cv2
+import natsort
 
 
 def split_mosaic(image, tile_size):
@@ -48,37 +50,44 @@ def _set_tile_size(image, tile_size):
     return tile_size
 
 
-def disassemble_image(input_img, tile_size, output_dir):
+def disassemble_images(input_dir, fmt, tile_size, output_dir):
     """
     Disasemble input_img to tiles of size to tile_size.
 
     Args:
-        input_img: str Path to input image
+        input_dir: str Directory containing input images
+        fmt: str format of input images
         tile_size: tuple that each disassembled/split image size
         output_dir: str directory to save the disassembled images to
 
     Returns:
         Save split/disassembled images to
     """
-    image = cv2.imread(input_img, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
-    print(image.shape)
-    fmt = input_img.split(".")[1]
-    tile_size = _set_tile_size(image, tile_size)
-    split_images = split_mosaic(image, tile_size)
-    for index, image in enumerate(split_images):
-        cv2.imwrite(os.path.join(
-            output_dir,
-            "{}.{}".format(index, fmt)), image)
+    images = natsort.natsorted(
+        glob.glob(os.path.join(input_dir, "*" + fmt)))
+    result_images = []
+    for input_img in images:
+        image = cv2.imread(
+            input_img, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
+        tile_size = _set_tile_size(image, tile_size)
+        split_images = split_mosaic(image, tile_size)
+        for index, image in enumerate(split_images):
+            path = os.path.join(
+                output_dir,
+                "{}_{}.{}".format(os.path.basename(input_img), index, fmt))
+            cv2.imwrite(path, image)
+            result_images.append(path)
 
     print("Split images are at: {}".format(output_dir))
 
 
 @click.command(help="Save disassembled mosaic images in a directory")  # noqa
-@click.option("--input_img", help="Input image", required=True, type=str) # noqa
+@click.option("--input_dir", help="Directory containing input images", required=True, type=str) # noqa
+@click.option("--fmt", help="Format of input images", required=True, type=str) # noqa
 @click.option("--tile_size", help="[x,y] list of tile size in x, y", required=False, multiple=True) # noqa
 @click.option("--output_dir", help="Absolute path to name to save the disassembled images to", required=True, type=str) # noqa
-def disassemble(input_img, tile_size, output_dir):
-    disassemble_image(input_img, tile_size, output_dir)
+def disassemble(input_dir, fmt, tile_size, output_dir):
+    disassemble_images(input_dir, fmt, tile_size, output_dir)
 
 
 if __name__ == '__main__':
