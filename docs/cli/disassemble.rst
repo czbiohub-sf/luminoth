@@ -3,14 +3,14 @@
 Disassemble one large image to small images
 ============================================
 
-Assuming you have want to split large image into small image::
+Assuming you want to split large image into small images::
 
 
-  $ lumi disassemble --input_img mosaiced.png --tile_size 40, 50 --output_dir split/
+  $ lumi disassemble --input_dir mosaic/ --tile_size 40, 50 --output_dir split/
 
-The ``lumi disassemble`` CLI tool provides the following options related to disassemble an image of tile shape
+The ``lumi disassemble`` CLI tool provides the following options related to disassemble multiple images to small tiles of tile shape
 
-* ``--input_img``: Path of the image to split
+* ``--input_dir``: Directory containing mosaiced images to split
 
 * ``--tile_size``: Size of each tile in the split mosaic
 
