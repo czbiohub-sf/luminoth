@@ -63,6 +63,13 @@ def disassemble_images(input_dir, fmt, tile_size, output_dir):
     Returns:
         Save split/disassembled images to
     """
+    # Create a folder to save images to
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    else:
+        print("Path {} already exists, might be overwriting data".format(
+            output_dir))
+
     images = natsort.natsorted(
         glob.glob(os.path.join(input_dir, "*" + fmt)))
     result_images = []
@@ -74,7 +81,9 @@ def disassemble_images(input_dir, fmt, tile_size, output_dir):
         for index, image in enumerate(split_images):
             path = os.path.join(
                 output_dir,
-                "{}_{}.{}".format(os.path.basename(input_img), index, fmt))
+                "{}_{}.{}".format(
+                    os.path.basename(input_img).split(".")[0],
+                    index, fmt))
             cv2.imwrite(path, image)
             result_images.append(path)
 
