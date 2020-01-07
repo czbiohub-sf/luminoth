@@ -51,15 +51,16 @@ class ConfusionMatrixTest(tf.test.TestCase):
         self.labels = [0, 1, 2]
 
         self.expected_cm = np.array(([
-            [1, 0, 0, 0, 1],
-            [0, 0, 1, 3, 3],
-            [0, 0, 2, 0, 3],
-            [1, 1, 0, 0, 0],
-            [2, 2, 2, 0, 0]]))
+            [1, 0, 0, 1, 2],
+            [0, 0, 1, 1, 2],
+            [0, 0, 2, 0, 2],
+            [0, 3, 0, 0, 0],
+            [1, 3, 3, 0, 0]]))
+
         self.expected_ncm = np.array((
-            [[0.5, 0., 0.],
-             [0., 0., 0.5],
-             [0., 0., 1.]]), dtype=np.float32)
+            [[1, 0., 0.],
+             [0., 0., 0.333333],
+             [0., 0., 0.666667]]), dtype=np.float32)
 
     def tearDown(self):
         tf.reset_default_graph()
@@ -140,7 +141,7 @@ class ConfusionMatrixTest(tf.test.TestCase):
                 predicted_matched_classes,
                 gt_classes,
                 predicted_classes)
-
+        print(complete_cm)
         np.testing.assert_array_equal(complete_cm, self.expected_cm)
 
     def testUnequalBoxes(self):
@@ -181,6 +182,7 @@ class ConfusionMatrixTest(tf.test.TestCase):
         cm = confusion_matrix.get_confusion_matrix(
             self.gt_csv, self.predicted_csv,
             self.labels, self.iou_threshold, self.confidence_threshold)
+        print(cm)
         np.testing.assert_array_equal(cm, self.expected_cm)
 
     def testNormalizeConfusionMatrix(self):
@@ -188,7 +190,7 @@ class ConfusionMatrixTest(tf.test.TestCase):
 
         normalized_cm = confusion_matrix.normalize_confusion_matrix(
             self.expected_cm)
-        np.testing.assert_array_equal(normalized_cm, self.expected_ncm)
+        np.testing.assert_array_almost_equal(normalized_cm, self.expected_ncm)
 
 
 if __name__ == '__main__':
