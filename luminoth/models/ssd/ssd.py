@@ -33,7 +33,7 @@ class SSD(snt.AbstractModule):
         self._anchors_per_point = config.model.anchors.anchors_per_point
         self._loc_loss_weight = config.model.loss.localization_loss_weight
         # TODO: Why not use the default LOSSES collection?
-        loss_config = config.loss
+        loss_config = config.model.loss
         if loss_config.type == CROSS_ENTROPY:
             self.loss_type = CROSS_ENTROPY
         elif loss_config.type == FOCAL:
