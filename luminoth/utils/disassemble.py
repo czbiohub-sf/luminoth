@@ -83,7 +83,7 @@ def disassemble_images(input_dir, fmt, tile_size, output_dir):
                 output_dir,
                 "{}_{}.{}".format(
                     os.path.basename(input_img).split(".")[0],
-                    index, jpg))
+                    index, "jpg"))
             cv2.imwrite(path, image)
             result_images.append(path)
 
