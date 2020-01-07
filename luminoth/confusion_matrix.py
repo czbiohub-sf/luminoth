@@ -4,9 +4,15 @@ import click
 import sys
 import json
 import sklearn.metrics
+import matplotlib.pyplot as plt
 
 from luminoth.utils.bbox_overlap import bbox_overlap
 
+
+DEFAULT_CMAP = "Oranges"
+DEFAULT_FONT_SIZE = 11
+DEFAULT_LINE_WIDTH = 0.5
+DEFAULT_FIG_SIZE = (9, 9)
 
 """
 Output from this cli tool would as below:
@@ -199,17 +205,17 @@ def append_unmatched_gt_predict(
         gts_per_label = gt_classes.count(label)
         matched_gts_per_label = gt_matched_classes.count(label)
 
-        # Number of unmatched predicted objects are set at labels column
-        complete_confusion_matrix[i, number_classes] = \
-            predicteds_per_label - matched_predicteds_per_label
         # Number of unmatched groundtruth objects are set at labels row
-        complete_confusion_matrix[number_classes, i] = \
+        complete_confusion_matrix[i, number_classes] = \
             gts_per_label - matched_gts_per_label
+        # Number of unmatched predicted objects are set at labels column
+        complete_confusion_matrix[number_classes, i] = \
+            predicteds_per_label - matched_predicteds_per_label
 
-        # Number of total predicted objects are set at labels + 1 column
-        complete_confusion_matrix[i, number_classes + 1] = predicteds_per_label
         # Number of total groundtruth objects are set at labels + 1 row
-        complete_confusion_matrix[number_classes + 1, i] = gts_per_label
+        complete_confusion_matrix[i, number_classes + 1] = gts_per_label
+        # Number of total predicted objects are set at labels + 1 column
+        complete_confusion_matrix[number_classes + 1, i] = predicteds_per_label
 
     return complete_confusion_matrix
 
@@ -236,7 +242,7 @@ def get_confusion_matrix(
         iou_threshold: float, IOU threshold below which the
             match of the predicted bounding box with the
             ground truth box is invalid
-        confidence_threshold: flot Confidence score threshold below which
+        confidence_threshold: float Confidence score threshold below which
             bounding box detection is of low confidence and
             is ignored while considering true positives in predicted data
 
@@ -245,7 +251,7 @@ def get_confusion_matrix(
         (len(labels) + 2, len(labels) + 2) shape,
         includes total groundtruth, predicted per class in the last row, column
         and umatched groundtruth, unmatched predicted per class
-        in the last row - 1, column -1 respectively. Look at the text in the
+        in the last row - 1, column - 1 respectively. Look at the text in the
         beginning of the program to understand by example
     """
     (gt_classes,
@@ -264,6 +270,9 @@ def get_confusion_matrix(
         confusion_matrix = sklearn.metrics.confusion_matrix(
             gt_matched_classes, predicted_matched_classes, labels=labels)
 
+    predicted_classes = []
+    for index, row in pd.read_csv(predicted_csv).iterrows():
+            predicted_classes.append(row.label)
     # Completing confusion matrix with unmatched ground truths and predicteds
     # False negatives and False positives respectively
     complete_confusion_matrix = append_unmatched_gt_predict(
@@ -360,8 +369,7 @@ def print_precision_recall(
     # TODO PV Calculate actual precision, recall, & remove the below note
     print(
         "Note: Precision and recall here doesnt include the bounding boxes "
-        "that were present in ground truth but not detected in predicted "
-        "and viceversa")
+        "that were present in predicted but not in groundtruth")
 
     # Getting list of matched GT, Predicted classes
     (gt_classes,
@@ -414,7 +422,8 @@ def display(
         labels,
         iou_threshold,
         confidence_threshold,
-        output_path):
+        output_path,
+        output_fig):
     """
     Save and display confusion matrix, precision, recall scores of each of
     the unique labels
@@ -435,6 +444,10 @@ def display(
         confidence_threshold: flot Confidence score threshold below which
             bounding box detection is of low confidence and
             is ignored while considering true positives in predicted data
+        output_path: str output txt file containing confusion matrix,
+            precision, recall per class
+        output_fig: str output png file containing confusion matrix,
+            precision, recall per class
 
     Returns:
         Prints confusion matrix, normalized confusion matrix
@@ -473,22 +486,151 @@ def display(
         iou_threshold,
         confidence_threshold)
 
+    # Plot confusion matrix
+    confusion_matrix[-1, -1] = np.sum(confusion_matrix[-1, :])
+    confusion_matrix = np.delete(confusion_matrix, -2, 0)
+    confusion_matrix = np.delete(confusion_matrix, -2, 1)
+    plot_cm(confusion_matrix, labels, output_fig)
+
     # Close STDOUT and reset
     sys.stdout.close()
     sys.stdout = stdout_origin
+
+
+def matlab_transform_confusion_matrix(row, col, confusion_matrix):
+    """
+    Transform element in the confusion_matrix
+
+    Args:
+        confusion_matrix: numpy array of symmetrical (x, x) shape
+
+    Returns:
+        confusion_matrix: numpy array of symmetrical (x, x) shape
+
+    """
+    current_element = confusion_matrix[row][col]
+    total = confusion_matrix[-1][-1]
+    percentage_total = (float(current_element) / total) * 100
+    cm_length = confusion_matrix.shape[0]
+
+    # last line  and/or last column
+    if(col == (cm_length - 1)) or (row == (cm_length - 1)):
+        # totals and percents
+        if(current_element != 0):
+            if(col == cm_length - 1) and (row == cm_length - 1):
+                tot_rig = 0
+                for i in range(confusion_matrix.shape[0] - 1):
+                    tot_rig += confusion_matrix[i][i]
+                percentage_accuracy = (float(tot_rig) / current_element) * 100
+            elif(col == cm_length - 1):
+                tot_rig = confusion_matrix[row][row]
+                percentage_accuracy = (float(tot_rig) / current_element) * 100
+            elif(row == cm_length - 1):
+                tot_rig = confusion_matrix[col][col]
+                percentage_accuracy = (float(tot_rig) / current_element) * 100
+            percentage_error = 100 - percentage_accuracy
+        else:
+            percentage_accuracy = percentage_error = 0
+
+        percentage_accuracy_s = [
+            '%.2f%%' % (percentage_accuracy), '100%'][
+            percentage_accuracy == 100]
+        txt = '%s\n%.2f%%' % (percentage_accuracy_s, percentage_error)
+    else:
+        if(percentage_total > 0):
+            txt = '%s\n%.2f%%' % (current_element, percentage_total)
+        else:
+            txt = '0\n0.0%'
+    return txt
+
+
+def plot_cm(confusion_matrix, labels, output_fig):
+    """
+    Save confusion matrix, precision, recall scores of each of
+    the unique labels to a figure
+
+    Args:
+        confusion_matrix: numpy array of symmetrical (x, x) shape
+        labels: list of unqiue names of the objects present
+        output_fig: str output png file containing confusion matrix,
+            precision, recall per class
+
+    Returns:
+        Plots and saves matlab like confusion matrix with
+        precision, recall, and total percentages to output_fig
+    The rows correspond to the predicted class (Output Class) and
+    the columns correspond to the true class (Target Class).
+    The diagonal cells correspond to observations that are correctly
+    classified. The off-diagonal cells correspond to incorrectly
+    classified observations. Both the number of observations and the
+    percentage of the total number of observations are shown in each cell.
+
+    The column on the far right of the plot shows the percentages of all
+    the examples predicted to belong to each class that are correctly and
+    incorrectly classified. These metrics are often called the precision
+    (or positive predictive value) and false discovery rate, respectively.
+    The row at the bottom of the plot shows the percentages of all the examples
+     belonging to each class that are correctly and incorrectly classified.
+     These metrics are often called the recall (or true positive rate) and
+     false negative rate, respectively.
+     The cell in the bottom right of the plot shows the overall accuracy.
+    """
+    confusion_matrix = confusion_matrix.T
+    fig, ax = plt.subplots()
+    im = ax.imshow(confusion_matrix, cmap=DEFAULT_CMAP)
+    # set ticklabels rotation
+    ax.set_xticks(np.arange(confusion_matrix.shape[1]))
+    ax.set_yticks(np.arange(confusion_matrix.shape[0]))
+    ax.set_xticklabels(labels, rotation=45, fontsize=10)
+    ax.set_yticklabels(labels, rotation=0, fontsize=10)
+
+    # Turn off all the ticks
+    for t in ax.xaxis.get_major_ticks():
+        t.tick1On = False
+        t.tick2On = False
+    for t in ax.yaxis.get_major_ticks():
+        t.tick1On = False
+        t.tick2On = False
+
+    cm_length = confusion_matrix.shape[0]
+    # Loop over data dimensions and create text annotations.
+    for row in range(cm_length):
+        for col in range(cm_length):
+            text = ax.text(
+                row, col,
+                matlab_transform_confusion_matrix(row, col, confusion_matrix),
+                ha="center", va="center", color="black", fontsize=8)
+
+    # Turn spines off and create black grid.
+    for edge, spine in ax.spines.items():
+        spine.set_visible(False)
+    ax.set_xticks(np.arange(confusion_matrix.shape[1] + 1) - .5, minor=True)
+    ax.set_yticks(np.arange(confusion_matrix.shape[0] + 1) - .5, minor=True)
+    ax.grid(which="minor", color="w", linestyle='-', linewidth=3)
+    ax.grid(which="minor", color="black", linestyle='-', linewidth=2)
+    ax.tick_params(which="minor", bottom=False, left=False)
+
+    # titles and legends
+    ax.set_title('Confusion matrix', fontweight='bold')
+    ax.set_xlabel('Output Class', fontweight='bold')
+    ax.set_ylabel('Target Class', fontweight='bold')
+    plt.tight_layout()  # set layout slim
+    plt.savefig(output_fig, dpi=300)
 
 
 @click.command(help="Save or print confusion matrix per class after comparing ground truth and prediced bounding boxes")  # noqa
 @click.option("--groundtruth_csv", help="Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label and several rows corresponding to the groundtruth bounding box objects", required=True, type=str) # noqa
 @click.option("--predicted_csv", help="Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label,prob and several rows corresponding to the predicted bounding box objects", required=True, type=str) # noqa
 @click.option("--output_txt", help="output txt file containing confusion matrix, precision, recall per class", type=str) # noqa
+@click.option("--output_fig", help="output fig file (format can be png, eps, pdf, svg) containing confusion matrix, precision, recall per class", type=str) # noqa
 @click.option('--iou_threshold', type=float, required=False, default=0.5, help='IOU threshold below which the bounding box is invalid')  # noqa
-@click.option('--confidence_threshold', type=float, required=False, default=0.9, help='Confidence score threshold below which bounding box detection is of low confidence and is ignored while considering true positives')  # noqa
+@click.option('--confidence_threshold', type=float, required=False, default=0.5, help='Confidence score threshold below which bounding box detection is of low confidence and is ignored while considering true positives')  # noqa
 @click.option('--classes_json', required=True, help='path to a json file containing list of class label for the objects, labels are alphabetically sorted')  # noqa
 def confusion_matrix(
         groundtruth_csv,
         predicted_csv,
         output_txt,
+        output_fig,
         iou_threshold,
         confidence_threshold,
         classes_json):
@@ -501,7 +643,8 @@ def confusion_matrix(
         class_labels,
         iou_threshold,
         confidence_threshold,
-        output_txt)
+        output_txt,
+        output_fig)
 
 
 if __name__ == '__main__':
