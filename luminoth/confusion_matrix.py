@@ -272,7 +272,7 @@ def get_confusion_matrix(
 
     predicted_classes = []
     for index, row in pd.read_csv(predicted_csv).iterrows():
-            predicted_classes.append(row.label)
+        predicted_classes.append(row.label)
     # Completing confusion matrix with unmatched ground truths and predicteds
     # False negatives and False positives respectively
     complete_confusion_matrix = append_unmatched_gt_predict(
@@ -497,7 +497,7 @@ def display(
     sys.stdout = stdout_origin
 
 
-def matlab_transform_confusion_matrix(row, col, confusion_matrix):
+def format_element_to_matlab_confusion_matrix(row, col, confusion_matrix):
     """
     Transform element in the confusion_matrix
 
@@ -598,7 +598,8 @@ def plot_cm(confusion_matrix, labels, output_fig):
         for col in range(cm_length):
             text = ax.text(
                 row, col,
-                matlab_transform_confusion_matrix(row, col, confusion_matrix),
+                format_element_to_matlab_confusion_matrix(
+                    row, col, confusion_matrix),
                 ha="center", va="center", color="black", fontsize=8)
 
     # Turn spines off and create black grid.
@@ -616,6 +617,7 @@ def plot_cm(confusion_matrix, labels, output_fig):
     ax.set_ylabel('Target Class', fontweight='bold')
     plt.tight_layout()  # set layout slim
     plt.savefig(output_fig, dpi=300)
+    del im, text
 
 
 @click.command(help="Save or print confusion matrix per class after comparing ground truth and prediced bounding boxes")  # noqa
