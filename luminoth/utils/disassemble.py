@@ -5,6 +5,7 @@ import os
 import click
 import cv2
 import natsort
+import numpy as np
 
 
 def split_mosaic(image, tile_size):
@@ -58,10 +59,10 @@ def disassemble_images(input_dir, fmt, tile_size, output_dir):
         input_dir: str Directory containing input images
         fmt: str format of input images
         tile_size: tuple that each disassembled/split image size
-        output_dir: str directory to save the disassembled images to
+        output_dir: str directory to save the disassembled uint8 jpg images to
 
     Returns:
-        Save split/disassembled images to
+        Save split/disassembled scaled uint8 jpg images to
     """
     # Create a folder to save images to
     if not os.path.exists(output_dir):
@@ -74,11 +75,14 @@ def disassemble_images(input_dir, fmt, tile_size, output_dir):
         glob.glob(os.path.join(input_dir, "*" + fmt)))
     result_images = []
     for input_img in images:
+        print(input_img)
         image = cv2.imread(
             input_img, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
+        print(image.shape, image.min(), image.max())
         tile_size = _set_tile_size(image, tile_size)
         split_images = split_mosaic(image, tile_size)
         for index, image in enumerate(split_images):
+            image = (image / image.max() * 255).astype(np.uint8)
             path = os.path.join(
                 output_dir,
                 "{}_{}.{}".format(
@@ -94,7 +98,7 @@ def disassemble_images(input_dir, fmt, tile_size, output_dir):
 @click.option("--input_dir", help="Directory containing input images", required=True, type=str) # noqa
 @click.option("--fmt", help="Format of input images", required=True, type=str) # noqa
 @click.option("--tile_size", help="[x,y] list of tile size in x, y", required=False, multiple=True) # noqa
-@click.option("--output_dir", help="Absolute path to name to save the disassembled images to", required=True, type=str) # noqa
+@click.option("--output_dir", help="Absolute path to name to save the disassembled scaled uint8 jpg images to", required=True, type=str) # noqa
 def disassemble(input_dir, fmt, tile_size, output_dir):
     disassemble_images(input_dir, fmt, tile_size, output_dir)
 
