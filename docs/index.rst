@@ -10,7 +10,7 @@ Welcome to
 Currently, we support object detection, but we are aiming for much more. It's built in
 Python, using `TensorFlow <https://tensorflow.org>`_.
 
-The code is open source and `available on GitHub <https://github.com/tryolabs/luminoth>`_.
+The code is open source and `available on GitHub <https://github.com/czbiohub/luminoth-uv-imaging>`_.
 
 Documentation
 -------------

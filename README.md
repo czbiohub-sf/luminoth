@@ -46,7 +46,7 @@ pip install luminoth[gcloud]
 First, clone the repo on your machine and then install with `pip`:
 
 ```bash
-git clone https://github.com/tryolabs/luminoth.git
+git clone https://github.com/czbiohub/luminoth-uv-imaging.git
 cd luminoth
 pip install -e .
 ```
@@ -62,8 +62,6 @@ Currently, we support the following models:
 * **Object Detection**
   * [Faster R-CNN](https://arxiv.org/abs/1506.01497)
   * [SSD](https://arxiv.org/abs/1512.02325)
-
-We are planning on adding support for more models in the near future, such as [RetinaNet](https://arxiv.org/abs/1708.02002) and [Mask R-CNN](https://arxiv.org/abs/1703.06870).
 
 We also provide **pre-trained checkpoints** for the above models trained on popular datasets such as [COCO](http://cocodataset.org/) and [Pascal](http://host.robots.ox.ac.uk/pascal/VOC/).
 

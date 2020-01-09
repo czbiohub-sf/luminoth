@@ -13,7 +13,7 @@ schedule, is specified in a YAML config file. This file will be consumed by Lumi
 merged to the default configuration, to start the training session.
 
 You can see a minimal config file example in
-`sample_config.yml <https://github.com/tryolabs/luminoth/blob/master/examples/sample_config.yml>`_.
+`sample_config.yml <https://github.com/czbiohub/luminoth-uv-imaging/blob/master/examples/sample_config.yml>`_.
 This file illustrates the entries you'll most probably need to modify, which are:
 
 * ``train.run_name``: the run name for the training session, used to identify it.
@@ -26,7 +26,7 @@ This file illustrates the entries you'll most probably need to modify, which are
 
 For looking at all the possible configuration options,  mostly related to the model
 itself, you can check the
-`base_config.yml <https://github.com/tryolabs/luminoth/blob/master/luminoth/models/fasterrcnn/base_config.yml>`_
+`base_config.yml <https://github.com/czbiohub/luminoth-uv-imaging/blob/master/luminoth/models/fasterrcnn/base_config.yml>`_
 file.
 
 Building the config file for your dataset
