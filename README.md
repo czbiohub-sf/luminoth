@@ -65,6 +65,13 @@ Currently, we support the following models:
 
 We also provide **pre-trained checkpoints** for the above models trained on popular datasets such as [COCO](http://cocodataset.org/) and [Pascal](http://host.robots.ox.ac.uk/pascal/VOC/).
 
+We also provide **pre-trained checkpoints** for the Faster R-CNN trained on RBC cell detection/parasite stage classification are available in release https://github.com/czbiohub/luminoth-uv-imaging/releases/tag/v0.3.0
+
+68b8787e0bae - Faster R-CNN with commercial microscope dataset to detect healthy/ring/schizont/normal RBC
+e6fa22ca6045 - Faster R-CNN with commercial microscope dataset to healthy/unhealthy RBC
+
+Use `lumi predict` and the checkpoints above to test on your own dataset with similar 4 or 2 classes as mentioned above 
+
 # Usage
 
 There is one main command line interface which you can use with the `lumi` command. Whenever you are confused on how you are supposed to do something just type:
