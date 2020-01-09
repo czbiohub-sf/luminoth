@@ -141,7 +141,6 @@ class ConfusionMatrixTest(tf.test.TestCase):
                 predicted_matched_classes,
                 gt_classes,
                 predicted_classes)
-        print(complete_cm)
         np.testing.assert_array_equal(complete_cm, self.expected_cm)
 
     def testUnequalBoxes(self):
@@ -182,7 +181,6 @@ class ConfusionMatrixTest(tf.test.TestCase):
         cm = confusion_matrix.get_confusion_matrix(
             self.gt_csv, self.predicted_csv,
             self.labels, self.iou_threshold, self.confidence_threshold)
-        print(cm)
         np.testing.assert_array_equal(cm, self.expected_cm)
 
     def testNormalizeConfusionMatrix(self):
@@ -191,6 +189,21 @@ class ConfusionMatrixTest(tf.test.TestCase):
         normalized_cm = confusion_matrix.normalize_confusion_matrix(
             self.expected_cm)
         np.testing.assert_array_almost_equal(normalized_cm, self.expected_ncm)
+
+    def testformatElementToMatlabConfusionMatrix(self):
+        self.expected_cm[-1, -1] = np.sum(self.expected_cm[-1, :])
+        self.expected_cm = np.delete(self.expected_cm, -2, 0)
+        self.expected_cm = np.delete(self.expected_cm, -2, 1)
+        assert confusion_matrix.format_element_to_matlab_confusion_matrix(
+            0, 0, self.expected_cm) == "1\n14.29%"
+        assert confusion_matrix.format_element_to_matlab_confusion_matrix(
+            1, 1, self.expected_cm) == "0\n0.0%"
+        assert confusion_matrix.format_element_to_matlab_confusion_matrix(
+            3, 3, self.expected_cm) == "42.86%\n57.14%"
+        assert confusion_matrix.format_element_to_matlab_confusion_matrix(
+            3, 2, self.expected_cm) == "66.67%\n33.33%"
+        assert confusion_matrix.format_element_to_matlab_confusion_matrix(
+            2, 3, self.expected_cm) == "100%\n0.00%"
 
 
 if __name__ == '__main__':

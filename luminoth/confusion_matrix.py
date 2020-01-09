@@ -446,14 +446,17 @@ def display(
             is ignored while considering true positives in predicted data
         output_path: str output txt file containing confusion matrix,
             precision, recall per class
-        output_fig: str output png file containing confusion matrix,
-            precision, recall per class
+        output_fig: str output figure file containing confusion matrix,
+            precision, recall per class. Format of the figure file could be
+            png, svg, eps, or pdf.
 
     Returns:
         Prints confusion matrix, normalized confusion matrix
         precision, recall, f1_score, support per class,
         either to stdout or to a text file as
-        specified in output_path
+        specified in output_path, also saves a plotted confusion matrix image
+        in output_fig. the format of the figure is similar to figure returned
+        by matlab's plotconfusion function
     """
     # Redirect printing output to
     stdout_origin = sys.stdout
@@ -486,10 +489,12 @@ def display(
         iou_threshold,
         confidence_threshold)
 
-    # Plot confusion matrix
+    # set total at the last element to the sum of all predicted elements(tp+fp)
     confusion_matrix[-1, -1] = np.sum(confusion_matrix[-1, :])
+    # remove unmatched row, column
     confusion_matrix = np.delete(confusion_matrix, -2, 0)
     confusion_matrix = np.delete(confusion_matrix, -2, 1)
+    # Plot confusion matrix
     plot_cm(confusion_matrix, labels, output_fig)
 
     # Close STDOUT and reset
@@ -499,43 +504,76 @@ def display(
 
 def format_element_to_matlab_confusion_matrix(row, col, confusion_matrix):
     """
-    Transform element in the confusion_matrix
+    Return a string for the element on row, col location for
+    confusion_matrix to either
+    number of observation\npercentage of observations or
+    percentage_correct_classifications\npercentage_incorrect_classifications
+    per class
 
     Args:
-        confusion_matrix: numpy array of symmetrical (x, x) shape
+        row: int row location inside array
+        col: int col locat
+        confusion_matrix: numpy array of symmetrical (x, x) shape with target
+            class/groundtruth in columns and output/predicted class in rows and
+            total for each class including unmatched groundtruth
+            (not detected by the model) & unmatched predicted class(due to low
+            confidence)
 
     Returns:
-        confusion_matrix: numpy array of symmetrical (x, x) shape
+        text: str string depending on row, col location for
+            element in the confusion_matrix to either
+            number of observation\npercentage of observations or
+            percentage_correct_classifications\npercentage_incorrect
+            classifications per class.
+            If row, col are equal to the last row, col of the array then the
+            element represents totals per class,
+            percentage_correct_classifications\npercentage_incorrect
+            classifications per class is returned else
+            it is the number of objects per label in either ground truth or
+            predicted and number of observation\npercentage of observations is
+            returned
 
     """
     current_element = confusion_matrix[row][col]
-    total = confusion_matrix[-1][-1]
-    percentage_total = (float(current_element) / total) * 100
+    total_predicted = confusion_matrix[-1][-1]
+    percentage_total = (float(current_element) / total_predicted) * 100
     cm_length = confusion_matrix.shape[0]
 
-    # last line  and/or last column
+    # for totals calculate percentage accuracy and percentage error
     if(col == (cm_length - 1)) or (row == (cm_length - 1)):
         # totals and percents
         if(current_element != 0):
             if(col == cm_length - 1) and (row == cm_length - 1):
-                tot_rig = 0
+                total_correct = 0
                 for i in range(confusion_matrix.shape[0] - 1):
-                    tot_rig += confusion_matrix[i][i]
-                percentage_accuracy = (float(tot_rig) / current_element) * 100
+                    total_correct += confusion_matrix[i][i]
+                percentage_correct_classifications = (
+                    float(total_correct) / current_element) * 100
             elif(col == cm_length - 1):
-                tot_rig = confusion_matrix[row][row]
-                percentage_accuracy = (float(tot_rig) / current_element) * 100
+                true_positives_for_label = confusion_matrix[row][row]
+                true_predicted_per_class = current_element
+                percentage_correct_classifications = (
+                    float(true_positives_for_label) / true_predicted_per_class
+                ) * 100
             elif(row == cm_length - 1):
-                tot_rig = confusion_matrix[col][col]
-                percentage_accuracy = (float(tot_rig) / current_element) * 100
-            percentage_error = 100 - percentage_accuracy
+                true_positives_for_label = confusion_matrix[col][col]
+                true_groundtruth_per_class = current_element
+                percentage_correct_classifications = (
+                    float(
+                        true_positives_for_label) / true_groundtruth_per_class
+                ) * 100
+            percentage_incorrect_classifications = \
+                100 - percentage_correct_classifications
         else:
-            percentage_accuracy = percentage_error = 0
+            percentage_correct_classifications = \
+                percentage_incorrect_classifications = 0
 
-        percentage_accuracy_s = [
-            '%.2f%%' % (percentage_accuracy), '100%'][
-            percentage_accuracy == 100]
-        txt = '%s\n%.2f%%' % (percentage_accuracy_s, percentage_error)
+        percentage_correct_classifications_s = [
+            '%.2f%%' % (percentage_correct_classifications), '100%'][
+            percentage_correct_classifications == 100]
+        txt = '%s\n%.2f%%' % (
+            percentage_correct_classifications_s,
+            percentage_incorrect_classifications)
     else:
         if(percentage_total > 0):
             txt = '%s\n%.2f%%' % (current_element, percentage_total)
@@ -550,10 +588,11 @@ def plot_cm(confusion_matrix, labels, output_fig):
     the unique labels to a figure
 
     Args:
-        confusion_matrix: numpy array of symmetrical (x, x) shape
+        confusion_matrix: numpy array of symmetrical (x, x) shape,
+        along the columns is predicted data
         labels: list of unqiue names of the objects present
-        output_fig: str output png file containing confusion matrix,
-            precision, recall per class
+        output_fig: str output figure file containing confusion matrix,
+            precision, recall per class (format can be png, pdf, eps, svg)
 
     Returns:
         Plots and saves matlab like confusion matrix with
@@ -570,14 +609,17 @@ def plot_cm(confusion_matrix, labels, output_fig):
     incorrectly classified. These metrics are often called the precision
     (or positive predictive value) and false discovery rate, respectively.
     The row at the bottom of the plot shows the percentages of all the examples
-     belonging to each class that are correctly and incorrectly classified.
-     These metrics are often called the recall (or true positive rate) and
-     false negative rate, respectively.
-     The cell in the bottom right of the plot shows the overall accuracy.
+    belonging to each class that are correctly and incorrectly classified.
+    These metrics are often called the recall
+    (or true positive rate or sensitivity)
+    and false negative rate, respectively.
+    The cell in the bottom right of the plot shows the overall accuracy.
     """
+    # Transpose to set the ground truth to be along columns
     confusion_matrix = confusion_matrix.T
     fig, ax = plt.subplots()
     im = ax.imshow(confusion_matrix, cmap=DEFAULT_CMAP)
+
     # set ticklabels rotation
     ax.set_xticks(np.arange(confusion_matrix.shape[1]))
     ax.set_yticks(np.arange(confusion_matrix.shape[0]))
@@ -592,8 +634,8 @@ def plot_cm(confusion_matrix, labels, output_fig):
         t.tick1On = False
         t.tick2On = False
 
-    cm_length = confusion_matrix.shape[0]
     # Loop over data dimensions and create text annotations.
+    cm_length = confusion_matrix.shape[0]
     for row in range(cm_length):
         for col in range(cm_length):
             text = ax.text(
@@ -611,11 +653,13 @@ def plot_cm(confusion_matrix, labels, output_fig):
     ax.grid(which="minor", color="black", linestyle='-', linewidth=2)
     ax.tick_params(which="minor", bottom=False, left=False)
 
-    # titles and legends
+    # Titles and labels
     ax.set_title('Confusion matrix', fontweight='bold')
     ax.set_xlabel('Output Class', fontweight='bold')
     ax.set_ylabel('Target Class', fontweight='bold')
-    plt.tight_layout()  # set layout slim
+
+    # Save figure
+    plt.tight_layout()
     plt.savefig(output_fig, dpi=300)
     del im, text
 
