@@ -5,7 +5,7 @@ Overlay bounding boxes and their annotations on images
 
 Assuming you already have both your dataset and their bounding box, labeled annotations ready::
 
-  $ lumi overlay_bbs im_dir predicted_images/ --csv_path groundtruth_val.csv --output_dir overlaid_images --input_image_format .jpg
+  $ lumi overlay_bbs --im_dir predicted_images/ --csv_path groundtruth_val.csv --output_dir overlaid_images --input_image_format .jpg
 
 The ``lumi overlay_bbs`` CLI tool provides the following options related to overlaying the bbs, labels on images.
 

@@ -7,7 +7,7 @@ import pandas as pd
 
 # Constants for bounding box and label overlays
 FONT = cv2.FONT_HERSHEY_SIMPLEX
-FONT_SCALE = 1
+FONT_SCALE = 0.5
 FONT_COLOR = (0, 0, 255)
 LINE_TYPE = 2
 BB_COLOR = (0, 255, 0)

@@ -51,15 +51,16 @@ class ConfusionMatrixTest(tf.test.TestCase):
         self.labels = [0, 1, 2]
 
         self.expected_cm = np.array(([
-            [1, 0, 0, 0, 1],
-            [0, 0, 1, 3, 3],
-            [0, 0, 2, 0, 3],
-            [1, 1, 0, 0, 0],
-            [2, 2, 2, 0, 0]]))
+            [1, 0, 0, 1, 2],
+            [0, 0, 1, 1, 2],
+            [0, 0, 2, 0, 2],
+            [0, 3, 0, 0, 0],
+            [1, 3, 3, 0, 0]]))
+
         self.expected_ncm = np.array((
-            [[0.5, 0., 0.],
-             [0., 0., 0.5],
-             [0., 0., 1.]]), dtype=np.float32)
+            [[1, 0., 0.],
+             [0., 0., 0.333333],
+             [0., 0., 0.666667]]), dtype=np.float32)
 
     def tearDown(self):
         tf.reset_default_graph()
@@ -140,7 +141,6 @@ class ConfusionMatrixTest(tf.test.TestCase):
                 predicted_matched_classes,
                 gt_classes,
                 predicted_classes)
-
         np.testing.assert_array_equal(complete_cm, self.expected_cm)
 
     def testUnequalBoxes(self):
@@ -188,7 +188,22 @@ class ConfusionMatrixTest(tf.test.TestCase):
 
         normalized_cm = confusion_matrix.normalize_confusion_matrix(
             self.expected_cm)
-        np.testing.assert_array_equal(normalized_cm, self.expected_ncm)
+        np.testing.assert_array_almost_equal(normalized_cm, self.expected_ncm)
+
+    def testformatElementToMatlabConfusionMatrix(self):
+        self.expected_cm[-1, -1] = np.sum(self.expected_cm[-1, :])
+        self.expected_cm = np.delete(self.expected_cm, -2, 0)
+        self.expected_cm = np.delete(self.expected_cm, -2, 1)
+        assert confusion_matrix.format_element_to_matlab_confusion_matrix(
+            0, 0, self.expected_cm) == "1\n14.29%"
+        assert confusion_matrix.format_element_to_matlab_confusion_matrix(
+            1, 1, self.expected_cm) == "0\n0.0%"
+        assert confusion_matrix.format_element_to_matlab_confusion_matrix(
+            3, 3, self.expected_cm) == "42.86%\n57.14%"
+        assert confusion_matrix.format_element_to_matlab_confusion_matrix(
+            3, 2, self.expected_cm) == "66.67%\n33.33%"
+        assert confusion_matrix.format_element_to_matlab_confusion_matrix(
+            2, 3, self.expected_cm) == "100%\n0.00%"
 
 
 if __name__ == '__main__':
