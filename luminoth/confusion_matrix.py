@@ -116,7 +116,7 @@ def get_matched_gt_predict(
 
     # Find IOU Matches
     matches = []
-
+    print("groundtruth and predicted matches finding begins")
     for i in range(len(gt_boxes)):
         for j in range(len(predicted_boxes)):
             iou = bbox_overlap(
@@ -125,7 +125,7 @@ def get_matched_gt_predict(
 
             if iou > iou_threshold:
                 matches.append([i, j, iou])
-
+    print("matches found")
     # Remove redundant IOU matches with different labels
     matches = np.array(matches)
     if matches.shape[0] > 0:
@@ -152,6 +152,7 @@ def get_matched_gt_predict(
     # Get the list of predicted classses that matched with ground truth
     predicted_matched_classes = [
         predicted_classes[int(match[1])] for match in matches_list]
+    print("redundant matches removed")
     return (
         gt_classes,
         predicted_classes,
@@ -216,7 +217,7 @@ def append_unmatched_gt_predict(
         complete_confusion_matrix[i, number_classes + 1] = gts_per_label
         # Number of total predicted objects are set at labels + 1 column
         complete_confusion_matrix[number_classes + 1, i] = predicteds_per_label
-
+    print("complete confusion matrix returned")
     return complete_confusion_matrix
 
 
@@ -282,7 +283,7 @@ def get_confusion_matrix(
         predicted_matched_classes,
         gt_classes,
         predicted_classes)
-
+    print("confusion matrix obtained")
     return complete_confusion_matrix
 
 
