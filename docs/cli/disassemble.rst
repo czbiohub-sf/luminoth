@@ -3,7 +3,7 @@
 Disassemble one large image to small images
 ============================================
 
-Assuming you want to split large image into small images::
+Assuming you want to split large image into small uint8 jpg images::
 
 
   $ lumi disassemble --input_dir mosaic/ --fmt tif --tile_size 40, 50 --output_dir split/
