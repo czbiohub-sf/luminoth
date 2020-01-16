@@ -142,13 +142,14 @@ class PredictorNetwork(object):
         predictions = [] * len(objects)
         assert len(objects) == len(labels) == len(probs)
         print(objects)
-        for index, obj, label, prob in enumerate(zip(objects, labels, probs)):
+        count = 0
+        for obj, label, prob in zip(objects, labels, probs):
             if objects.count(obj) == 1:
                 d = {
                     'bbox': obj,
                     'label': label,
                     'prob': round(prob, 4)}
-                predictions[index] = d
+                predictions[count] = d
                 print(len(predictions))
             elif objects.count(obj) > 1:
                 print("before")
@@ -177,7 +178,7 @@ class PredictorNetwork(object):
                 predictions[repeated_indices[0]] = d
                 print(len(predictions))
                 print("after")
-
+            count += 1
         predictions = list(filter([], predictions))
         predictions = sorted(
             predictions, key=lambda x: x['prob'], reverse=True)
