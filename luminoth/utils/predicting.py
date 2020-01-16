@@ -156,7 +156,7 @@ class PredictorNetwork(object):
                 max_prob = max(prob_repeated_objs.values())
                 prob_index = [
                     index for index, prob in prob_repeated_objs.items()
-                    if prob == max_prob]
+                    if prob == max_prob][0]
                 d = {
                     'bbox': obj,
                     'label': labels[prob_index],
