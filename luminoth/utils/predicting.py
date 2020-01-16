@@ -154,11 +154,12 @@ class PredictorNetwork(object):
                 prob_repeated_objs = [
                     [i, probs[i]] for i, value in enumerate(objects)
                     if value == obj]
-                indices = [i for (i, _) in prob_repeated_objs]
-                probs = [j for (_, j) in prob_repeated_objs]
-                max_prob = max(probs)
+                repeated_indices = [i for (i, _) in prob_repeated_objs]
+                repeated_probs = [j for (_, j) in prob_repeated_objs]
+                max_prob = max(repeated_probs)
                 prob_index = [
-                    index for index, prob in zip(indices, probs)
+                    index for index, prob in zip(
+                        repeated_indices, repeated_probs)
                     if prob == max_prob][0]
                 d = {
                     'bbox': obj,
