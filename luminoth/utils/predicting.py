@@ -174,7 +174,7 @@ class PredictorNetwork(object):
                     'label': labels[prob_index],
                     'prob': round(max_prob, 4)}
                 print(d)
-                predictions.insert(repeated_indices[0], d)
+                predictions[repeated_indices[0]] = d
                 print(len(predictions))
                 print("after")
 
