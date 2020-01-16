@@ -5,7 +5,7 @@ Confusion matrix comparing ground truth and predicted bounding boxes detected by
 
 Assuming you already have both your dataset and predicted output ready to evaluate using confusion matrix, other validation metrics::
 
-  $ lumi confusion_matrix --groundtruth_csv lumi_csv/val.csv --predicted_csv preds_val/objects.csv --output_txt cm.txt --output_fif cm.png --classes_json all_data/classes.json
+  $ lumi confusion_matrix --groundtruth_csv lumi_csv/val.csv --predicted_csv preds_val/objects.csv --output_txt cm.txt --output_fif cm.png --classes_json all_data/classes.json --input_image_format .jpg --num_cpus 4
 
 The ``lumi confusion_matrix`` CLI tool provides the following options related to evaluation.
 
@@ -22,3 +22,7 @@ The ``lumi confusion_matrix`` CLI tool provides the following options related to
 * ``--iou_threshold``: IOU threshold below which the match of the predicted bounding box with the ground truth box is invalid, defaults to 0.5
 
 * ``--confidence_threshold``: Confidence score threshold below which bounding box detection is of low confidence and is ignored while considering true positives, defaults to 0.9
+
+* ``--input_image_format``: Format of images in image_id column in the csvs
+
+* ``--num_cpus``: Number of cpus to run comparison between groundtruth and predicted to obtain matched classses

@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import click
 import itertools
 import os
@@ -53,10 +52,32 @@ Groundtruth [    1]   0.000   0.000   0.500
 
 
 def get_valid_match_iou(i, j, gt_boxes, predicted_boxes, iou_threshold):
+    """
+    Returns all groundtruth classes, predicted classes, matched groundtruth
+    classes, matched predicted classes with iou greater than iou_threshold,
+    after filtering the predicted classes with confidence greater than
+    confidence_threshold for one image given in image_path with format
+    input_image_format
+
+    Args:
+        i: image_id to look for in the dataframes
+        j: str Format of the image_id file in the csv files
+            for groundtruth and prediction
+        gt_boxes: dataframe with image_id,xmin,ymin,xmax,ymax,label as header
+            and several rows corresponding to the groundtruth
+            bounding boxes, labels, image in which they are present. image_id
+            should be same for all rows
+        predicted_boxes:
+        iou_threshold: float, IOU threshold below which the
+            match of the predicted bounding box with the
+            ground truth box is invalid
+    Returns:
+        list: [index_gt, index_predicted, iou] or None
+    """
     iou = bbox_overlap(
         np.array(gt_boxes[i]).reshape(1, 4),
         np.array(predicted_boxes[j]).reshape(1, 4))[0][0]
-    if iou > iou_threshold:
+    if iou >= iou_threshold:
         return [i, j, iou]
 
 
@@ -73,9 +94,13 @@ def get_matched_gt_predict_per_image(
     Returns all groundtruth classes, predicted classes, matched groundtruth
     classes, matched predicted classes with iou greater than iou_threshold,
     after filtering the predicted classes with confidence greater than
-    confidence_threshold
+    confidence_threshold for one image given in image_path with format
+    input_image_format
 
     Args:
+        im_path: image_id to look for in the dataframes
+        input_image_format: str Format of the image_id file in the csv files
+            for groundtruth and prediction
         df_gt: dataframe with image_id,xmin,ymin,xmax,ymax,label as header
             and several rows corresponding to the groundtruth
             bounding boxes, labels, image in which they are present. image_id
@@ -92,6 +117,8 @@ def get_matched_gt_predict_per_image(
         confidence_threshold: flot Confidence score threshold below which
             bounding box detection is of low confidence and
             is ignored while considering true positives in predicted data
+        num_cpus: int number of cpus to run comparison between groundtruth
+            and predicted to obtain matched classses
 
     Returns:
         gt_classes: list of all the annotations/labels in groundtruth
@@ -110,8 +137,13 @@ def get_matched_gt_predict_per_image(
     gt_boxes = []
     gt_classes = []
     for index, row in df_gt.iterrows():
-        gt_boxes.append([row.xmin, row.ymin, row.xmax, row.ymax])
-        gt_classes.append(row.label)
+        box = [row.xmin, row.ymin, row.xmax, row.ymax]
+        if box in gt_boxes:
+            row_index = gt_boxes.index(box)
+            gt_classes.insert(row_index, row.label)
+        else:
+            gt_boxes.append(box)
+            gt_classes.append(row.label)
 
     # Collect the bboxes, labels in 2 lists for predicted only if their
     # prob is greater than confidence_threshold
@@ -119,10 +151,19 @@ def get_matched_gt_predict_per_image(
     predicted_classes = []
     predicted_scores = []
     for index, row in df_predicted.iterrows():
-        if row.prob > confidence_threshold:
-            predicted_boxes.append([row.xmin, row.ymin, row.xmax, row.ymax])
-            predicted_classes.append(row.label)
-            predicted_scores.append(row.prob)
+        prob = row.prob
+        if prob >= confidence_threshold:
+            box = [row.xmin, row.ymin, row.xmax, row.ymax]
+            if box in predicted_boxes:
+                row_index = predicted_boxes.index(box)
+                previous_prob = df_predicted.iloc[row_index]['prob']
+                if prob > previous_prob:
+                    predicted_classes.insert(row_index, row.label)
+                    predicted_scores.insert(row_index, row.prob)
+            else:
+                predicted_boxes.append(box)
+                predicted_classes.append(row.label)
+                predicted_scores.append(row.prob)
 
     # Find IOU Matches
 
@@ -138,9 +179,9 @@ def get_matched_gt_predict_per_image(
             predicted_boxes,
             iou_threshold) for i,
         j in iterator)
-    matches = list(filter(None, matches))
+    matches_before = list(filter(None, matches))
     # Remove redundant IOU matches with different labels
-    matches = np.array(matches)
+    matches = np.array(matches_before)
     if matches.shape[0] > 0:
         # Sort list of matches by descending IOU
         # so we can remove duplicate detections
@@ -195,6 +236,17 @@ def get_matched_gt_predict(
             containing image_id,xmin,ymin,xmax,ymax,label,prob"
             and several rows corresponding to the predicted
             bounding boxes, labels, image in which they are present
+        labels: list of unqiue names of the objects present
+        iou_threshold: float, IOU threshold below which the
+            match of the predicted bounding box with the
+            ground truth box is invalid
+        confidence_threshold: flot Confidence score threshold below which
+            bounding box detection is of low confidence and
+            is ignored while considering true positives in predicted data
+        input_image_format: str Format of the image_id file in the csv files
+            for groundtruth and prediction
+        num_cpus: int number of cpus to run comparison between groundtruth
+            and predicted to obtain matched classses
 
     Returns:
         gt_classes: list of all the annotations/labels in groundtruth
@@ -210,8 +262,6 @@ def get_matched_gt_predict(
     gt_df = add_base_path(gt_csv, input_image_format)
     predicted_df = add_base_path(predicted_csv, input_image_format)
     unique_image_paths = gt_df['base_path'].unique().tolist()
-    gt_classes = gt_matched_classes = \
-        predicted_classes = predicted_matched_classes = []
 
     result = Parallel(
         n_jobs=num_cpus)(
@@ -225,14 +275,23 @@ def get_matched_gt_predict(
             iou_threshold,
             confidence_threshold,
             num_cpus) for im_path in unique_image_paths)
-
+    gt_classes = []
+    gt_matched_classes = []
+    predicted_classes = []
+    predicted_matched_classes = []
     for per_image_result in result:
-        for j in per_image_result:
-            gt_classes.append(j[0])
-            predicted_classes.append(j[1])
-            gt_matched_classes.append(j[2])
-            predicted_matched_classes.append(j[3])
-
+        gt_classes_image = per_image_result[0]
+        predicted_classes_image = per_image_result[1]
+        gt_matched_classes_image = per_image_result[2]
+        predicted_matched_classes_image = per_image_result[3]
+        for item0 in gt_classes_image:
+            gt_classes.append(item0)
+        for item1 in predicted_classes_image:
+            predicted_classes.append(item1)
+        for item2 in gt_matched_classes_image:
+            gt_matched_classes.append(item2)
+        for item3 in predicted_matched_classes_image:
+            predicted_matched_classes.append(item3)
     return (
         gt_classes,
         predicted_classes,
@@ -327,6 +386,10 @@ def get_confusion_matrix(
         confidence_threshold: float Confidence score threshold below which
             bounding box detection is of low confidence and
             is ignored while considering true positives in predicted data
+        input_image_format: str Format of the image_id file in the csv files
+            for groundtruth and prediction
+        num_cpus: int number of cpus to run comparison between groundtruth
+            and predicted to obtain matched classses
 
     Returns:
         complete_confusion_matrix: numpy array of
@@ -348,15 +411,10 @@ def get_confusion_matrix(
         input_image_format,
         num_cpus)
 
-    confusion_matrix = np.zeros(
-        (len(labels), len(labels)), dtype=np.uint64)
     if gt_matched_classes != [] and predicted_matched_classes != []:
         confusion_matrix = sklearn.metrics.confusion_matrix(
             gt_matched_classes, predicted_matched_classes, labels=labels)
 
-    predicted_classes = []
-    for index, row in pd.read_csv(predicted_csv).iterrows():
-        predicted_classes.append(row.label)
     # Completing confusion matrix with unmatched ground truths and predicteds
     # False negatives and False positives respectively
     complete_confusion_matrix = append_unmatched_gt_predict(
@@ -480,6 +538,10 @@ def display(
         output_fig: str output figure file containing confusion matrix,
             precision, recall per class. Format of the figure file could be
             png, svg, eps, or pdf.
+        input_image_format: str Format of the image_id file in the csv files
+            for groundtruth and prediction
+        num_cpus: int number of cpus to run comparison between groundtruth
+            and predicted to obtain matched classses
 
     Returns:
         Prints confusion matrix, normalized confusion matrix
@@ -693,7 +755,7 @@ def plot_cm(confusion_matrix, labels, output_fig):
 @click.command(help="Save or print confusion matrix per class after comparing ground truth and prediced bounding boxes")  # noqa
 @click.option("--groundtruth_csv", help="Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label and several rows corresponding to the groundtruth bounding box objects", required=True, type=str) # noqa
 @click.option("--predicted_csv", help="Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label,prob and several rows corresponding to the predicted bounding box objects", required=True, type=str) # noqa
-@click.option("--input_image_format", help="Format of images in input directory", required=False, type=str, default=".jpg") # noqa
+@click.option("--input_image_format", help="Format of images in image_id column in the csvs", required=False, type=str, default=".jpg") # noqa
 @click.option("--output_txt", help="output txt file containing confusion matrix, precision, recall per class", type=str) # noqa
 @click.option("--output_fig", help="output fig file (format can be png, eps, pdf, svg) containing confusion matrix, precision, recall per class", type=str) # noqa
 @click.option('--iou_threshold', type=float, required=False, default=0.5, help='IOU threshold below which the bounding box is invalid')  # noqa

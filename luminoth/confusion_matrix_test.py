@@ -15,6 +15,8 @@ class ConfusionMatrixTest(tf.test.TestCase):
     def setUp(self):
 
         # Set up common input parameters, expected results
+        self.input_image_format = ".png"
+        self.num_cpus = 1
         self.tempfiles_to_delete = []
         self.iou_threshold = 0.5
         self.confidence_threshold = 0.9
@@ -74,7 +76,7 @@ class ConfusionMatrixTest(tf.test.TestCase):
         df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
         for i, bbox in enumerate(bboxes):
             label_name = labels[i]
-            df = df.append({'image_id': "file",
+            df = df.append({'image_id': "file.png",
                             'xmin': bbox[0],
                             'xmax': bbox[2],
                             'ymin': bbox[1],
@@ -105,7 +107,9 @@ class ConfusionMatrixTest(tf.test.TestCase):
             self.predicted_csv,
             self.labels,
             self.iou_threshold,
-            self.confidence_threshold)
+            self.confidence_threshold,
+            self.input_image_format,
+            self.num_cpus)
 
         np.testing.assert_array_equal(
             obtained_gt_classes, self.expected_gt_classes)
@@ -128,7 +132,9 @@ class ConfusionMatrixTest(tf.test.TestCase):
             self.predicted_csv,
             self.labels,
             self.iou_threshold,
-            self.confidence_threshold)
+            self.confidence_threshold,
+            self.input_image_format,
+            self.num_cpus)
 
         cm = confusion_matrix.sklearn.metrics.confusion_matrix(
             gt_matched_classes, predicted_matched_classes, labels=self.labels)
@@ -154,7 +160,8 @@ class ConfusionMatrixTest(tf.test.TestCase):
 
         cm = confusion_matrix.get_confusion_matrix(
             groundtruth_csv, predicted_csv,
-            labels, self.iou_threshold, self.confidence_threshold)
+            labels, self.iou_threshold, self.confidence_threshold,
+            self.input_image_format, self.num_cpus)
         expected = np.zeros((3, 3))
         expected[0, 1] = expected[1, 0] = 1
         expected[0, 2] = expected[2, 0] = 1
@@ -180,7 +187,8 @@ class ConfusionMatrixTest(tf.test.TestCase):
         # Getting confusion matrix on random bboxes test
         cm = confusion_matrix.get_confusion_matrix(
             self.gt_csv, self.predicted_csv,
-            self.labels, self.iou_threshold, self.confidence_threshold)
+            self.labels, self.iou_threshold, self.confidence_threshold,
+            self.input_image_format, self.num_cpus)
         np.testing.assert_array_equal(cm, self.expected_cm)
 
     def testNormalizeConfusionMatrix(self):
