@@ -165,7 +165,7 @@ class PredictorNetwork(object):
                     'bbox': obj,
                     'label': labels[prob_index],
                     'prob': round(max_prob, 4)}
-                predictions.insert(prob_index, d)
+                predictions.insert(repeated_indices[0], d)
 
         predictions = sorted(
             predictions, key=lambda x: x['prob'], reverse=True)
