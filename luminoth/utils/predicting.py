@@ -139,16 +139,16 @@ class PredictorNetwork(object):
 
         # Save a prediction by suppressing the class with
         # lowest probability for the same bounding box
-        predictions = []
+        predictions = [] * len(objects)
         assert len(objects) == len(labels) == len(probs)
         print(objects)
-        for obj, label, prob in zip(objects, labels, probs):
+        for index, obj, label, prob in enumerate(zip(objects, labels, probs)):
             if objects.count(obj) == 1:
                 d = {
                     'bbox': obj,
                     'label': label,
                     'prob': round(prob, 4)}
-                predictions.append(d)
+                predictions[index] = d
                 print(len(predictions))
             elif objects.count(obj) > 1:
                 print("before")
@@ -178,6 +178,7 @@ class PredictorNetwork(object):
                 print(len(predictions))
                 print("after")
 
+        predictions = list(filter([], predictions))
         predictions = sorted(
             predictions, key=lambda x: x['prob'], reverse=True)
 
