@@ -141,7 +141,6 @@ class PredictorNetwork(object):
         # lowest probability for the same bounding box
         predictions = []
         assert len(objects) == len(labels) == len(probs)
-        tf.logging.info(objects)
         print(objects)
         for obj, label, prob in zip(objects, labels, probs):
             if objects.count(obj) == 1:
@@ -150,22 +149,34 @@ class PredictorNetwork(object):
                     'label': label,
                     'prob': round(prob, 4)}
                 predictions.append(d)
+                print(len(predictions))
             elif objects.count(obj) > 1:
+                print("before")
+                print(len(predictions))
+                print(objects.count(obj))
                 prob_repeated_objs = [
                     [i, probs[i]] for i, value in enumerate(objects)
                     if value == obj]
+                print(prob_repeated_objs)
                 repeated_indices = [i for (i, _) in prob_repeated_objs]
+                print(repeated_indices)
                 repeated_probs = [j for (_, j) in prob_repeated_objs]
+                print(repeated_probs)
                 max_prob = max(repeated_probs)
+                print(max_prob)
                 prob_index = [
                     index for index, prob in zip(
                         repeated_indices, repeated_probs)
                     if prob == max_prob][0]
+                print(prob_index)
                 d = {
                     'bbox': obj,
                     'label': labels[prob_index],
                     'prob': round(max_prob, 4)}
+                print(d)
                 predictions.insert(repeated_indices[0], d)
+                print(len(predictions))
+                print("after")
 
         predictions = sorted(
             predictions, key=lambda x: x['prob'], reverse=True)
