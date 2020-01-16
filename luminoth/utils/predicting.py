@@ -142,6 +142,7 @@ class PredictorNetwork(object):
         predictions = []
         assert len(objects) == len(labels) == len(probs)
         tf.logging.info(objects)
+        print(objects)
         for obj, label, prob in zip(objects, labels, probs):
             if objects.count(obj) == 1:
                 d = {
@@ -150,12 +151,14 @@ class PredictorNetwork(object):
                     'prob': round(prob, 4)}
                 predictions.append(d)
             elif objects.count(obj) > 1:
-                prob_repeated_objs = {
-                    i: probs[i] for i, value in enumerate(objects)
-                    if value == obj}
-                max_prob = max(prob_repeated_objs.values())
+                prob_repeated_objs = [
+                    [i, probs[i]] for i, value in enumerate(objects)
+                    if value == obj]
+                indices = [i for (i, _) in prob_repeated_objs]
+                probs = [j for (_, j) in prob_repeated_objs]
+                max_prob = max(probs)
                 prob_index = [
-                    index for index, prob in prob_repeated_objs.items()
+                    index for index, prob in zip(indices, probs)
                     if prob == max_prob][0]
                 d = {
                     'bbox': obj,
