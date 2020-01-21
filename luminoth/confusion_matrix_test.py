@@ -283,5 +283,6 @@ class ConfusionMatrixTest(tf.test.TestCase):
             obtained_predicted_matched_classes,
             self.expected_predicted_matched_classes)
 
+
 if __name__ == '__main__':
     tf.test.main()
