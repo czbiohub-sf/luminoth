@@ -21,6 +21,7 @@ NUM_CPUS = 4
 """
 Output from this cli tool would as below:
 lumi confusion_matrix --groundtruth_csv val.csv --predicted_csv preds_val.csv --classes_json classes.json
+--output_fig confusion_matrix_val.svg
 
 Confusion matrix before normalization
 
@@ -60,14 +61,12 @@ def get_valid_match_iou(i, j, gt_boxes, predicted_boxes, iou_threshold):
     input_image_format
 
     Args:
-        i: image_id to look for in the dataframes
-        j: str Format of the image_id file in the csv files
-            for groundtruth and prediction
-        gt_boxes: dataframe with image_id,xmin,ymin,xmax,ymax,label as header
-            and several rows corresponding to the groundtruth
-            bounding boxes, labels, image in which they are present. image_id
-            should be same for all rows
-        predicted_boxes:
+        i: index in groundtruth boxes list to compare
+        j: index in predicted boxes list to compare with
+        gt_boxes: list of 4 arrayed groundtruth bounding boxes of format
+        [[xmin, ymin, xmax, ymax], [xmin1, ymin1, xmax1, ymax1], ..]
+        predicted_boxes: list of 4 arrayed predicted bounding boxes of format
+        [[xmin, ymin, xmax, ymax], [xmin1, ymin1, xmax1, ymax1], ..]
         iou_threshold: float, IOU threshold below which the
             match of the predicted bounding box with the
             ground truth box is invalid
@@ -132,7 +131,7 @@ def get_matched_gt_predict_per_image(
     """
     # Collect the bboxes, labels in 2 lists for ground truth
     basename = os.path.basename(im_path).replace(input_image_format, "")
-    df_gt = df_gt[df_predicted.base_path == basename]
+    df_gt = df_gt[df_gt.base_path == basename]
     df_predicted = df_predicted[df_predicted.base_path == basename]
     gt_boxes = []
     gt_classes = []
@@ -150,8 +149,8 @@ def get_matched_gt_predict_per_image(
             predicted_boxes.append([row.xmin, row.ymin, row.xmax, row.ymax])
             predicted_classes.append(row.label)
             predicted_scores.append(row.prob)
-    # Find IOU Matches
 
+    # Find IOU Matches
     iterator = itertools.product(
         range(len(gt_boxes)), range(len(predicted_boxes)))
     matches = Parallel(
@@ -165,6 +164,7 @@ def get_matched_gt_predict_per_image(
             iou_threshold) for i,
         j in iterator)
     matches_before = list(filter(None, matches))
+
     # Remove redundant IOU matches with different labels
     matches = np.array(matches_before)
     if matches.shape[0] > 0:
@@ -248,6 +248,7 @@ def get_matched_gt_predict(
     predicted_df = add_base_path(predicted_csv, input_image_format)
     unique_image_paths = gt_df['base_path'].unique().tolist()
 
+    # Parallely process different images per
     result = Parallel(
         n_jobs=num_cpus)(
         delayed(
