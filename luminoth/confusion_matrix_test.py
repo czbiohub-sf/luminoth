@@ -42,8 +42,8 @@ class ConfusionMatrixTest(tf.test.TestCase):
 
         self.expected_gt_classes = gt_bboxes[:, 4]
         self.expected_predicted_classes = predicted_bboxes[:, 4]
-        self.expected_gt_matched_classes = [0, 2, 1, 2]
-        self.expected_predicted_matched_classes = [0, 2, 2, 2]
+        self.expected_gt_matched_classes = [1, 0, 2, 1, 2]
+        self.expected_predicted_matched_classes = [1, 0, 2, 2, 2]
 
         self.gt_csv = self.get_test_data(
             gt_bboxes, self.expected_gt_classes)
@@ -54,14 +54,14 @@ class ConfusionMatrixTest(tf.test.TestCase):
 
         self.expected_cm = np.array(([
             [1, 0, 0, 1, 2],
-            [0, 0, 1, 1, 2],
+            [0, 1, 1, 0, 2],
             [0, 0, 2, 0, 2],
-            [0, 3, 0, 0, 0],
+            [0, 2, 0, 0, 0],
             [1, 3, 3, 0, 0]]))
 
         self.expected_ncm = np.array((
             [[1, 0., 0.],
-             [0., 0., 0.333333],
+             [0., 0.333333, 0.333333],
              [0., 0., 0.666667]]), dtype=np.float32)
 
     def tearDown(self):
@@ -117,6 +117,7 @@ class ConfusionMatrixTest(tf.test.TestCase):
             obtained_predicted_classes, self.expected_predicted_classes)
         np.testing.assert_array_equal(
             obtained_gt_matched_classes, self.expected_gt_matched_classes)
+        print("testGetMatchedGTPredict {}".format(obtained_gt_matched_classes))
         np.testing.assert_array_equal(
             obtained_predicted_matched_classes,
             self.expected_predicted_matched_classes)
@@ -178,7 +179,8 @@ class ConfusionMatrixTest(tf.test.TestCase):
 
         cm = confusion_matrix.get_confusion_matrix(
             groundtruth_csv, predicted_csv,
-            labels, self.iou_threshold, self.confidence_threshold)
+            labels, self.iou_threshold, self.confidence_threshold,
+            self.input_image_format, self.num_cpus)
         expected = np.zeros((3, 3))
         expected[0, 0] = expected[2, 0] = expected[0, 2] = 1
         np.testing.assert_array_equal(cm, expected)
@@ -189,6 +191,8 @@ class ConfusionMatrixTest(tf.test.TestCase):
             self.gt_csv, self.predicted_csv,
             self.labels, self.iou_threshold, self.confidence_threshold,
             self.input_image_format, self.num_cpus)
+        print("testGetConfusionMatrix")
+        print(cm)
         np.testing.assert_array_equal(cm, self.expected_cm)
 
     def testNormalizeConfusionMatrix(self):
@@ -205,9 +209,9 @@ class ConfusionMatrixTest(tf.test.TestCase):
         assert confusion_matrix.format_element_to_matlab_confusion_matrix(
             0, 0, self.expected_cm) == "1\n14.29%"
         assert confusion_matrix.format_element_to_matlab_confusion_matrix(
-            1, 1, self.expected_cm) == "0\n0.0%"
+            1, 1, self.expected_cm) == "1\n14.29%"
         assert confusion_matrix.format_element_to_matlab_confusion_matrix(
-            3, 3, self.expected_cm) == "42.86%\n57.14%"
+            3, 3, self.expected_cm) == "57.14%\n42.86%"
         assert confusion_matrix.format_element_to_matlab_confusion_matrix(
             3, 2, self.expected_cm) == "66.67%\n33.33%"
         assert confusion_matrix.format_element_to_matlab_confusion_matrix(

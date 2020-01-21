@@ -137,13 +137,8 @@ def get_matched_gt_predict_per_image(
     gt_boxes = []
     gt_classes = []
     for index, row in df_gt.iterrows():
-        box = [row.xmin, row.ymin, row.xmax, row.ymax]
-        if box in gt_boxes:
-            row_index = gt_boxes.index(box)
-            gt_classes.insert(row_index, row.label)
-        else:
-            gt_boxes.append(box)
-            gt_classes.append(row.label)
+        gt_boxes.append([row.xmin, row.ymin, row.xmax, row.ymax])
+        gt_classes.append(row.label)
 
     # Collect the bboxes, labels in 2 lists for predicted only if their
     # prob is greater than confidence_threshold
@@ -151,20 +146,10 @@ def get_matched_gt_predict_per_image(
     predicted_classes = []
     predicted_scores = []
     for index, row in df_predicted.iterrows():
-        prob = row.prob
-        if prob >= confidence_threshold:
-            box = [row.xmin, row.ymin, row.xmax, row.ymax]
-            if box in predicted_boxes:
-                row_index = predicted_boxes.index(box)
-                previous_prob = df_predicted.iloc[row_index]['prob']
-                if prob > previous_prob:
-                    predicted_classes.insert(row_index, row.label)
-                    predicted_scores.insert(row_index, row.prob)
-            else:
-                predicted_boxes.append(box)
-                predicted_classes.append(row.label)
-                predicted_scores.append(row.prob)
-
+        if row.prob > confidence_threshold:
+            predicted_boxes.append([row.xmin, row.ymin, row.xmax, row.ymax])
+            predicted_classes.append(row.label)
+            predicted_scores.append(row.prob)
     # Find IOU Matches
 
     iterator = itertools.product(
@@ -411,6 +396,7 @@ def get_confusion_matrix(
         input_image_format,
         num_cpus)
 
+    confusion_matrix = np.zeros((len(labels), len(labels)), dtype=np.uint64)
     if gt_matched_classes != [] and predicted_matched_classes != []:
         confusion_matrix = sklearn.metrics.confusion_matrix(
             gt_matched_classes, predicted_matched_classes, labels=labels)
