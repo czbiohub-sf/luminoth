@@ -139,17 +139,34 @@ class PredictorNetwork(object):
 
         # Save a prediction by suppressing the class with
         # lowest probability for the same bounding box
-        predictions = []
+        predictions = [None] * len(objects)
         assert len(objects) == len(labels) == len(probs)
+        count = 0
         for obj, label, prob in zip(objects, labels, probs):
-            tf.logging.info("Repeated bounding box count in image {}:".format(
-                objects.count(obj)))
-            d = {
-                'bbox': obj,
-                'label': label,
-                'prob': round(prob, 4)}
-            predictions.append(d)
-
+            if objects.count(obj) == 1:
+                d = {
+                    'bbox': obj,
+                    'label': label,
+                    'prob': round(prob, 4)}
+                predictions[count] = d
+            elif objects.count(obj) > 1:
+                prob_repeated_objs = [
+                    [i, probs[i]] for i, value in enumerate(objects)
+                    if value == obj]
+                repeated_indices = [i for (i, _) in prob_repeated_objs]
+                repeated_probs = [j for (_, j) in prob_repeated_objs]
+                max_prob = max(repeated_probs)
+                prob_index = [
+                    index for index, prob in zip(
+                        repeated_indices, repeated_probs)
+                    if prob == max_prob][0]
+                d = {
+                    'bbox': obj,
+                    'label': labels[prob_index],
+                    'prob': round(max_prob, 4)}
+                predictions[repeated_indices[0]] = d
+            count += 1
+        predictions = list(filter(None, predictions))
         predictions = sorted(
             predictions, key=lambda x: x['prob'], reverse=True)
 

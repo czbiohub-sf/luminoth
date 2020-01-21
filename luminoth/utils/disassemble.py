@@ -75,10 +75,8 @@ def disassemble_images(input_dir, fmt, tile_size, output_dir):
         glob.glob(os.path.join(input_dir, "*" + fmt)))
     result_images = []
     for input_img in images:
-        print(input_img)
         image = cv2.imread(
             input_img, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
-        print(image.shape, image.min(), image.max())
         tile_size = _set_tile_size(image, tile_size)
         split_images = split_mosaic(image, tile_size)
         for index, image in enumerate(split_images):
