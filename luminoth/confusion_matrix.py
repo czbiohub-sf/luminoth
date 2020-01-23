@@ -2,6 +2,7 @@ import numpy as np
 import click
 import itertools
 import os
+import pandas as pd
 import sys
 import json
 import sklearn.metrics
@@ -402,6 +403,10 @@ def get_confusion_matrix(
         confusion_matrix = sklearn.metrics.confusion_matrix(
             gt_matched_classes, predicted_matched_classes, labels=labels)
 
+    df_predicted = pd.read_csv(predicted_csv)
+    predicted_classes = []
+    for index, row in df_predicted.iterrows():
+        predicted_classes.append(row.label)
     # Completing confusion matrix with unmatched ground truths and predicteds
     # False negatives and False positives respectively
     complete_confusion_matrix = append_unmatched_gt_predict(
