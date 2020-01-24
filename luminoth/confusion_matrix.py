@@ -489,6 +489,7 @@ def normalize_confusion_matrix(confusion_matrix):
     confusion_matrix = confusion_matrix.astype(np.float64)
     total_gt = total_gt.astype(np.float64)
     normalized_confusion_matrix = confusion_matrix / total_gt
+    normalized_confusion_matrix = np.nan_to_num(normalized_confusion_matrix)
     assert all(
         i <= 1.0 for i in normalized_confusion_matrix.flatten().tolist()
     ) is True
