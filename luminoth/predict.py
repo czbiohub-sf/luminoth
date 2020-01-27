@@ -68,8 +68,18 @@ def filter_classes(objects, only_classes=None, ignore_classes=None):
     return objects
 
 
+def filter_probabilities(objects, min_prob=None, max_prob=None):
+    if min_prob:
+        objects = [o for o in objects if o['prob'] > min_prob]
+
+    if max_prob:
+        objects = [o for o in objects if o['prob'] < max_prob]
+
+    return objects
+
+
 def predict_image(network, path, only_classes=None, ignore_classes=None,
-                  save_path=None):
+                  save_path=None, min_prob=None, max_prob=None):
     click.echo('Predicting {}...'.format(path), nl=False)
 
     # Open and read the image to predict.
@@ -90,6 +100,12 @@ def predict_image(network, path, only_classes=None, ignore_classes=None,
         only_classes=only_classes,
         ignore_classes=ignore_classes
     )
+
+    # Filter the results according to the user input.
+    objects = filter_probabilities(
+        objects,
+        min_prob=min_prob,
+        max_prob=max_prob)
 
     # Save predicted image.
     if save_path:
@@ -178,17 +194,17 @@ def predict_video(network, path, only_classes=None, ignore_classes=None,
 @click.option('config_files', '--config', '-c', multiple=True, help='Config to use.')  # noqa
 @click.option('--checkpoint', help='Checkpoint to use.')
 @click.option('override_params', '--override', '-o', multiple=True, help='Override model config params.')  # noqa
-@click.option('output_path',
- '--output', '-f', default='-',
- help='Output file with the predictions (for example, csv bounding boxes) containing image_id,xmin,ymin,xmax,ymax,label')  # noqa
+@click.option('output_path', '--output', '-f', default='-', help='Output file with the predictions (for example, csv bounding boxes) containing image_id,xmin,ymin,xmax,ymax,label')  # noqa
 @click.option('--save-media-to', '-d', help='Directory to store media to.')
 @click.option('--min-prob', default=0.5, type=float, help='When drawing, only draw bounding boxes with probability larger than.')  # noqa
+@click.option('--max-prob', default=1.0, type=float, help='When drawing, only draw bounding boxes with probability lesser than.')  # noqa
 @click.option('--max-detections', default=100, type=int, help='Maximum number of detections per image.')  # noqa
-@click.option('--only-class', '-k', default=None, multiple=True, help='Class to ignore when predicting.')  # noqa
+@click.option('--only-class', '-k', default=None, multiple=True, help='Class to include when predicting.')  # noqa
 @click.option('--ignore-class', '-K', default=None, multiple=True, help='Class to ignore when predicting.')  # noqa
 @click.option('--debug', is_flag=True, help='Set debug level logging.')
 def predict(path_or_dir, config_files, checkpoint, override_params,
-            output_path, save_media_to, min_prob, max_detections, only_class,
+            output_path, save_media_to, min_prob, max_prob,
+            max_detections, only_class,
             ignore_class, debug):
     """Obtain a model's predictions.
 
@@ -275,6 +291,8 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
             only_classes=only_class,
             ignore_classes=ignore_class,
             save_path=save_path,
+            min_prob=min_prob,
+            max_prob=max_prob
         )
 
         # TODO: Not writing csv for video files for now.
