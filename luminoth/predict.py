@@ -323,4 +323,5 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
         output.write(df.to_string())
         output.close()
     else:
+        sys.stdout.write(output_path.replace(".csv", ".txt"))
         df.to_csv(output_path)
