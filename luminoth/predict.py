@@ -11,6 +11,7 @@ from PIL import Image
 from luminoth.tools.checkpoint import get_checkpoint_config
 from luminoth.utils.config import get_config, override_config_params
 from luminoth.utils.predicting import PredictorNetwork
+from luminoth.utils.split_train_val import get_image_paths_per_class
 from luminoth.vis import build_colormap, vis_objects
 
 IMAGE_FORMATS = ['jpg', 'jpeg', 'png']
@@ -116,7 +117,7 @@ def predict_image(network, path, only_classes=None, ignore_classes=None,
 
 
 def predict_video(network, path, only_classes=None, ignore_classes=None,
-                  save_path=None):
+                  save_path=None, min_prob=None, max_prob=None):
     if save_path:
         # We hardcode the video output to mp4 for the time being.
         save_path = os.path.splitext(save_path)[0] + '.mp4'
@@ -158,6 +159,11 @@ def predict_video(network, path, only_classes=None, ignore_classes=None,
                     only_classes=only_classes,
                     ignore_classes=ignore_classes
                 )
+
+                objects = filter_probabilities(
+                    objects,
+                    min_prob=min_prob,
+                    max_prob=max_prob)
 
                 objects_per_frame.append({
                     'frame': idx,
@@ -308,6 +314,7 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
                                 'prob': obj["prob"]},
                                ignore_index=True)
 
+    get_image_paths_per_class(df)
     # Build the `Formatter` based on the outputs, which automatically writes
     # the formatted output to all the requested output files.
     if output_path == '-':
