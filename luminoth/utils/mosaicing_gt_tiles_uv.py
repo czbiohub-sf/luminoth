@@ -1,7 +1,6 @@
 import cv2
 import os
 import numpy as np
-import itertools
 import pandas as pd
 import random
 
@@ -30,20 +29,16 @@ RANDOM_SEED = 42
 
 # Change this to where you have the downloaded the dataset
 im_dir = DATA_DIR + "{}/Matlab-RBC Instances/285 nm/sl3/"
-df = pd.read_excel(DATA_DIR + "/humanOnlyMetadata_285 nm.xls")
+df = pd.read_excel(DATA_DIR + "mergedMetadata_PartialHuman_285nm.xls")
 
 # Set random seed, so the randomized locations in the artificially generated
 # mosaic stay the same on running the program again
 random.seed(RANDOM_SEED)
-# Maximum number of tiles is 512 / 120, get the cartesean product for each of
-# the 120 x 120 locations inside the 520 x 696 array
-x_tiles, y_tiles = IMAGE_SHAPE[1] // TILE_SIZE_X, IMAGE_SHAPE[0] // TILE_SIZE_Y
-indices = list(itertools.product(range(y_tiles), range(x_tiles)))
 
-# Remove 24000 healthy rows
+# Filter for only one focus slice to avoid redundant images
 count = 0
 for index, row in df.iterrows():
-    if row["HumanLabels"] == "healthy" and count < 24000:
+    if "sl3" not in row["ParentFilename"]:
         df = df.drop([index])
         count += 1
 
@@ -75,26 +70,16 @@ while len(df) > 8:
         # First image, create arrays to place the randomized cells and a mask
         # to set the already occupied cell locations to 255
         if count == 0:
-            mosaiced_im = np.ones(
-                IMAGE_SHAPE, dtype=np.uint8) * BACKGROUND_COLOR
             random_mosaiced_im = np.ones(
                 (IMAGE_SHAPE), dtype=np.uint8) * BACKGROUND_COLOR
             masked_random = np.ones(
                 (IMAGE_SHAPE), dtype=np.uint8)
 
-            # Set the cell at the x, y tile location
-            x, y = indices[count]
-            image[image == 255] = BACKGROUND_COLOR
-            mosaiced_im[
-                x * TILE_SIZE_X: TILE_SIZE_X * (x + 1),
-                y * TILE_SIZE_Y: TILE_SIZE_Y * (y + 1)] = image
-            # Binarize the array
-            threshold = np.zeros_like(mosaiced_im)
-            threshold[mosaiced_im == BACKGROUND_COLOR] = 0
-            threshold[mosaiced_im != BACKGROUND_COLOR] = 255
+            # Find the contours for the image to find the bounding box
+            threshold = np.zeros((TILE_SIZE_X, TILE_SIZE_Y), dtype=np.uint8)
+            threshold[image == 255] = 0
+            threshold[image != 255] = 255
             threshold = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, kernel)
-
-            # Find the contours for the mosaic image to find the bounding box
             ctrs, _ = cv2.findContours(
                 threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             assert len(ctrs) == 1
@@ -112,12 +97,14 @@ while len(df) > 8:
             # If the subset is not filled
             if subset.sum() == subset.size:
                 # Ser the randomized location to the tile
+                image[image == 255] = BACKGROUND_COLOR
                 random_mosaiced_im[
                     random_y: random_y + h, random_x: random_x + w
-                ] = mosaiced_im[y: y + h, x: x + w]
+                ] = image[y: y + h, x: x + w]
                 # Set the filled subset of the array to zero
                 masked_random[
-                    random_y: random_y + h, random_x: random_x + w] = 0
+                    random_y: random_y + h, random_x: random_x + w][
+                    image[y: y + h, x: x + w] != 255] = 0
                 # Save the location and label in csv file
                 dicts.append(
                     {'image_id': saved_random_image_path,
@@ -127,6 +114,8 @@ while len(df) > 8:
                         'ymax': random_y + h,
                         'label': row["HumanLabels"]})
                 indices_seen.append(index)
+                count += 1
+                print(count, saved_random_image_path)
             else:
                 # Try to get a unoccupied subset of random location
                 trial_count = 0
@@ -143,12 +132,14 @@ while len(df) > 8:
                 # If the subset is not filled
                 if subset.sum() == subset.size:
                     # Ser the randomized location to the tile
+                    image[image == 255] = BACKGROUND_COLOR
                     random_mosaiced_im[
                         random_y: random_y + h, random_x: random_x + w
-                    ] = mosaiced_im[y: y + h, x: x + w]
+                    ] = image[y: y + h, x: x + w]
                     # Set the filled subset of the array to zero
                     masked_random[
-                        random_y: random_y + h, random_x: random_x + w] = 0
+                        random_y: random_y + h, random_x: random_x + w][
+                        image[y: y + h, x: x + w] != 255] = 0
                     # Save the location and label in csv file
                     dicts.append(
                         {'image_id': saved_random_image_path,
@@ -158,24 +149,23 @@ while len(df) > 8:
                             'ymax': random_y + h,
                             'label': row["HumanLabels"]})
                     indices_seen.append(index)
-            count += 1
-        elif count < len(indices):
+                    count += 1
+                    print(count, saved_random_image_path)
+        elif count >= 20 or index == len(df):
+            # Reset count, increment image count, save image
+            count = 0
+            cv2.imwrite(saved_random_image_path, random_mosaiced_im)
+            for d in dicts:
+                output_random_df = output_random_df.append(
+                    d, ignore_index=True)
+            image_count += 1
+            dicts = []
+        elif count < 20:
             # Repeat above for other indices at count greater than zero
-            x, y = indices[count]
-            image[image == 255] = BACKGROUND_COLOR
-            mosaiced_im[
-                x * TILE_SIZE_X: TILE_SIZE_X * (x + 1),
-                y * TILE_SIZE_Y: TILE_SIZE_Y * (y + 1)] = image
-
-            # Get a mask for the only current cell tile
-            mosaiced_im_current = np.ones(
-                IMAGE_SHAPE, dtype=np.uint8) * BACKGROUND_COLOR
-            mosaiced_im_current[
-                x * TILE_SIZE_X: TILE_SIZE_X * (x + 1),
-                y * TILE_SIZE_Y: TILE_SIZE_Y * (y + 1)] = image
-            threshold = np.zeros_like(mosaiced_im_current)
-            threshold[mosaiced_im_current == BACKGROUND_COLOR] = 0
-            threshold[mosaiced_im_current != BACKGROUND_COLOR] = 255
+            # Find the contours for the image to find the bounding box
+            threshold = np.zeros((TILE_SIZE_X, TILE_SIZE_Y), dtype=np.uint8)
+            threshold[image == 255] = 0
+            threshold[image != 255] = 255
             threshold = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, kernel)
             ctrs, _ = cv2.findContours(
                 threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -187,12 +177,14 @@ while len(df) > 8:
             subset = masked_random[
                 random_y: random_y + h, random_x: random_x + w]
             if subset.sum() == subset.size:
+                image[image == 255] = BACKGROUND_COLOR
                 random_mosaiced_im[
                     random_y: random_y + h, random_x: random_x + w
-                ] = mosaiced_im[
+                ] = image[
                     y: y + h, x: x + w]
                 masked_random[
-                    random_y: random_y + h, random_x: random_x + w] = 0
+                    random_y: random_y + h, random_x: random_x + w][
+                    image[y: y + h, x: x + w] != 255] = 0
                 dicts.append(
                     {'image_id': saved_random_image_path,
                         'xmin': random_x,
@@ -201,6 +193,8 @@ while len(df) > 8:
                         'ymax': random_y + h,
                         'label': row["HumanLabels"]})
                 indices_seen.append(index)
+                count += 1
+                print(count, saved_random_image_path)
             else:
                 trial_count = 0
                 for i in range(NUM_TRIALS):
@@ -214,12 +208,14 @@ while len(df) > 8:
                 assert trial_count <= 1, "trial_count {}, {}".format(
                     trial_count, saved_random_image_path)
                 if subset.sum() == subset.size:
+                    image[image == 255] = BACKGROUND_COLOR
                     random_mosaiced_im[
                         random_y: random_y + h, random_x: random_x + w
-                    ] = mosaiced_im[
+                    ] = image[
                         y: y + h, x: x + w]
                     masked_random[
-                        random_y: random_y + h, random_x: random_x + w] = 0
+                        random_y: random_y + h, random_x: random_x + w][
+                        image[y: y + h, x: x + w] != 255] = 0
                     dicts.append(
                         {'image_id': saved_random_image_path,
                             'xmin': random_x,
@@ -228,17 +224,8 @@ while len(df) > 8:
                             'ymax': random_y + h,
                             'label': row["HumanLabels"]})
                     indices_seen.append(index)
-
-            count += 1
-        else:
-            # Reset count, increment image count, save image
-            count = 0
-            cv2.imwrite(saved_random_image_path, random_mosaiced_im)
-            for d in dicts:
-                output_random_df = output_random_df.append(
-                    d, ignore_index=True)
-            image_count += 1
-            dicts = []
+                    count += 1
+                    print(count, saved_random_image_path)
     # Remove the bounding boxes that couldn't form an image because of going
     # through the dataframe
     if count != 0:
