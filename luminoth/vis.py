@@ -135,7 +135,7 @@ def draw_label(draw, coords, label, prob, color, scale=1):
     ], prob, font=prob_font)
 
 
-def vis_objects(image, objects, colormap=None, labels=True, scale=1, fill=30):
+def vis_objects(image, objects, colormap=None, labels=True, scale=0.8, fill=30):
     """Visualize objects as returned by `Detector`.
 
     Arguments:

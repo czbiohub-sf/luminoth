@@ -74,7 +74,7 @@ def filter_probabilities(objects, min_prob=None, max_prob=None):
         objects = [o for o in objects if o['prob'] > min_prob]
 
     if max_prob:
-        objects = [o for o in objects if o['prob'] < max_prob]
+        objects = [o for o in objects if o['prob'] <= max_prob]
 
     return objects
 
