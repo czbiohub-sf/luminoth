@@ -1,182 +1,87 @@
 """Provides various visualization-specific functions."""
+import cv2
 import numpy as np
-import sys
 
-from PIL import Image, ImageDraw, ImageFont
-
-
-def get_font():
-    """Attempts to retrieve a reasonably-looking TTF font from the system.
-
-    We don't make much of an effort, but it's what we can reasonably do without
-    incorporating additional dependencies for this task.
-    """
-    if sys.platform == 'win32':
-        font_names = ['Arial']
-    elif sys.platform in ['linux', 'linux2']:
-        font_names = ['DejaVuSans-Bold', 'DroidSans-Bold']
-    elif sys.platform == 'darwin':
-        font_names = ['Menlo', 'Helvetica']
-
-    font = None
-    for font_name in font_names:
-        try:
-            font = ImageFont.truetype(font_name)
-            break
-        except IOError:
-            continue
-
-    return font
+FONT = cv2.FONT_HERSHEY_SIMPLEX
+FONT_SCALE = 0.5
+FONT_COLOR = (0, 0, 255)
+LINE_TYPE = 2
+BB_COLOR = (0, 255, 0)
+BB_LINE_WIDTH = 2
 
 
-SYSTEM_FONT = get_font()
+def draw_label(im_rgb, bbox, label, prob, color=FONT_COLOR, scale=FONT_SCALE):
+    """Visualize objects as returned by `Detector`.
 
-
-def hex_to_rgb(x):
-    """Turns a color hex representation into a tuple representation."""
-    return tuple([int(x[i:i + 2], 16) for i in (0, 2, 4)])
-
-
-def build_colormap():
-    """Builds a colormap function that maps labels to colors.
+    Arguments:
+        im_rgb (numpy.ndarray): Color Image to draw the label,prob on.
+        bbox (List of 4 int/float): Indicates the bounding box boundaries
+        label (str or int): Label of the bbox
+        prob(float): Probability of the label for the given bbox
+        color (list of 3-tuples): List of 2 rgb tuples indicating the color for
+            bounding box and font
+        scale (float): Scale factor for the font
 
     Returns:
-        Function that receives a label and returns a color tuple `(R, G, B)`
-        for said label.
+        numpy.ndarray: Color image with bounding box and labels drawn on
     """
-    # Build the 10-color palette to be used for all classes. The following are
-    # the hex-codes for said colors (taken the default 10-categorical d3 color
-    # palette).
-    palette = (
-        '1f77b4ff7f0e2ca02cd627289467bd8c564be377c27f7f7fbcbd2217becf'
-    )
-    colors = [hex_to_rgb(palette[i:i + 6]) for i in range(0, len(palette), 6)]
 
-    seen_labels = {}
+    label = str(label) + '({:.2f})'.format(prob)  # Turn `prob` into a string.
 
-    def colormap(label):
-        # If label not yet seen, get the next value in the palette sequence.
-        if label not in seen_labels:
-            seen_labels[label] = colors[len(seen_labels) % len(colors)]
-
-        return seen_labels[label]
-
-    return colormap
-
-
-def draw_rectangle(draw, coordinates, color, width=1, fill=30):
-    """Draw a rectangle with an optional width."""
-    # Add alphas to the color so we have a small overlay over the object.
-    fill = color + (fill,)
-    outline = color + (255,)
-
-    # Pillow doesn't support width in rectangles, so we must emulate it with a
-    # loop.
-    for i in range(width):
-        coords = [
-            coordinates[0] - i,
-            coordinates[1] - i,
-            coordinates[2] + i,
-            coordinates[3] + i,
-        ]
-
-        # Fill must be drawn only for the first rectangle, or the alphas will
-        # add up.
-        if i == 0:
-            draw.rectangle(coords, fill=fill, outline=outline)
-        else:
-            draw.rectangle(coords, outline=outline)
-
-
-def draw_label(draw, coords, label, prob, color, scale=1):
-    """Draw a box with the label and probability."""
-    # Attempt to get a native TTF font. If not, use the default bitmap font.
-    global SYSTEM_FONT
-    if SYSTEM_FONT:
-        label_font = SYSTEM_FONT.font_variant(size=int(round(16 * scale)))
-        prob_font = SYSTEM_FONT.font_variant(size=int(round(12 * scale)))
-    else:
-        label_font = ImageFont.load_default()
-        prob_font = ImageFont.load_default()
-
-    label = str(label)  # `label` may not be a string.
-    prob = '({:.2f})'.format(prob)  # Turn `prob` into a string.
-
-    # We want the probability font to be smaller, so we'll write the label in
-    # two steps.
-    label_w, label_h = label_font.getsize(label)
-    prob_w, prob_h = prob_font.getsize(prob)
-
-    # Get margins to manually adjust the spacing. The margin goes between each
-    # segment (i.e. margin, label, margin, prob, margin).
-    margin_w, margin_h = label_font.getsize('M')
-    margin_w *= 0.2
-    _, full_line_height = label_font.getsize('Mq')
-
-    # Draw the background first, considering all margins and the full line
-    # height.
-    background_coords = [
-        coords[0],
-        coords[1],
-        coords[0] + label_w + prob_w + 3 * margin_w,
-        coords[1] + full_line_height * 1.15,
-    ]
-    draw.rectangle(background_coords, fill=color + (255,))
-
-    # Then write the two pieces of text.
-    draw.text([
-        coords[0] + margin_w,
-        coords[1],
-    ], label, font=label_font)
-
-    draw.text([
-        coords[0] + label_w + 2 * margin_w,
-        coords[1] + (margin_h - prob_h),
-    ], prob, font=prob_font)
+    left_corner_of_text = (int(bbox[0]), int(bbox[1]))
+    cv2.putText(
+        im_rgb,
+        label,
+        left_corner_of_text,
+        FONT,
+        FONT_SCALE,
+        FONT_COLOR,
+        LINE_TYPE)
 
 
 def vis_objects(
-        image, objects, colormap=None, labels=True, scale=0.8, fill=30):
+        image, objects, color=[BB_COLOR, FONT_COLOR], labels=True,
+        scale=FONT_SCALE, line_width=BB_LINE_WIDTH):
     """Visualize objects as returned by `Detector`.
 
     Arguments:
         image (numpy.ndarray): Image to draw the bounding boxes on.
         objects (list of dicts or dict): List of objects as returned by a
             `Detector` instance.
-        colormap (function): Colormap function to use for the objects.
-        labels (boolean): Whether to draw labels.
-        scale (float): Scale factor for the box sizes, which will enlarge or
-            shrink the width of the boxes and the fonts.
-        fill (int): Integer between 0..255 to use as fill for the bounding
-            boxes.
+        color (list of 3-tuples): List of 2 rgb tuples indicating the color for
+            bounding box and font
+        labels (boolean): If true, labels are plotted on the bbounding box with
+            probabilities
+        scale (float): Scale factor for the font
+        line_width (int): width of the bounding box
 
     Returns:
-        A PIL image with the detected objects' bounding boxes and labels drawn.
-        Can be casted to a `numpy.ndarray` by using `numpy.array` on the
-        returned object.
+        numpy.ndarray: Color image with bounding box and labels drawn on
     """
+    image = image.astype(np.uint8)
+
+    if len(image.shape) == 3:
+        if image.shape[2] == 1:
+            im_rgb = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+    elif len(image.shape) == 2:
+        im_rgb = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+
     if not isinstance(objects, list):
         objects = [objects]
 
-    if colormap is None:
-        colormap = build_colormap()
-
-    image = Image.fromarray(image.astype(np.uint8))
-
-    draw = ImageDraw.Draw(image, 'RGBA')
     for obj in objects:
-        # TODO: Can we do image resolution-agnostic?
-        color = colormap(obj['label'])
-
-        # Cast `width` to int so it also works in Python 2
-        draw_rectangle(
-            draw, obj['bbox'], color, width=int(round(3 * scale)),
-            fill=fill
+        bbox = obj['bbox']
+        left_corner_of_text = (int(bbox[0]), int(bbox[1]))
+        right_bottom_corner = (int(bbox[2]), int(bbox[3]))
+        cv2.rectangle(
+            im_rgb,
+            left_corner_of_text,
+            right_bottom_corner,
+            color[0],
+            line_width,
         )
         if labels:
             draw_label(
-                draw, obj['bbox'][:2], obj['label'], obj['prob'], color,
-                scale=scale
-            )
+                im_rgb, bbox, obj['label'], obj['prob'], color[1], scale)
 
     return image

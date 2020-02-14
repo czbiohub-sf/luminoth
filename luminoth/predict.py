@@ -12,7 +12,7 @@ from luminoth.tools.checkpoint import get_checkpoint_config
 from luminoth.utils.config import get_config, override_config_params
 from luminoth.utils.predicting import PredictorNetwork
 from luminoth.utils.split_train_val import get_image_paths_per_class
-from luminoth.vis import build_colormap, vis_objects
+from luminoth.vis import vis_objects
 
 IMAGE_FORMATS = ['jpg', 'jpeg', 'png']
 VIDEO_FORMATS = ['mov', 'mp4', 'avi']  # TODO: check if more formats work
@@ -143,8 +143,6 @@ def predict_video(network, path, only_classes=None, ignore_classes=None,
         label='Predicting {}'.format(path)
     )
 
-    colormap = build_colormap()
-
     objects_per_frame = []
     with video_progress_bar as bar:
         try:
@@ -172,7 +170,7 @@ def predict_video(network, path, only_classes=None, ignore_classes=None,
 
                 # Draw the image and write it to the video file.
                 if save_path:
-                    image = vis_objects(frame, objects, colormap=colormap)
+                    image = vis_objects(frame, objects)
                     writer.writeFrame(np.array(image))
 
             stop_time = time.time()
