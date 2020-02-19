@@ -6,10 +6,7 @@ import cv2
 import numpy as np
 import pandas as pd
 
-from matplotlib import pyplot
 from PIL import ImageFont, ImageDraw, Image
-import matplotlib as mpl
-mpl.rcParams['pdf.fonttype'] = 42
 # Constants for bounding box and label overlays
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 FONT = os.path.join(CURRENT_DIR, "arial.ttf")
@@ -139,9 +136,8 @@ def overlay_bbs_on_all_images(
 
     for im_path in images_in_path:
         im_rgb = overlay_bb_labels(im_path, input_image_format, df)
-        cv2_im_rgb = cv2.cvtColor(im_rgb, cv2.COLOR_BGR2RGB)
-        pdf = os.path.basename(im_path).replace(input_image_format, ".pdf")
-        pyplot.imsave(os.path.join(output_dir, pdf), cv2_im_rgb)
+        png = os.path.basename(im_path).replace(input_image_format, ".png")
+        cv2.imwrite(os.path.join(output_dir, png), im_rgb)
     print("Overlaid bounding box labeled images are at: {}".format(output_dir))
 
 

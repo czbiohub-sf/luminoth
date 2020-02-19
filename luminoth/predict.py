@@ -2,20 +2,18 @@ import click
 import pandas as pd
 import numpy as np
 import os
+import cv2
 import skvideo.io
 import sys
 import time
 import tensorflow as tf
 
-from matplotlib import pyplot
 from PIL import Image
 from luminoth.tools.checkpoint import get_checkpoint_config
 from luminoth.utils.config import get_config, override_config_params
 from luminoth.utils.predicting import PredictorNetwork
 from luminoth.utils.split_train_val import get_image_paths_per_class
 from luminoth.utils.vis import vis_objects
-import matplotlib as mpl
-mpl.rcParams['pdf.fonttype'] = 42
 
 IMAGE_FORMATS = ['jpg', 'jpeg', 'png']
 VIDEO_FORMATS = ['mov', 'mp4', 'avi']  # TODO: check if more formats work
@@ -113,7 +111,7 @@ def predict_image(network, path, only_classes=None, ignore_classes=None,
 
     # Save predicted image.
     if save_path:
-        pyplot.imsave(save_path, vis_objects(np.array(image), objects))
+        cv2.imwrite(save_path, vis_objects(np.array(image), objects))
 
     click.echo(' done.')
     return objects
@@ -283,11 +281,9 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
     # Iterate over files and run the model on each.
     df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
     for file in files:
-        input_image_format = os.path.basename(file).split(".")[-1]
         # Get the media output path, if media storage is requested.
-        basename = os.path.basename(file).replace(input_image_format, ".pdf")
         save_path = os.path.join(
-            save_media_to, 'pred_{}'.format(basename)
+            save_media_to, 'pred_{}'.format(os.path.basename(file))
         ) if save_media_to else None
 
         file_type = get_file_type(file)
