@@ -16,7 +16,7 @@ are stored in RBC Instances/405 nm 40x/sl1
 # Constants
 HOME = os.path.expanduser("~")
 DATA_DIR = os.path.join(
-    HOME, "Downloads", "CrossTrain-2020-01-10-11-22-40_UVScopeData/")
+    HOME, "Downloads", "AllUVScopePreProcData/")
 
 # Known input data parameters for the UV  microscope data
 # using lumi disassemble
@@ -29,7 +29,9 @@ RANDOM_SEED = 42
 
 # Change this to where you have the downloaded the dataset
 im_dir = DATA_DIR + "{}/Matlab-RBC Instances/285 nm/sl3/"
-df = pd.read_excel(DATA_DIR + "mergedMetadata_PartialHuman_285nm.xls")
+xls_file_name = DATA_DIR + "mergedMetadata_285nm_20200217.xls"
+df = pd.read_excel(xls_file_name, sheetname=None, ignore_index=True)
+df = pd.concat(df.values(), ignore_index=True)
 
 # Set random seed, so the randomized locations in the artificially generated
 # mosaic stay the same on running the program again
@@ -81,7 +83,7 @@ while len(df) > 8:
             threshold[image != 255] = 255
             threshold = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, kernel)
             ctrs, _ = cv2.findContours(
-                threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             assert len(ctrs) == 1
             x, y, w, h = cv2.boundingRect(ctrs[0])
 
@@ -115,7 +117,6 @@ while len(df) > 8:
                         'label': row["HumanLabels"]})
                 indices_seen.append(index)
                 count += 1
-                print(count, saved_random_image_path)
             else:
                 # Try to get a unoccupied subset of random location
                 trial_count = 0
@@ -150,7 +151,6 @@ while len(df) > 8:
                             'label': row["HumanLabels"]})
                     indices_seen.append(index)
                     count += 1
-                    print(count, saved_random_image_path)
         elif count >= 20 or index == len(df):
             # Reset count, increment image count, save image
             count = 0
@@ -160,7 +160,7 @@ while len(df) > 8:
                     d, ignore_index=True)
             image_count += 1
             dicts = []
-        elif count < 20:
+        elif count < 24:
             # Repeat above for other indices at count greater than zero
             # Find the contours for the image to find the bounding box
             threshold = np.zeros((TILE_SIZE_X, TILE_SIZE_Y), dtype=np.uint8)
@@ -168,7 +168,7 @@ while len(df) > 8:
             threshold[image != 255] = 255
             threshold = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, kernel)
             ctrs, _ = cv2.findContours(
-                threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             assert len(ctrs) == 1
             x, y, w, h = cv2.boundingRect(ctrs[0])
 
@@ -194,7 +194,6 @@ while len(df) > 8:
                         'label': row["HumanLabels"]})
                 indices_seen.append(index)
                 count += 1
-                print(count, saved_random_image_path)
             else:
                 trial_count = 0
                 for i in range(NUM_TRIALS):
@@ -225,7 +224,6 @@ while len(df) > 8:
                             'label': row["HumanLabels"]})
                     indices_seen.append(index)
                     count += 1
-                    print(count, saved_random_image_path)
     # Remove the bounding boxes that couldn't form an image because of going
     # through the dataframe
     if count != 0:

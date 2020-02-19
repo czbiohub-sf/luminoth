@@ -1,12 +1,17 @@
 """Provides various visualization-specific functions."""
+import os
+
 import cv2
 import numpy as np
+from PIL import ImageFont, ImageDraw, Image
 
-FONT = cv2.FONT_HERSHEY_SIMPLEX
-FONT_SCALE = 0.5
-FONT_COLOR = (0, 0, 255)
+
+CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+FONT = os.path.join(CURRENT_DIR, "arial.ttf")
+FONT_SCALE = 15
+FONT_COLOR = (255, 255, 255, 0)
 LINE_TYPE = 2
-BB_COLOR = (0, 255, 0)
+BB_COLOR = (224, 189, 182)
 BB_LINE_WIDTH = 2
 
 
@@ -28,15 +33,26 @@ def draw_label(im_rgb, bbox, label, prob, color=FONT_COLOR, scale=FONT_SCALE):
 
     label = str(label) + '({:.2f})'.format(prob)  # Turn `prob` into a string.
 
-    left_corner_of_text = (int(bbox[0]), int(bbox[1]))
-    cv2.putText(
-        im_rgb,
-        label,
-        left_corner_of_text,
-        FONT,
-        FONT_SCALE,
-        FONT_COLOR,
-        LINE_TYPE)
+    left_corner_of_text = (
+        int(bbox[0] + BB_LINE_WIDTH), int(bbox[1] + BB_LINE_WIDTH))
+
+    # Convert the image to RGB (OpenCV uses BGR)
+    cv2_im_rgb = cv2.cvtColor(im_rgb, cv2.COLOR_BGR2RGB)
+
+    # Pass the image to PIL
+    pil_im = Image.fromarray(cv2_im_rgb)
+
+    draw = ImageDraw.Draw(pil_im)
+    # use a truetype font
+    font = ImageFont.truetype(FONT, FONT_SCALE)
+
+    # Draw the text
+    draw.text(left_corner_of_text, label, font=font, fill=color)
+
+    # Get back the image to OpenCV
+    cv2_im_processed = cv2.cvtColor(np.array(pil_im), cv2.COLOR_RGB2BGR)
+
+    return cv2_im_processed
 
 
 def vis_objects(
@@ -81,7 +97,7 @@ def vis_objects(
             line_width,
         )
         if labels:
-            draw_label(
+            im_rgb = draw_label(
                 im_rgb, bbox, obj['label'], obj['prob'], color[1], scale)
 
-    return image
+    return im_rgb

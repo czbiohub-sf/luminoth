@@ -3,14 +3,20 @@ import os
 
 import click
 import cv2
+import numpy as np
 import pandas as pd
 
+from matplotlib import pyplot
+from PIL import ImageFont, ImageDraw, Image
+import matplotlib as mpl
+mpl.rcParams['pdf.fonttype'] = 42
 # Constants for bounding box and label overlays
-FONT = cv2.FONT_HERSHEY_SIMPLEX
-FONT_SCALE = 0.5
-FONT_COLOR = (0, 0, 255)
+CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+FONT = os.path.join(CURRENT_DIR, "arial.ttf")
+FONT_SCALE = 15
+FONT_COLOR = (255, 255, 255, 0)
 LINE_TYPE = 2
-BB_COLOR = (0, 255, 0)
+BB_COLOR = (224, 189, 182)
 BB_LINE_WIDTH = 2
 
 
@@ -71,16 +77,9 @@ def overlay_bb_labels(
     # Plot bounding boxes, annotation label
     for index, row in tmp_df.iterrows():
         label = str(row.label)
-        left_corner_of_text = (int(row.xmin), int(row.ymin))
+        left_corner_of_text = (
+            int(row.xmin), int(row.ymin))
         right_bottom_corner = (int(row.xmax), int(row.ymax))
-        cv2.putText(
-            im_rgb,
-            label,
-            left_corner_of_text,
-            FONT,
-            FONT_SCALE,
-            FONT_COLOR,
-            LINE_TYPE)
 
         cv2.rectangle(
             im_rgb,
@@ -90,6 +89,24 @@ def overlay_bb_labels(
             line_width,
         )
 
+        left_corner_of_text = (
+            int(row.xmin + line_width), int(row.ymin + line_width))
+        # Convert the image to RGB (OpenCV uses BGR)
+        cv2_im_rgb = cv2.cvtColor(im_rgb, cv2.COLOR_BGR2RGB)
+
+        # Pass the image to PIL
+        pil_im = Image.fromarray(cv2_im_rgb)
+
+        draw = ImageDraw.Draw(pil_im, mode="RGB")
+        # use a truetype font
+        font = ImageFont.truetype(FONT, FONT_SCALE)
+
+        # Draw the text
+        draw.text(left_corner_of_text, label, font=font, fill=FONT_COLOR)
+
+        # Get back the image to OpenCV
+        im_rgb = cv2.cvtColor(np.array(pil_im), cv2.COLOR_RGB2BGR)
+
     return im_rgb
 
 
@@ -97,7 +114,7 @@ def overlay_bbs_on_all_images(
         im_dir, csv_path, output_dir, input_image_format):
     """
     Save the bounding boxes and their annotations overlaid
-     on all the input images in the given dir as a png image
+     on all the input images in the given dir as a pdf image
      in the output_dir
 
     Args:
@@ -122,8 +139,9 @@ def overlay_bbs_on_all_images(
 
     for im_path in images_in_path:
         im_rgb = overlay_bb_labels(im_path, input_image_format, df)
-        png = os.path.basename(im_path).replace(input_image_format, ".png")
-        cv2.imwrite(os.path.join(output_dir, png), im_rgb)
+        cv2_im_rgb = cv2.cvtColor(im_rgb, cv2.COLOR_BGR2RGB)
+        pdf = os.path.basename(im_path).replace(input_image_format, ".pdf")
+        pyplot.imsave(os.path.join(output_dir, pdf), cv2_im_rgb)
     print("Overlaid bounding box labeled images are at: {}".format(output_dir))
 
 
