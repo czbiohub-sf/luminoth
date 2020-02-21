@@ -171,7 +171,7 @@ class PredictorNetwork(object):
                     'bbox': obj,
                     'label': labels[prob_index],
                     'prob': round(max_prob, 4)}
-                predictions[repeated_indices[0]] = d
+                predictions[prob_index] = d
             repeated_indices = self.bbs_pixel_apart(obj, objects)
             if len(repeated_indices) > 0:
                 repeated_probs = [probs[i] for i in repeated_indices]
@@ -186,9 +186,10 @@ class PredictorNetwork(object):
                     'bbox': objects[prob_index],
                     'label': labels[prob_index],
                     'prob': round(max_prob, 4)}
-                predictions[repeated_indices[-1]] = d
+                predictions[prob_index] = d
             count += 1
         predictions = list(filter(None, predictions))
+
         predictions = sorted(
             predictions, key=lambda x: x['prob'], reverse=True)
 
