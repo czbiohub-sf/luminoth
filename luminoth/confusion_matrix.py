@@ -79,6 +79,8 @@ def get_valid_match_iou(i, j, gt_boxes, predicted_boxes, iou_threshold):
         np.array(predicted_boxes[j]).reshape(1, 4))[0][0]
     if iou >= iou_threshold:
         return [i, j, iou]
+    else:
+        print(i, j, iou)
 
 
 def get_matched_gt_predict_per_image(
@@ -145,11 +147,14 @@ def get_matched_gt_predict_per_image(
     predicted_boxes = []
     predicted_classes = []
     predicted_scores = []
+    print("predicted df length {}".format(len(df_predicted)))
     for index, row in df_predicted.iterrows():
         if row.prob > confidence_threshold:
             predicted_boxes.append([row.xmin, row.ymin, row.xmax, row.ymax])
             predicted_classes.append(row.label)
             predicted_scores.append(row.prob)
+    print("predicted df after conf filtering length {}".format(
+        len(predicted_classes)))
 
     # Find IOU Matches
     iterator = itertools.product(
