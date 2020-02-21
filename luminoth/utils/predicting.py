@@ -179,6 +179,9 @@ class PredictorNetwork(object):
                 repeated_probs.append(prob)
                 repeated_indices.append(count)
                 max_prob = max(repeated_probs)
+                tf.logging.info("{} {}".format(
+                    repeated_probs, repeated_indices))
+                assert len(repeated_probs) == len(repeated_indices)
                 prob_index = [
                     index for index, prob in zip(
                         repeated_indices, repeated_probs)
