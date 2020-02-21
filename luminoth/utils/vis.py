@@ -74,15 +74,13 @@ def vis_objects(
     Returns:
         numpy.ndarray: Color image with bounding box and labels drawn on
     """
-    image = image.astype(np.uint8)
+    im_rgb = image.astype(np.uint8)
 
     if len(image.shape) == 3:
         if image.shape[2] == 1:
-            im_rgb = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+            im_rgb = cv2.cvtColor(im_rgb, cv2.COLOR_GRAY2RGB)
     elif len(image.shape) == 2:
-        im_rgb = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-    else:
-        im_rgb = image
+        im_rgb = cv2.cvtColor(im_rgb, cv2.COLOR_GRAY2RGB)
 
     if not isinstance(objects, list):
         objects = [objects]
