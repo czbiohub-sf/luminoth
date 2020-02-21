@@ -11,7 +11,7 @@ from PIL import ImageFont, ImageDraw, Image
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 FONT = os.path.join(CURRENT_DIR, "arial.ttf")
 FONT_SCALE = 15
-FONT_COLOR = (255, 255, 255, 0)
+FONT_COLOR = (255, 219, 140, 0)
 LINE_TYPE = 2
 BB_COLOR = (224, 189, 182)
 BB_LINE_WIDTH = 2
@@ -111,7 +111,7 @@ def overlay_bbs_on_all_images(
         im_dir, csv_path, output_dir, input_image_format):
     """
     Save the bounding boxes and their annotations overlaid
-     on all the input images in the given dir as a pdf image
+     on all the input images in the given dir as a png image
      in the output_dir
 
     Args:

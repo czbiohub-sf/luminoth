@@ -9,7 +9,7 @@ from PIL import ImageFont, ImageDraw, Image
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 FONT = os.path.join(CURRENT_DIR, "arial.ttf")
 FONT_SCALE = 15
-FONT_COLOR = (255, 255, 255, 0)
+FONT_COLOR = (255, 219, 140, 0)
 LINE_TYPE = 2
 BB_COLOR = (224, 189, 182)
 BB_LINE_WIDTH = 2
@@ -81,6 +81,8 @@ def vis_objects(
             im_rgb = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
     elif len(image.shape) == 2:
         im_rgb = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+    else:
+        im_rgb = image
 
     if not isinstance(objects, list):
         objects = [objects]

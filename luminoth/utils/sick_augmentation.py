@@ -1,9 +1,11 @@
 import cv2
 import os
-import re
 import numpy as np
 import pandas as pd
 import random
+import re
+import imgaug as ia
+from imgaug import augmenters as iaa
 
 """
 This program is used to preprocess the 2048 x 2048 leica commerical microscope
@@ -31,21 +33,19 @@ RANDOM_SEED = 42
 # Change this to where you have the downloaded the dataset
 im_dir = DATA_DIR + "{}/Matlab-RBC Instances/285 nm/sl{}/"
 xls_file_name = DATA_DIR + "mergedMetadata_285nm_20200217.xls"
-df = pd.read_excel(xls_file_name, sheetname=None, ignore_index=True)
+df = pd.read_excel(xls_file_name, sheet_name=None, ignore_index=True)
 df = pd.concat(df.values(), ignore_index=True)
 
 # Set random seed, so the randomized locations in the artificially generated
 # mosaic stay the same on running the program again
 random.seed(RANDOM_SEED)
 
-# Filter for only one focus healthy slices to avoid redundant images
+# Filter for only one focus slice to avoid redundant images
 count = 0
 for index, row in df.iterrows():
-    if "sl3" not in row["ParentFilename"]:
-        # focus slices sl1, sl2, sl4, sl5
-        if "healthy" in row["HumanLabels"]:
-            df = df.drop([index])
-            count += 1
+    if "healthy" in row["HumanLabels"]:
+        df = df.drop([index])
+        count += 1
 
 # Randomize rows to not pick two similar labeled cells or same dataset cells
 df = df.sample(frac=1).reset_index(drop=True)
@@ -57,6 +57,7 @@ image_count = 0
 # List of indices, already copied to the csv file and rbc cells in the row
 # are in an image
 indices_seen = []
+saved_random_image_paths = []
 
 while len(df) > 19:
     count = 0
@@ -76,7 +77,7 @@ while len(df) > 19:
         # save the image one with tiles randomly placed,
         # doesn't create the directory if it doesn't exist
         saved_random_image_path = os.path.join(
-            DATA_DIR, "random_mosaic", "{}.tif".format(image_count))
+            DATA_DIR, "random_mosaic_sick", "sick_{}.tif".format(image_count))
         # First image, create arrays to place the randomized cells and a mask
         # to set the already occupied cell locations to 255
         if count == 0:
@@ -162,6 +163,7 @@ while len(df) > 19:
         elif count >= 20 or index == len(df):
             # Reset count, increment image count, save image
             count = 0
+            saved_random_image_paths.append(saved_random_image_path)
             cv2.imwrite(saved_random_image_path, random_mosaiced_im)
             for d in dicts:
                 output_random_df = output_random_df.append(
@@ -247,4 +249,69 @@ while len(df) > 19:
 # contours per 596 x 620 image, this might be the last few rows from each time
 # running the above code, check for that
 output_random_df.to_csv(os.path.join(
-    DATA_DIR, "random_mosaic/output_random_df_montage_1.csv"))
+    DATA_DIR, "random_mosaic_sick/output_random_df_montage_sick.csv"))
+
+bbs = []
+images = []
+dicts = []
+
+for image_path in saved_random_image_paths:
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    images.append(image)
+    tmp_df = output_random_df[output_random_df.image_id == image_path]
+
+    bbs_per_image = []
+    labels_per_image = []
+    for index, row in tmp_df.iterrows():
+        bbs_per_image.append(
+            ia.BoundingBox(
+                x1=row.xmin, y1=row.ymin,
+                x2=row.xmax, y2=row.ymax,
+                label=row.label))
+    bbs.append(bbs_per_image)
+
+# The array has shape (320, 520, 696) and dtype uint8.
+images = np.array(images, dtype=np.uint8)
+
+seq = iaa.Sequential([
+    iaa.Flipud(1.0),  # vertically flips
+    iaa.Fliplr(1.0),  # horizontal flips
+    # Strengthen or weaken the contrast in each image.
+    iaa.LinearContrast((0.75, 1.5)),
+    # Add gaussian noise.
+    # For 50% of all images, we sample the noise once per pixel.
+    # For the other 50% of all images, we sample the noise per pixel AND
+    # channel. This can change the color (not only brightness) of the
+    # pixels.
+    # But we only blur about 50% of all images.
+    iaa.Sometimes(
+        0.5,
+        iaa.GaussianBlur(sigma=(0, 0.5))),
+    iaa.AdditiveGaussianNoise(
+        loc=0, scale=(0.0, 0.05 * 255), per_channel=0.5)], random_order=True)
+# Make some images brighter and some darker.
+# In 20% of all cases, we sample the multiplier once per channel,
+# which can end up changing the color of the images.
+# iaa.Multiply((0.8, 1.2), per_channel=0.2)], random_order=True)
+images_aug, bbs_aug = seq(images=images, bounding_boxes=bbs)
+
+for index, bbs_per_image in enumerate(bbs_aug):
+    aug_path = saved_random_image_paths[index].replace(
+        "sick_", "aug_sick_")
+    cv2.imwrite(aug_path, images_aug[index, :, :])
+    for bb in bbs_per_image:
+        dicts.append(
+            {
+                'image_id': aug_path,
+                'xmin': bb.x1,
+                'xmax': bb.x2,
+                'ymin': bb.y1,
+                'ymax': bb.y2,
+                'label': bb.label})
+
+for d in dicts:
+    output_random_df = output_random_df.append(
+        d, ignore_index=True)
+
+output_random_df.to_csv(os.path.join(
+    DATA_DIR, "random_mosaic_sick/output_random_df_montage_sick_aug.csv"))
