@@ -192,7 +192,7 @@ class PredictorNetwork(object):
                     'prob': round(max_prob, 4)}
                 tf.logging.info("{} {}".format(count, d))
                 tf.logging.info("{} {}".format(prob_index, max_prob))
-                tf.logging.info("{}".format(predictions)
+                tf.logging.info("{}".format(predictions))
                 predictions[prob_index] = d
             count += 1
         tf.logging.info("{}".format(len(predictions)))
