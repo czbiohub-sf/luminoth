@@ -110,7 +110,7 @@ class PredictorNetwork(object):
         repeated_indices = [
             index for index, each_obj in enumerate(
                 objects) if [0, 1] == np.unique(
-                np.subtract(each_obj, obj)).tolist()]
+                np.fabs(np.subtract(each_obj, obj))).tolist()]
         return repeated_indices
 
     def predict_image(self, image):
