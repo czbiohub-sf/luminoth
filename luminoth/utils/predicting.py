@@ -150,28 +150,6 @@ class PredictorNetwork(object):
         assert len(objects) == len(labels) == len(probs)
         count = 0
         for obj, label, prob in zip(objects, labels, probs):
-            if objects.count(obj) == 1:
-                d = {
-                    'bbox': obj,
-                    'label': label,
-                    'prob': round(prob, 4)}
-                predictions[count] = d
-            elif objects.count(obj) > 1:
-                prob_repeated_objs = [
-                    [i, probs[i]] for i, value in enumerate(objects)
-                    if value == obj]
-                repeated_indices = [i for (i, _) in prob_repeated_objs]
-                repeated_probs = [j for (_, j) in prob_repeated_objs]
-                max_prob = max(repeated_probs)
-                prob_index = [
-                    index for index, prob in zip(
-                        repeated_indices, repeated_probs)
-                    if prob == max_prob][0]
-                d = {
-                    'bbox': obj,
-                    'label': labels[prob_index],
-                    'prob': round(max_prob, 4)}
-                predictions[prob_index] = d
             repeated_indices = self.bbs_pixel_apart(obj, objects)
             tf.logging.info("{}".format(repeated_indices))
             if len(repeated_indices) > 0:
@@ -193,6 +171,28 @@ class PredictorNetwork(object):
                 tf.logging.info("{} {}".format(count, d))
                 tf.logging.info("{} {}".format(prob_index, max_prob))
                 tf.logging.info("{}".format(predictions))
+                predictions[prob_index] = d
+            if objects.count(obj) == 1:
+                d = {
+                    'bbox': obj,
+                    'label': label,
+                    'prob': round(prob, 4)}
+                predictions[count] = d
+            elif objects.count(obj) > 1:
+                prob_repeated_objs = [
+                    [i, probs[i]] for i, value in enumerate(objects)
+                    if value == obj]
+                repeated_indices = [i for (i, _) in prob_repeated_objs]
+                repeated_probs = [j for (_, j) in prob_repeated_objs]
+                max_prob = max(repeated_probs)
+                prob_index = [
+                    index for index, prob in zip(
+                        repeated_indices, repeated_probs)
+                    if prob == max_prob][0]
+                d = {
+                    'bbox': obj,
+                    'label': labels[prob_index],
+                    'prob': round(max_prob, 4)}
                 predictions[prob_index] = d
             count += 1
         tf.logging.info("{}".format(len(predictions)))
