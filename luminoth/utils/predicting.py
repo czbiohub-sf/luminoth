@@ -106,6 +106,13 @@ class PredictorNetwork(object):
             if config.train.debug:
                 self.fetches['_debug'] = pred_dict
 
+    def bbs_pixel_apart(self, obj, objects):
+        repeated_indices = [
+            index for index, each_obj in enumerate(
+                objects) if [0, 1] == np.unique(
+                np.subtract(each_obj, obj)).tolist()]
+        return repeated_indices
+
     def predict_image(self, image):
         fetched = self.session.run(self.fetches, feed_dict={
             self.image_placeholder: np.array(image)
@@ -165,6 +172,21 @@ class PredictorNetwork(object):
                     'label': labels[prob_index],
                     'prob': round(max_prob, 4)}
                 predictions[repeated_indices[0]] = d
+            repeated_indices = self.bbs_pixel_apart(obj, objects)
+            if len(repeated_indices) > 0:
+                repeated_probs = [probs[i] for i in repeated_indices]
+                repeated_probs.append(prob)
+                repeated_indices.append(count)
+                max_prob = max(repeated_probs)
+                prob_index = [
+                    index for index, prob in zip(
+                        repeated_indices, repeated_probs)
+                    if prob == max_prob][0]
+                d = {
+                    'bbox': objects[prob_index],
+                    'label': labels[prob_index],
+                    'prob': round(max_prob, 4)}
+                predictions[repeated_indices[-1]] = d
             count += 1
         predictions = list(filter(None, predictions))
         predictions = sorted(
