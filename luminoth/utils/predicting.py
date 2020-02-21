@@ -173,6 +173,7 @@ class PredictorNetwork(object):
                     'prob': round(max_prob, 4)}
                 predictions[prob_index] = d
             repeated_indices = self.bbs_pixel_apart(obj, objects)
+            tf.logging.info("{}".format(repeated_indices))
             if len(repeated_indices) > 0:
                 repeated_probs = [probs[i] for i in repeated_indices]
                 repeated_probs.append(prob)
@@ -186,10 +187,12 @@ class PredictorNetwork(object):
                     'bbox': objects[prob_index],
                     'label': labels[prob_index],
                     'prob': round(max_prob, 4)}
+                tf.logging.info("{} {}".format(count, d))
                 predictions[prob_index] = d
             count += 1
+        tf.logging.info("{}".format(len(predictions)))
         predictions = list(filter(None, predictions))
-
+        tf.logging.info("{}".format(len(predictions)))
         predictions = sorted(
             predictions, key=lambda x: x['prob'], reverse=True)
 
