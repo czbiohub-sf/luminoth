@@ -115,7 +115,6 @@ class PredictorNetwork(object):
             for i in unique_differences:
                 if i <= 5:
                     set_index_flags += 1
-                    break
             if set_index_flags == len(unique_differences):
                 tf.logging.info(
                     "{} {} {}".format(repeated_indices, each_obj, obj))
