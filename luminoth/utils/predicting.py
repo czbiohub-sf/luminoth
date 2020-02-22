@@ -114,6 +114,7 @@ class PredictorNetwork(object):
                 if np.unique(np.fabs(np.subtract(
                         each_obj, obj))).tolist() == list(range(i)):
                     set_index_flag = True
+                    break
             if set_index_flag:
                 repeated_indices.append(index)
         return repeated_indices
