@@ -109,13 +109,16 @@ class PredictorNetwork(object):
     def bbs_pixel_apart(self, obj, objects):
         repeated_indices = []
         for index, each_obj in enumerate(objects):
-            set_index_flag = False
-            for i in range(5):
-                if np.unique(np.fabs(np.subtract(
-                        each_obj, obj))).tolist() == list(range(i)):
-                    set_index_flag = True
+            set_index_flags = 0
+            unique_differences = \
+                np.unique(np.fabs(np.subtract(each_obj, obj))).tolist()
+            for i in unique_differences:
+                if i <= 5:
+                    set_index_flags += 1
                     break
-            if set_index_flag:
+            if set_index_flags == unique_differences:
+                tf.logging.info(
+                    "{} {} {}".format(repeated_indices, each_obj, obj))
                 repeated_indices.append(index)
         return repeated_indices
 
