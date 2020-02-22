@@ -116,8 +116,6 @@ class PredictorNetwork(object):
                 if i <= 5:
                     set_index_flags += 1
             if set_index_flags == len(unique_differences):
-                tf.logging.info(
-                    "{} {} {}".format(repeated_indices, each_obj, obj))
                 repeated_indices.append(index)
         return repeated_indices
 
@@ -159,14 +157,11 @@ class PredictorNetwork(object):
         count = 0
         for obj, label, prob in zip(objects, labels, probs):
             repeated_indices = self.bbs_pixel_apart(obj, objects)
-            tf.logging.info("{}".format(repeated_indices))
             if len(repeated_indices) > 0:
                 repeated_probs = [probs[i] for i in repeated_indices]
                 repeated_probs.append(prob)
                 repeated_indices.append(count)
                 max_prob = max(repeated_probs)
-                tf.logging.info("{} {}".format(
-                    repeated_probs, repeated_indices))
                 assert len(repeated_probs) == len(repeated_indices)
                 prob_index = [
                     index for index, prob in zip(
@@ -176,9 +171,6 @@ class PredictorNetwork(object):
                     'bbox': objects[prob_index],
                     'label': labels[prob_index],
                     'prob': round(max_prob, 4)}
-                tf.logging.info("{} {}".format(count, d))
-                tf.logging.info("{} {}".format(prob_index, max_prob))
-                tf.logging.info("{}".format(predictions))
                 predictions[prob_index] = d
             else:
                 if objects.count(obj) == 1:
@@ -204,9 +196,7 @@ class PredictorNetwork(object):
                         'prob': round(max_prob, 4)}
                     predictions[prob_index] = d
             count += 1
-        tf.logging.info("{}".format(len(predictions)))
         predictions = list(filter(None, predictions))
-        tf.logging.info("{}".format(len(predictions)))
         predictions = sorted(
             predictions, key=lambda x: x['prob'], reverse=True)
 
