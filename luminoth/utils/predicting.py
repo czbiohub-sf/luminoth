@@ -107,10 +107,15 @@ class PredictorNetwork(object):
                 self.fetches['_debug'] = pred_dict
 
     def bbs_pixel_apart(self, obj, objects):
-        repeated_indices = [
-            index for index, each_obj in enumerate(
-                objects) if [0, 1] == np.unique(
-                np.fabs(np.subtract(each_obj, obj))).tolist()]
+        repeated_indices = []
+        for index, each_obj in enumerate(objects):
+            set_index_flag = False
+            for i in range(5):
+                if np.unique(np.fabs(np.subtract(
+                        each_obj, obj))).tolist() == list(range(i)):
+                    set_index_flag = True
+            if set_index_flag:
+                repeated_indices.append(index)
         return repeated_indices
 
     def predict_image(self, image):

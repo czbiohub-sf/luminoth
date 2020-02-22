@@ -79,8 +79,6 @@ def get_valid_match_iou(i, j, gt_boxes, predicted_boxes, iou_threshold):
         np.array(predicted_boxes[j]).reshape(1, 4))[0][0]
     if iou >= iou_threshold:
         return [i, j, iou]
-    else:
-        print(i, j, iou)
 
 
 def get_matched_gt_predict_per_image(
