@@ -125,6 +125,7 @@ setup(
             'pyasn1>=0.4.2',
         ],
         ':python_version <= "2.7"': ['enum34'],
+        ':python_version >= "3.5"': ['imgaug==0.4.0'],
     },
     entry_points="""
         [console_scripts]
