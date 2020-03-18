@@ -38,15 +38,6 @@ df = pd.concat(df.values(), ignore_index=True)
 # mosaic stay the same on running the program again
 random.seed(RANDOM_SEED)
 
-# Filter for only one focus healthy slices to avoid redundant images
-count = 0
-for index, row in df.iterrows():
-    if "sl3" not in row["ParentFilename"]:
-        # focus slices sl1, sl2, sl4, sl5
-        if "healthy" in row["HumanLabels"]:
-            df = df.drop([index])
-            count += 1
-
 # Randomize rows to not pick two similar labeled cells or same dataset cells
 df = df.sample(frac=1).reset_index(drop=True)
 
@@ -68,6 +59,8 @@ while len(df) > 19:
             i for i in row[
                 "ParentFilename"].split("_") if "sl" in i][0]
         focus_slice = int(re.search(r'\d+', sl).group())
+        if focus_slice != 3:
+            continue
         image = cv2.imread(
             os.path.join(
                 im_dir.format(row["datasetID"], focus_slice),
@@ -76,7 +69,7 @@ while len(df) > 19:
         # save the image one with tiles randomly placed,
         # doesn't create the directory if it doesn't exist
         saved_random_image_path = os.path.join(
-            DATA_DIR, "random_mosaic", "{}.tif".format(image_count))
+            DATA_DIR, "random_mosaic_no_foc", "{}.tif".format(image_count))
         # First image, create arrays to place the randomized cells and a mask
         # to set the already occupied cell locations to 255
         if count == 0:
@@ -247,4 +240,4 @@ while len(df) > 19:
 # contours per 596 x 620 image, this might be the last few rows from each time
 # running the above code, check for that
 output_random_df.to_csv(os.path.join(
-    DATA_DIR, "random_mosaic/output_random_df_montage_1.csv"))
+    DATA_DIR, "random_mosaic_no_foc/output_random_df_montage_1.csv"))

@@ -276,8 +276,6 @@ images = np.array(images, dtype=np.uint8)
 seq = iaa.Sequential([
     iaa.Flipud(1.0),  # vertically flips
     iaa.Fliplr(1.0),  # horizontal flips
-    # Strengthen or weaken the contrast in each image.
-    iaa.LinearContrast((0.75, 1.5)),
     # Add gaussian noise.
     # For 50% of all images, we sample the noise once per pixel.
     # For the other 50% of all images, we sample the noise per pixel AND

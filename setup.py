@@ -59,6 +59,7 @@ INSTALL_REQUIRES = [
     # https://github.com/makinacorpus/easydict/pull/14 is merged.
     'easydict>=1.7,<=1.8',
     'six>=1.11',
+    'imgaug==0.4.0'
 ]
 TEST_REQUIRES = []
 
@@ -122,7 +123,8 @@ setup(
             'oauth2client>=4.1.2',
             # See https://github.com/tryolabs/luminoth/issues/147
             'pyasn1>=0.4.2',
-        ]
+        ],
+        ':python_version <= "2.7"': ['enum34'],
     },
     entry_points="""
         [console_scripts]
