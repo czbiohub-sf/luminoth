@@ -7,6 +7,7 @@ import re
 import imgaug as ia
 from imgaug import augmenters as iaa
 
+# pip install imaug to run this code
 """
 This program is used to preprocess the 2048 x 2048 leica commerical microscope
 images, each image consisting of about 9000 cells. The human annotated data is
