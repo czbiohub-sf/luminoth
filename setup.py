@@ -53,8 +53,6 @@ INSTALL_REQUIRES = [
     'natsort==6.2.0',
     'opencv-python==4.1.0.25',
     'joblib==0.14.1',
-    # pin setuptools for tensorflow compatibility
-    'setuptools>=41.0.0',
     # Sonnet 1.25+ requires tensorflow_probability which we do not need here.
     'dm-sonnet>=1.12,<=1.23',
     # Can remove easydict <=1.8 pin after
@@ -126,7 +124,6 @@ setup(
             'pyasn1>=0.4.2',
         ],
         ':python_version <= "2.7"': ['enum34'],
-        ':python_version >= "3.5"': ['imgaug==0.4.0'],
     },
     entry_points="""
         [console_scripts]
