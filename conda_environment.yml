@@ -5,6 +5,7 @@ channels:
   - defaults
 dependencies:
   - click==6.7
+  - setuptools>=41.0.0
   - flask==1.1.1
   - jupyter==1.0.0
   - lxml==4.4.1
