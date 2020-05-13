@@ -136,8 +136,8 @@ class OpenImagesReader(ObjectDetectionReader):
             with tf.gfile.Open(annotations_file) as af:
                 reader = csv.DictReader(af)
                 image_ids = set()
-                for l in reader:
-                    image_ids.add(l['ImageID'])
+                for read in reader:
+                    image_ids.add(read['ImageID'])
             self._image_ids = image_ids
         return self._image_ids
 

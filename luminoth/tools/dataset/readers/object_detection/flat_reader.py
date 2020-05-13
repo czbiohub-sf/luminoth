@@ -170,7 +170,7 @@ class FlatReader(ObjectDetectionReader):
             return
         elif len(possible_files) > 1:
             tf.logging.warning(
-                'Image {} matches with {} files ({}).'.format(
+                'Image {} matches with {} files.'.format(
                     image_id, len(possible_files)))
 
         return os.path.join(self._get_split_path(), possible_files[0])

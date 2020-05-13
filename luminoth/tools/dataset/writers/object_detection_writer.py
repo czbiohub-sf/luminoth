@@ -85,7 +85,7 @@ class ObjectDetectionWriter(BaseWriter):
             return
         elif self._reader.errors > 0:
             tf.logging.warning(
-                'Failed on {} records. '
+                'Failed with errors on {} records.'
                 '(Use "--debug" flag to display all logs)'.format(
                     self._reader.errors, self._reader.yielded_records
                 )
