@@ -66,7 +66,7 @@ def overlay_bb_labels(
     Returns:
         im_rgb: np.array overlaid_image with same shape and 3 channels
     """
-    im_rgb = cv2.imread(im_path, cv2.IMREAD_COLOR)
+    im_rgb = cv2.imread(im_path, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
 
     basename = os.path.basename(im_path).replace(input_image_format, "")
     tmp_df = df[df.base_path == basename]

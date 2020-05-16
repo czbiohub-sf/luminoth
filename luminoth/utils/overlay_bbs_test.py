@@ -128,7 +128,7 @@ class OverlayBbsTest(tf.test.TestCase):
                 os.path.join(
                     output_dir, "*" + self.input_image_format)))
         for path in images:
-            image = cv2.imread(path)
+            image = cv2.imread(path, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
             assert image.shape == self.output_image_shape
             assert image.sum() != 0
         assert len(images) == num_images

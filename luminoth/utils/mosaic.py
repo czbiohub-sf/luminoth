@@ -112,7 +112,8 @@ def mosaic_images(im_dir, tile_size, fill_value, output_png, fmt):
     """
     images_in_path = natsort.natsorted(
         glob.glob(os.path.join(im_dir, "*" + fmt)))
-    image = cv2.imread(images_in_path[0], cv2.IMREAD_GRAYSCALE)
+    image = cv2.imread(
+        images_in_path[0], cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
     fill_value = _set_fill_value(image, fill_value)
     tile_size = _set_tile_size(image, tile_size)
     mosaiced_image = assemble_mosaic(

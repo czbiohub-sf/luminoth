@@ -8,7 +8,7 @@ from PIL import ImageFont, ImageDraw, Image
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 FONT = os.path.join(CURRENT_DIR, "arial.ttf")
-FONT_SCALE = 15
+FONT_SCALE = 10000000
 FONT_COLOR = (255, 219, 140, 0)
 LINE_TYPE = 2
 BB_COLOR = (224, 189, 182)
@@ -44,7 +44,7 @@ def draw_label(im_rgb, bbox, label, prob, color=FONT_COLOR, scale=FONT_SCALE):
 
     draw = ImageDraw.Draw(pil_im)
     # use a truetype font
-    font = ImageFont.truetype(FONT, FONT_SCALE)
+    font = ImageFont.truetype(FONT, 28, encoding="unic")
 
     # Draw the text
     draw.text(left_corner_of_text, label, font=font, fill=color)

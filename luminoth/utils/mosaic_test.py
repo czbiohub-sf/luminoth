@@ -136,7 +136,8 @@ class MosiacTest(tf.test.TestCase):
         # Assert mosaiced image is as expected
         assert os.path.exists(output_png)
         assert os.path.getsize(output_png) != 0
-        mosaiced_image = cv2.imread(output_png)
+        mosaiced_image = cv2.imread(
+            output_png, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
         assert mosaiced_image.shape == (
             math.ceil(np.sqrt(num_images)) * tile_size[0],
             math.ceil(np.sqrt(num_images)) * tile_size[1],

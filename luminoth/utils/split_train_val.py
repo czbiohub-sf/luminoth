@@ -222,7 +222,8 @@ def write_lumi_images_csv(
         basename = base_path + "_" + basename
         new_path = os.path.join(path, basename)
 
-        image = cv2.imread(original_path, cv2.IMREAD_ANYDEPTH)
+        image = cv2.imread(
+            original_path, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
         image = (image / image.max() * 255).astype(np.uint8)
 
         cv2.imwrite(new_path, image)
