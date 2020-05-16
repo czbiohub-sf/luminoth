@@ -20,7 +20,7 @@ class DataAugDemoTest(tf.test.TestCase):
     def setUp(self):
         self.tempfiles_to_delete = []
         self.input_image_format = ".png"
-        self.gray_image_shape = [50, 41]
+        self.gray_image_shape = [50, 41, 1]
         self.color_image_shape = [50, 41, 3]
 
     def tearDown(self):

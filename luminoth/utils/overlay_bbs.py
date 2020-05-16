@@ -3,18 +3,8 @@ import os
 
 import click
 import cv2
-import numpy as np
 import pandas as pd
-
-from PIL import ImageFont, ImageDraw, Image
-# Constants for bounding box and label overlays
-CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
-FONT = os.path.join(CURRENT_DIR, "arial.ttf")
-FONT_SCALE = 15
-FONT_COLOR = (255, 219, 140, 0)
-LINE_TYPE = 2
-BB_COLOR = (224, 189, 182)
-BB_LINE_WIDTH = 2
+from .vis import draw_label, FONT_COLOR, FONT_SCALE, BB_COLOR, BB_LINE_WIDTH
 
 
 def add_base_path(csv_path, input_image_format):
@@ -50,8 +40,10 @@ def overlay_bb_labels(
         im_path,
         input_image_format,
         df,
-        color=BB_COLOR,
-        line_width=BB_LINE_WIDTH):
+        bb_color,
+        bb_line_width,
+        font_color,
+        font_scale):
     """
     Return an image overlaid with bounding box rectangles and the annotations
 
@@ -73,7 +65,6 @@ def overlay_bb_labels(
 
     # Plot bounding boxes, annotation label
     for index, row in tmp_df.iterrows():
-        label = str(row.label)
         left_corner_of_text = (
             int(row.xmin), int(row.ymin))
         right_bottom_corner = (int(row.xmax), int(row.ymax))
@@ -82,33 +73,24 @@ def overlay_bb_labels(
             im_rgb,
             left_corner_of_text,
             right_bottom_corner,
-            color,
-            line_width,
+            bb_color,
+            bb_line_width,
         )
-
-        left_corner_of_text = (
-            int(row.xmin + line_width), int(row.ymin + line_width))
-        # Convert the image to RGB (OpenCV uses BGR)
-        cv2_im_rgb = cv2.cvtColor(im_rgb, cv2.COLOR_BGR2RGB)
-
-        # Pass the image to PIL
-        pil_im = Image.fromarray(cv2_im_rgb)
-
-        draw = ImageDraw.Draw(pil_im, mode="RGB")
-        # use a truetype font
-        font = ImageFont.truetype(FONT, FONT_SCALE)
-
-        # Draw the text
-        draw.text(left_corner_of_text, label, font=font, fill=FONT_COLOR)
-
-        # Get back the image to OpenCV
-        im_rgb = cv2.cvtColor(np.array(pil_im), cv2.COLOR_RGB2BGR)
+        bbox = [row.xmin, row.ymin, row.xmax, row.ymax]
+        if "prob" in row:
+            im_rgb = draw_label(
+                im_rgb, bbox, row['label'], row['prob'],
+                font_color, font_scale)
+        else:
+            im_rgb = draw_label(
+                im_rgb, bbox, row['label'], None, font_color, font_scale)
 
     return im_rgb
 
 
 def overlay_bbs_on_all_images(
-        im_dir, csv_path, output_dir, input_image_format):
+        im_dir, csv_path, output_dir, input_image_format,
+        bb_color, bb_line_width, font_color, font_scale):
     """
     Save the bounding boxes and their annotations overlaid
      on all the input images in the given dir as a png image
@@ -135,7 +117,9 @@ def overlay_bbs_on_all_images(
     df = add_base_path(csv_path, input_image_format)
 
     for im_path in images_in_path:
-        im_rgb = overlay_bb_labels(im_path, input_image_format, df)
+        im_rgb = overlay_bb_labels(
+            im_path, input_image_format, df,
+            bb_color, bb_line_width, font_color, font_scale)
         png = os.path.basename(im_path).replace(input_image_format, ".png")
         cv2.imwrite(os.path.join(output_dir, png), im_rgb)
     print("Overlaid bounding box labeled images are at: {}".format(output_dir))
@@ -146,13 +130,23 @@ def overlay_bbs_on_all_images(
 @click.option("--csv_path", help="Absolute path to csv file containing rois xmin,xmax,ymin,ymax,label,image_path", required=True, type=str) # noqa
 @click.option("--output_dir", help="Absolute path to folder name to save the roi overlaid images to", required=True, type=str) # noqa
 @click.option("--input_image_format", help="Format of images in input directory", required=True, type=str) # noqa
-def overlay_bbs(im_dir, csv_path, output_dir, input_image_format):
+@click.option("--bb_color", help="color in rbg format - 3 length tuple for the bounding box rectangle drawn", required=False, type=(int, int, int), default=BB_COLOR) # noqa
+@click.option("--bb_line_width", help="width of the bounding box rectangle drawn", required=False, type=int, default=BB_LINE_WIDTH) # noqa
+@click.option("--font_color", help="color in rbga format - 4 length tuple for the text per bounding box", required=False, type=(int, int, int, int), default=FONT_COLOR) # noqa
+@click.option("--font_scale", help="scale of the font for the text - label of the bounding box", required=False, type=int, default=FONT_SCALE) # noqa
+def overlay_bbs(
+        im_dir, csv_path, output_dir, input_image_format, bb_color,
+        bb_line_width, font_color, font_scale):
 
     overlay_bbs_on_all_images(
         im_dir,
         csv_path,
         output_dir,
-        input_image_format)
+        input_image_format,
+        bb_color,
+        bb_line_width,
+        font_color,
+        font_scale)
 
 
 if __name__ == '__main__':

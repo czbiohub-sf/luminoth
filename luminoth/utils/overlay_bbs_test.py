@@ -27,6 +27,10 @@ class OverlayBbsTest(tf.test.TestCase):
         self.output_image_shape = (50, 41, 3)
         self.num_bboxes = 11
         self.im_path = "test_bb_labels_0.png"
+        self.font_scale = 1
+        self.font_color = (100, 219, 45, 0)
+        self.bb_color = (29, 56, 94)
+        self.bb_line_width = 2
 
     def tearDown(self):
         tf.reset_default_graph()
@@ -102,7 +106,9 @@ class OverlayBbsTest(tf.test.TestCase):
         df = pd.read_csv(csv)
         df['base_path'] = self.im_path.replace(self.input_image_format, "")
         image = overlay_bb_labels(
-            df['image_id'].tolist()[0], self.input_image_format, df)
+            df['image_id'].tolist()[0], self.input_image_format, df,
+            self.bb_color, self.bb_line_width,
+            self.font_color, self.font_scale)
 
         # Assert overlaid image is as expected shape
         assert image.shape == self.output_image_shape
@@ -120,7 +126,9 @@ class OverlayBbsTest(tf.test.TestCase):
             os.path.dirname(csv),
             csv,
             output_dir,
-            self.input_image_format)
+            self.input_image_format,
+            self.bb_color, self.bb_line_width,
+            self.font_color, self.font_scale)
 
         # Assert overlaid images are as expected
         images = natsort.natsorted(

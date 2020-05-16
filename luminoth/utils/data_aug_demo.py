@@ -15,13 +15,14 @@ from luminoth.utils.image import (
     flip_image, random_patch, random_resize,
     random_distortion, expand,
     rot90, random_patch_gaussian)
+from .vis import FONT_COLOR, FONT_SCALE, BB_COLOR, BB_LINE_WIDTH
 
 # Constant for tile_size of an image in the mosaic
 TILE_SIZE = [256, 256]
 # Constants for bounding box and label overlays
 FONT = cv2.FONT_HERSHEY_SIMPLEX
-FONT_SCALE = 1
-FONT_COLOR = (255, 0, 255)
+AUG_FONT_SCALE = 1
+AUG_FONT_COLOR = (255, 0, 255)
 LINE_TYPE = 2
 
 # TODO PV Move below config to a config file that can be given as input for cli
@@ -107,7 +108,12 @@ def update_augmentation(
     df.image_path = im_filename
 
     # overlay bounding box labels on the augmented image
-    overlaid_augmented_image = overlay_bb_labels(im_filename, ".png", df)
+    overlaid_augmented_image = overlay_bb_labels(
+        im_filename, ".png", df,
+        BB_COLOR,
+        BB_LINE_WIDTH,
+        FONT_COLOR,
+        FONT_SCALE)
 
     # write augmentation technique string on the image
     cv2.putText(
@@ -115,8 +121,8 @@ def update_augmentation(
         augmentation,
         (100, 100),
         FONT,
-        FONT_SCALE,
-        FONT_COLOR,
+        AUG_FONT_SCALE,
+        AUG_FONT_COLOR,
         LINE_TYPE)
 
     # Write the augmented bounding box overlaid png image to disk
