@@ -111,7 +111,10 @@ def predict_image(network, path, only_classes=None, ignore_classes=None,
 
     # Save predicted image.
     if save_path:
-        cv2.imwrite(save_path, vis_objects(np.array(image), objects))
+        image = cv2.cvtColor(
+            vis_objects(np.array(image), objects),
+            cv2.COLOR_BGR2RGB)
+        cv2.imwrite(save_path, image)
 
     click.echo(' done.')
     return objects
