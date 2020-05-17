@@ -8,7 +8,7 @@ from PIL import ImageFont, ImageDraw, Image
 
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
-FONT_SCALE = 1
+FONT_SCALE = 2
 FONT_COLOR = (255, 219, 140, 0)
 LINE_TYPE = 2
 BB_COLOR = (182, 189, 224)
