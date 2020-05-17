@@ -113,7 +113,7 @@ class PredictorNetwork(object):
             unique_differences = \
                 np.unique(np.fabs(np.subtract(each_obj, obj))).tolist()
             for i in unique_differences:
-                if i <= 5:
+                if i <= 50:
                     set_index_flags += 1
             if set_index_flags == len(unique_differences):
                 repeated_indices.append(index)
