@@ -9,7 +9,7 @@ from PIL import ImageFont, ImageDraw, Image
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 FONT_SCALE = 1
-FONT_COLOR = (255, 219, 140, 0)
+FONT_COLOR = (140, 219, 255, 0)
 LINE_TYPE = 2
 BB_COLOR = (224, 189, 182)
 BB_LINE_WIDTH = 2
@@ -65,10 +65,8 @@ def draw_label(im_rgb, coords, label, prob, color, scale=1):
     margin_w *= 0.2
 
     # Convert the image to RGB (OpenCV uses BGR)
-    cv2_im_rgb = cv2.cvtColor(im_rgb, cv2.COLOR_BGR2RGB)
-
     # Pass the image to PIL
-    pil_im = Image.fromarray(cv2_im_rgb)
+    pil_im = Image.fromarray(im_rgb)
 
     draw = ImageDraw.Draw(pil_im)
 
@@ -87,7 +85,7 @@ def draw_label(im_rgb, coords, label, prob, color, scale=1):
         ], prob, font=prob_font)
         # Get back the image to OpenCV
 
-    return cv2.cvtColor(np.array(pil_im), cv2.COLOR_RGB2BGR)
+    return np.array(pil_im)
 
 
 def vis_objects(
