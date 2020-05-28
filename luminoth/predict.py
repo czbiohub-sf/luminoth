@@ -7,6 +7,7 @@ import skvideo.io
 import sys
 import time
 import tensorflow as tf
+import xlsxwriter
 
 from PIL import Image
 from luminoth.tools.checkpoint import get_checkpoint_config
@@ -197,6 +198,39 @@ def predict_video(network, path, only_classes=None, ignore_classes=None,
     return objects_per_frame
 
 
+def write_xlsx(csv_path, spacing):
+    folder_path = os.path.dirname(csv_path)
+    workbook = xlsxwriter.Workbook()
+    worksheet = workbook.add_worksheet('sheet1')
+
+    worksheet.set_column('A:A', 15)
+    worksheet.set_column('B:B', 10)
+    temp_folder = os.path.join(folder_path, "predict_temp_bbs")
+    if not os.path.exists(temp_folder):
+        os.makedirs(temp_folder)
+    else:
+        print(
+            "Path {} already exists, might be overwriting data".format(
+                temp_folder))
+    df = pd.read_csv(csv_path)
+
+    for rowy, row in df.iterrows():
+        for i in range(len(row)):
+            worksheet.write(rowy * spacing, i, row[i])
+        image = cv2.imread(
+            row['image_id'],
+            cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)[
+                row.ymin: row.ymax, row.xmin: row.xmax, :]
+        temp_image = os.path.join(temp_folder, "temp_{}.png".format(rowy))
+        cv2.imwrite(temp_image, image)
+        worksheet.insert_image(
+            rowy * spacing, i + 1,
+            temp_image,
+            {'x_scale': 0.3, 'y_scale': 0.3})
+
+    workbook.close()
+
+
 @click.command(help="Obtain a model's predictions.")
 @click.argument('path-or-dir', nargs=-1)
 @click.option('config_files', '--config', '-c', multiple=True, help='Config to use.')  # noqa
@@ -210,10 +244,11 @@ def predict_video(network, path, only_classes=None, ignore_classes=None,
 @click.option('--only-class', '-k', default=None, multiple=True, help='Class to include when predicting.')  # noqa
 @click.option('--ignore-class', '-K', default=None, multiple=True, help='Class to ignore when predicting.')  # noqa
 @click.option('--debug', is_flag=True, help='Set debug level logging.')
+@click.option('--xlsx-spacing', default=2, type=int, help='When inserting images in xlsx, space between rows')  # noqa
 def predict(path_or_dir, config_files, checkpoint, override_params,
             output_path, save_media_to, min_prob, max_prob,
             max_detections, only_class,
-            ignore_class, debug):
+            ignore_class, debug, xlsx_spacing):
     """Obtain a model's predictions.
 
     Receives either `config_files` or `checkpoint` in order to load the correct
@@ -325,3 +360,4 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
     else:
         sys.stdout.write(output_path.replace(".csv", ".txt"))
         df.to_csv(output_path)
+        write_xlsx(output_path, xlsx_spacing)
