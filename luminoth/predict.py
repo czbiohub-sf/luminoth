@@ -8,6 +8,7 @@ import sys
 import time
 import tensorflow as tf
 import xlsxwriter
+import json
 
 from PIL import Image
 from luminoth.tools.checkpoint import get_checkpoint_config
@@ -198,7 +199,7 @@ def predict_video(network, path, only_classes=None, ignore_classes=None,
     return objects_per_frame
 
 
-def write_xlsx(csv_path, spacing):
+def write_xlsx(csv_path, spacing, class_labels_percentage):
     folder_path = os.path.dirname(csv_path)
     workbook = xlsxwriter.Workbook()
     worksheet = workbook.add_worksheet('sheet1')
@@ -213,20 +214,23 @@ def write_xlsx(csv_path, spacing):
             "Path {} already exists, might be overwriting data".format(
                 temp_folder))
     df = pd.read_csv(csv_path)
-
-    for rowy, row in df.iterrows():
-        for i in range(len(row)):
-            worksheet.write(rowy * spacing, i, row[i])
-        image = cv2.imread(
-            row['image_id'],
-            cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)[
-                row.ymin: row.ymax, row.xmin: row.xmax, :]
-        temp_image = os.path.join(temp_folder, "temp_{}.png".format(rowy))
-        cv2.imwrite(temp_image, image)
-        worksheet.insert_image(
-            rowy * spacing, i + 1,
-            temp_image,
-            {'x_scale': 0.3, 'y_scale': 0.3})
+    rowy = 0
+    for label, frac in class_labels_percentage.items():
+        subset_df = df[df['label'] == label].sample(frac=frac)
+        for index, row in subset_df.iterrows():
+            for i in range(len(row)):
+                worksheet.write(rowy * spacing, i, row[i])
+            image = cv2.imread(
+                row['image_id'],
+                cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)[
+                    row.ymin: row.ymax, row.xmin: row.xmax, :]
+            temp_image = os.path.join(temp_folder, "temp_{}.png".format(rowy))
+            cv2.imwrite(temp_image, image)
+            worksheet.insert_image(
+                rowy * spacing, i + 1,
+                temp_image,
+                {'x_scale': 0.3, 'y_scale': 0.3})
+            rowy += index
 
     workbook.close()
 
@@ -245,10 +249,12 @@ def write_xlsx(csv_path, spacing):
 @click.option('--ignore-class', '-K', default=None, multiple=True, help='Class to ignore when predicting.')  # noqa
 @click.option('--debug', is_flag=True, help='Set debug level logging.')
 @click.option('--xlsx-spacing', default=2, type=int, help='When inserting images in xlsx, space between rows')  # noqa
+@click.option('--classes-json', required=False, help='path to a json file containing dictionary of class labels as keys and the float between 0 to 1 representing fraction of the rows/objects for the class to be saved in the xlsx as values')  # noqa
 def predict(path_or_dir, config_files, checkpoint, override_params,
             output_path, save_media_to, min_prob, max_prob,
             max_detections, only_class,
-            ignore_class, debug, xlsx_spacing):
+            ignore_class, debug, xlsx_spacing,
+            classes_json):
     """Obtain a model's predictions.
 
     Receives either `config_files` or `checkpoint` in order to load the correct
@@ -259,6 +265,10 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
     Additional model behavior may be modified with `min-prob`, `only-class` and
     `ignore-class`.
     """
+    # Read class labels as a list
+    if classes_json is not None:
+        with open(classes_json, "r") as f:
+            class_labels_percentage = json.load(f)
     if debug:
         tf.logging.set_verbosity(tf.logging.DEBUG)
     else:
@@ -360,4 +370,4 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
     else:
         sys.stdout.write(output_path.replace(".csv", ".txt"))
         df.to_csv(output_path)
-        write_xlsx(output_path, xlsx_spacing)
+        write_xlsx(output_path, xlsx_spacing, class_labels_percentage)
