@@ -28,8 +28,8 @@ class OverlayBbsTest(tf.test.TestCase):
         self.num_bboxes = 11
         self.im_path = "test_bb_labels_0.png"
         self.font_scale = 1
-        self.font_color = [100, 219, 45, 0]
-        self.bb_color = [29, 56, 94]
+        self.font_color = (100, 219, 45, 0)
+        self.bb_color = (29, 56, 94)
         self.bb_line_width = 2
 
     def tearDown(self):
