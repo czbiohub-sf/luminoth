@@ -3,8 +3,7 @@
 ---
 
 [![Build Status](https://travis-ci.com/czbiohub/luminoth-uv-imaging.svg)
-[![Documentation Status](https://readthedocs.org/projects/luminoth/badge/?version=latest)](http://luminoth.readthedocs.io/en/latest/?badge=latest)
-[![codecov](https://codecov.io/gh/tryolabs/luminoth/branch/master/graph/badge.svg)](https://codecov.io/gh/tryolabs/luminoth)
+[![codecov](https://codecov.io/gh/czbiohub/luminoth-uv-imaging/branch/master/graph/badge.svg)](https://codecov.io/gh/czbiohub/luminoth-uv-imaging)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 Luminoth is an open source toolkit for **computer vision**. Currently, we support object detection, but we are aiming for much more. It is built in Python, using [TensorFlow](https://www.tensorflow.org/) and [Sonnet](https://github.com/deepmind/sonnet).
