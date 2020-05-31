@@ -266,6 +266,7 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
     `ignore-class`.
     """
     # Read class labels as a list
+    class_labels_percentage = {}
     if classes_json is not None:
         with open(classes_json, "r") as f:
             class_labels_percentage = json.load(f)
@@ -347,9 +348,11 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
         )
 
         # TODO: Not writing csv for video files for now.
+        unique_classes = []
         if objects is not None and file_type == 'image':
             for obj in objects:
                 label_name = obj['label']
+                unique_classes.append(label_name)
                 df = df.append({'image_id': file,
                                 'xmin': obj['bbox'][0],
                                 'xmax': obj['bbox'][2],
@@ -370,4 +373,8 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
     else:
         sys.stdout.write(output_path.replace(".csv", ".txt"))
         df.to_csv(output_path)
+        if class_labels_percentage == {}:
+            unique_classes = list(set(unique_classes))
+            class_labels_percentage = \
+                {unique_class: 1.0 for unique_class in unique_classes}
         write_xlsx(output_path, xlsx_spacing, class_labels_percentage)
