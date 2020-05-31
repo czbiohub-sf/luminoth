@@ -201,7 +201,7 @@ def predict_video(network, path, only_classes=None, ignore_classes=None,
 
 def write_xlsx(csv_path, spacing, class_labels_percentage):
     folder_path = os.path.dirname(csv_path)
-    workbook = xlsxwriter.Workbook()
+    workbook = xlsxwriter.Workbook(csv_path.replace(".csv", ".xlsx"))
     worksheet = workbook.add_worksheet('sheet1')
 
     worksheet.set_column('A:A', 15)
