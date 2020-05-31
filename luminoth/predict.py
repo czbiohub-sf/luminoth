@@ -222,8 +222,13 @@ def write_xlsx(csv_path, spacing, class_labels_percentage):
                 worksheet.write(rowy * spacing, i, row[i])
             image = cv2.imread(
                 row['image_id'],
-                cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)[
+                cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
+            if len(image.shape) == 3:
+                image = image[
                     row.ymin: row.ymax, row.xmin: row.xmax, :]
+            else:
+                image = image[
+                    row.ymin: row.ymax, row.xmin: row.xmax]
             temp_image = os.path.join(temp_folder, "temp_{}.png".format(rowy))
             cv2.imwrite(temp_image, image)
             worksheet.insert_image(
