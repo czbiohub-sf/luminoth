@@ -30,5 +30,8 @@ The ``lumi predict`` CLI tool provides the following options related to training
 
 * ``--debug``: Boolean flag, if set, print debug level logging.
 
+* ``--xlsx-spacing``: int, When inserting images in xlsx, space between rows, default 2 i.e 1 row of empty space between rows to accomadate the thumbnail of the image.
+
+* ``--classes-json``: str,  path to a json file containing dictionary of class labels as keys and the float between 0 to 1 representing fraction of the rows/objects for the class to be saved in the xlsx with the images as values. This is to avoid having an excel sheet with a lot of thumbnail images which is hard to load because of size issues.
 
 For more info on prediction go to ``.. _tutorial/01-first-steps``

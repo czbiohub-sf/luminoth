@@ -201,7 +201,7 @@ def mosaic_data_aug(
         tile_size[0] * sqrt(len(DATA_AUGMENTATION_STRATEGIES)),
         tile_size[1] * sqrt(len(DATA_AUGMENTATION_STRATEGIES)).
     """
-    image = cv2.imread(input_image, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
+    image = cv2.imread(input_image, cv2.IMREAD_COLOR)
 
     # Filter out rows containing bounding boxes and annotations
     # for the input_image path above

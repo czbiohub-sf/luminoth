@@ -59,6 +59,7 @@ INSTALL_REQUIRES = [
     # https://github.com/makinacorpus/easydict/pull/14 is merged.
     'easydict>=1.7,<=1.8',
     'six>=1.11',
+    'XlsxWriter>=1.2.8'
 ]
 TEST_REQUIRES = []
 
