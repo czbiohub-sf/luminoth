@@ -22,23 +22,6 @@ Luminoth currently supports Python 2.7 and 3.4–3.6.
 
 To use Luminoth, [TensorFlow](https://www.tensorflow.org/install/) must be installed beforehand. If you want **GPU support**, you should install the GPU version of TensorFlow with `pip install tensorflow-gpu`, or else you can use the CPU version using `pip install tensorflow`.
 
-## Installing Luminoth
-
-Just install from PyPI:
-
-```bash
-pip install luminoth
-```
-
-Optionally, Luminoth can also install TensorFlow for you if you install it with `pip install luminoth[tf]` or `pip install luminoth[tf-gpu]`, depending on the version of TensorFlow you wish to use.
-
-### Google Cloud
-
-If you wish to train using **Google Cloud ML Engine**, the optional dependencies must be installed:
-
-```bash
-pip install luminoth[gcloud]
-```
 
 ## Installing from source
 
