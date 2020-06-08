@@ -2,11 +2,11 @@ __version__ = '0.2.4dev0'
 
 __title__ = 'Luminoth'
 __description__ = 'Computer vision toolkit based on TensorFlow'
-__uri__ = 'https://luminoth.ai'
+__uri__ = 'https://github.com/czbiohub/luminoth-uv-imaging/'
 __doc__ = __description__ + ' <' + __uri__ + '>'
 
-__author__ = 'Tryolabs'
-__email__ = 'luminoth@tryolabs.com'
+__author__ = 'Tryolabs/Pranathi Vemuri'
+__email__ = 'pranathi93.vemuri@gmail.com'
 
 __license__ = 'BSD 3-Clause License'
 __copyright__ = 'Copyright (c) 2018 Tryolabs S.A.'
@@ -30,4 +30,4 @@ Depending on your use case, you should install either `tensorflow` or
 from luminoth.cli import cli  # noqa
 from luminoth.io import read_image  # noqa
 from luminoth.tasks import Detector  # noqa
-from luminoth.utils.vis import vis_objects  # noqa
+from luminoth.vis import vis_objects  # noqa
