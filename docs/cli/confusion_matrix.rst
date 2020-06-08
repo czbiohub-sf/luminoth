@@ -29,5 +29,5 @@ The ``lumi confusion_matrix`` CLI tool provides the following options related to
 
 * ``--keep_unmatched``: If true, keeps unmatched classes percentage in the confusion matrix plot
 
-* ``--binary_classes``: path to a json file containing a dictionary with 2 keys and values as the classes that belongs to each of the 2 classes,ex:{0: [0],1: [1, 2, 3],"binary_labels": ["healthy", "unhealthy"]}
+* ``--binary_classes``: path to a json file containing a dictionary with 2 keys and values as the classes that belongs to each of the 2 classes,ex:{"0": [healthy],"1": ["schizont", "ring", "troph"],"binary_labels": ["healthy", "unhealthy"]}
 
