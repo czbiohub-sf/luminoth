@@ -402,7 +402,17 @@ def get_confusion_matrix(
     if gt_matched_classes != [] and predicted_matched_classes != []:
         confusion_matrix = sklearn.metrics.confusion_matrix(
             gt_matched_classes, predicted_matched_classes, labels=labels)
+        unique_classes = np.unique(gt_matched_classes)
+        total_gt = sum(gt_classes)
+        total_predicted = sum(predicted_classes)
+        for i in unique_classes:
+            sample_gt_percent = gt_classes.count(i) / total_gt
+            sample_predicted_percent = predicted_classes.count(i) / total_predicted
+            error = sample_gt_percent - sample_predicted_percent
+            sample_composition_error[i] = error
 
+        print(
+            "Overall composition error {}\n".format(sample_composition_error))
     df_predicted = pd.read_csv(predicted_csv)
     predicted_classes = []
     for index, row in df_predicted.iterrows():
@@ -505,7 +515,9 @@ def display(
         output_path,
         output_fig,
         input_image_format,
-        num_cpus):
+        num_cpus,
+        keep_unmatched,
+        binary_classes):
     """
     Save and display confusion matrix, precision, recall scores of each of
     the unique labels
@@ -535,6 +547,14 @@ def display(
             for groundtruth and prediction
         num_cpus: int number of cpus to run comparison between groundtruth
             and predicted to obtain matched classses
+        keep_unmatched: bool keeps and shows the unmatched predicted
+        classes when compared with ground truth
+        binary_classes: str path to a json file containing a dictionary with
+        2 keys and values as the classes that belongs to each of the 2 classes
+        ex:{
+            0: [0],
+            1: [1, 2, 3],
+            "binary_labels": ["healthy", "unhealthy"]}
 
     Returns:
         Prints confusion matrix, normalized confusion matrix
@@ -572,15 +592,44 @@ def display(
 
     # set total at the last element to the sum of all predicted elements(tp+fp)
     confusion_matrix[-1, -1] = np.sum(confusion_matrix[-1, :])
-    # remove unmatched row, column
-    confusion_matrix = np.delete(confusion_matrix, -2, 0)
-    confusion_matrix = np.delete(confusion_matrix, -2, 1)
+    if not keep_unmatched:
+        # remove unmatched row, column
+        confusion_matrix = np.delete(confusion_matrix, -2, 0)
+        confusion_matrix = np.delete(confusion_matrix, -2, 1)
+    else:
+        labels = labels.insert(-1, "Unmatched")
     # Plot confusion matrix
     plot_cm(confusion_matrix, labels, output_fig)
-
+    if binary_classes != "":
+        with open(binary_classes, "r") as f:
+            binary_classes = json.load(f)
+        format = output_fig.split(".")[-1]
+        labels_0 = binary_classes[0]
+        labels_1 = binary_classes[1]
+        binary_labels = binary_classes["binary_labels"]
+        binarized_confusion_matrix = binarize(
+            confusion_matrix, labels_0, labels_1)
+        # Plot confusion matrix binary
+        plot_cm(
+            binarized_confusion_matrix,
+            binary_labels,
+            output_fig.replace("." + format, "_binary." + format))
     # Close STDOUT and reset
     sys.stdout.close()
     sys.stdout = stdout_origin
+
+
+def binarize(confusion_matrix, labels_0, labels_1):
+    confusion_matrix = confusion_matrix[:-2, :-2]
+    binary_confusion_matrix = np.zeros((2, 2), dtype=np.uint64)
+    for zero_class_row in labels_0:
+        binary_confusion_matrix[0, 0] += confusion_matrix[
+            zero_class_row, zero_class_row]
+       binary_confusion_matrix[0, 1] += confusion_matrix[0, zero_class_row]
+    for one_class_row in labels_1:
+        binary_confusion_matrix[1, 1] += confusion_matrix[
+            one_class_row, one_class_row]
+        binary_confusion_matrix[1, 0] += confusion_matrix[1, zero_class_row]
 
 
 def format_element_to_matlab_confusion_matrix(row, col, confusion_matrix):
@@ -754,7 +803,9 @@ def plot_cm(confusion_matrix, labels, output_fig):
 @click.option('--iou_threshold', type=float, required=False, default=0.5, help='IOU threshold below which the bounding box is invalid')  # noqa
 @click.option('--confidence_threshold', type=float, required=False, default=0.5, help='Confidence score threshold below which bounding box detection is of low confidence and is ignored while considering true positives')  # noqa
 @click.option('--classes_json', required=True, help='path to a json file containing list of class label for the objects, labels are alphabetically sorted')  # noqa
+@click.option('--binary_classes', required=False, default="", help='path to a json file containing a dictionary with 2 keys and values as the classes that belongs to each of the 2 classes, ex:{"healthy": ["healthy"], "unhealthy": ["ring", "schizont", "troph"]}')  # noqa
 @click.option('--num_cpus', required=False, default=NUM_CPUS, type=int, help='number of cpus to run comparison between groundtruth and predicted to obtain matched classses')  # noqa
+@click.option('--keep_unmatched', type=bool, required=False, default=True, help='if true, keeps unmatched classes percentage in the confusion matrix plot')  # noqa
 def confusion_matrix(
         groundtruth_csv,
         predicted_csv,
@@ -763,8 +814,10 @@ def confusion_matrix(
         iou_threshold,
         confidence_threshold,
         classes_json,
+        binary_classes,
         num_cpus,
-        input_image_format):
+        input_image_format,
+        keep_unmatched):
     # Read class labels as a list
     with open(classes_json, "r") as f:
         class_labels = json.load(f)
@@ -777,7 +830,9 @@ def confusion_matrix(
         output_txt,
         output_fig,
         input_image_format,
-        num_cpus
+        num_cpus,
+        keep_unmatched,
+        binary_classes
     )
 
 

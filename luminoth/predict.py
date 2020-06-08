@@ -235,7 +235,7 @@ def write_xlsx(csv_path, spacing, class_labels_percentage):
                 rowy * spacing, i + 1,
                 temp_image,
                 {'x_scale': 0.3, 'y_scale': 0.3})
-            rowy += index
+            rowy += 1
 
     workbook.close()
 
