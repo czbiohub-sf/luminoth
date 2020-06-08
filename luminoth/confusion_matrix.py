@@ -612,10 +612,8 @@ def display(
             labels.remove("Unmatched")
         binary_confusion_matrix = binarize(
             confusion_matrix, labels, labels_0, labels_1)
-        print("Binary confusion matrix")
         binary_confusion_matrix[-1, -1] = np.sum(
             binary_confusion_matrix[-1, :])
-        print(binary_confusion_matrix)
         # Plot confusion matrix binary
         plot_cm(
             binary_confusion_matrix,
