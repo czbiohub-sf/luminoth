@@ -803,7 +803,7 @@ def plot_cm(confusion_matrix, labels, output_fig):
 @click.option('--iou_threshold', type=float, required=False, default=0.5, help='IOU threshold below which the bounding box is invalid')  # noqa
 @click.option('--confidence_threshold', type=float, required=False, default=0.5, help='Confidence score threshold below which bounding box detection is of low confidence and is ignored while considering true positives')  # noqa
 @click.option('--classes_json', required=True, help='path to a json file containing list of class label for the objects, labels are alphabetically sorted')  # noqa
-@click.option('--binary_classes', required=False, default="", help='path to a json file containing a dictionary with 2 keys and values as the classes that belongs to each of the 2 classes, ex:{"healthy": ["healthy"], "unhealthy": ["ring", "schizont", "troph"]}')  # noqa
+@click.option('--binary_classes', required=False, default="", help='path to a json file containing a dictionary with 2 keys and values as the classes that belongs to each of the 2 classes,ex:{0: [0],1: [1, 2, 3],"binary_labels": ["healthy", "unhealthy"]}')  # noqa
 @click.option('--num_cpus', required=False, default=NUM_CPUS, type=int, help='number of cpus to run comparison between groundtruth and predicted to obtain matched classses')  # noqa
 @click.option('--keep_unmatched', type=bool, required=False, default=True, help='if true, keeps unmatched classes percentage in the confusion matrix plot')  # noqa
 def confusion_matrix(

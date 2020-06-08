@@ -26,3 +26,8 @@ The ``lumi confusion_matrix`` CLI tool provides the following options related to
 * ``--input_image_format``: Format of images in image_id column in the csvs
 
 * ``--num_cpus``: Number of cpus to run comparison between groundtruth and predicted to obtain matched classses
+
+* ``--keep_unmatched``: If true, keeps unmatched classes percentage in the confusion matrix plot
+
+* ``--binary_classes``: path to a json file containing a dictionary with 2 keys and values as the classes that belongs to each of the 2 classes,ex:{0: [0],1: [1, 2, 3],"binary_labels": ["healthy", "unhealthy"]}
+
