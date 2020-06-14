@@ -17,7 +17,7 @@ if __name__ == "__main__":
     if "Titration_point" in image_path:
         titration_point = int(
             os.path.basename(image_path).split("Titration_point")[-1].split("_")[0]
-    elif "Titration_Point" in image_path:
+    else if "Titration_Point" in image_path:
        titration_point = int(
            os.path.basename(image_path).split("Titration_Point")[-1].split("_")[0])
     parasitemia_percentage = (len(filtered_df) / len(df)) * 100
