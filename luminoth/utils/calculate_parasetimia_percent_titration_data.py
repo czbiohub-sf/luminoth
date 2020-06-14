@@ -12,7 +12,7 @@ if __name__ == "__main__":
     filtered_df = df[df['label'].isin(parasite_classes)]
     parasitemia_percentages = {}
     for i in range(1, 6):
-        slice_total_df = df[df['image_id'].contains("sl{}".format(i))]
+        slice_total_df = df[df['image_id'].str.contains("sl{}".format(i))]
         slice_filtered_df = slice_total_df[
             slice_total_df['label'].isin(parasite_classes)]
         parasitemia_percentages["sl{}".format(i)] = (
