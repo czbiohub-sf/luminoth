@@ -13,6 +13,7 @@ if __name__ == "__main__":
     for index, row in df.iterrows():
         image_path = row["image_id"]
         break
+    print(image_path)
     titration_point = int(
         os.path.basename(image_path).split("Titration_point")[-1].split("_")[0])
     parasitemia_percentage = (len(filtered_df) / len(df)) * 100
