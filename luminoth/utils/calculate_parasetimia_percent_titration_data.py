@@ -9,5 +9,10 @@ if __name__ == "__main__":
     total_classes = len(df)
     parasite_classes = ["ring", "schizont", "troph"]
     filtered_df = df[df['label'].isin(parasite_classes)]
+    for index, row in df.rows():
+        image_path = row["image_id"]
+        break
+    titration_point = int(
+        image_path.split("Titration_point")[-1].split("_")[0])
     parasitemia_percentage = [len(filtered_df) / len(df)] + 100
-    print(parasitemia_percentage)
+    print(titration_point, parasitemia_percentage)
