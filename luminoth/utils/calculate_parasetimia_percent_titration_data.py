@@ -9,7 +9,7 @@ if __name__ == "__main__":
     total_classes = len(df)
     parasite_classes = ["ring", "schizont", "troph"]
     filtered_df = df[df['label'].isin(parasite_classes)]
-    for index, row in df.rows():
+    for index, row in df.iterrows():
         image_path = row["image_id"]
         break
     titration_point = int(
