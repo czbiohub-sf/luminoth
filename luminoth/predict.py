@@ -6,6 +6,7 @@ import cv2
 import skvideo.io
 import sys
 import time
+import tempfile
 import tensorflow as tf
 import xlsxwriter
 import json
@@ -85,7 +86,13 @@ def filter_probabilities(objects, min_prob=None, max_prob=None):
 def predict_image(network, path, only_classes=None, ignore_classes=None,
                   save_path=None, min_prob=None, max_prob=None):
     click.echo('Predicting {}...'.format(path), nl=False)
-
+    extension = os.path.split(".")[-1]
+    basename = os.path.basename(path)
+    if extension == "tif":
+        image = Image.open(path).convert('RGB')
+        tempname = basename.replace("." + extension, "." + "jpg")
+        path = os.path.join(tempfile.mkdtemp(prefix='lumi'), tempname)
+        image.save(path)
     # Open and read the image to predict.
     with tf.gfile.Open(path, 'rb') as f:
         try:
