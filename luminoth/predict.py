@@ -88,11 +88,15 @@ def predict_image(network, path, only_classes=None, ignore_classes=None,
     click.echo('Predicting {}...'.format(path), nl=False)
     extension = path.split(".")[-1]
     basename = os.path.basename(path)
+
+    # Write to only a png - as jpg creates all zeros uint16 data and conversion
+    # to rgb, pil and tiffle can't handle uin16 data conversiont to RGB as wekk
     if extension == "tif":
-        image = Image.open(path).convert('RGB')
-        tempname = basename.replace("." + extension, "." + "jpg")
+        image = Image.open(path)
+        image = cv2.cvtColor(np.array(image), cv2.COLOR_GRAY2BGR)
+        tempname = basename.replace("." + extension, "." + "png")
         path = os.path.join(tempfile.mkdtemp(prefix='lumi'), tempname)
-        image.save(path)
+        cv2.imwrite(image, path)
     # Open and read the image to predict.
     with tf.gfile.Open(path, 'rb') as f:
         try:
