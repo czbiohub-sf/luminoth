@@ -96,7 +96,7 @@ def predict_image(network, path, only_classes=None, ignore_classes=None,
         image = cv2.cvtColor(np.array(image), cv2.COLOR_GRAY2BGR)
         tempname = basename.replace("." + extension, "." + "png")
         path = os.path.join(tempfile.mkdtemp(prefix='lumi'), tempname)
-        cv2.imwrite(image, path)
+        cv2.imwrite(path, image)
     # Open and read the image to predict.
     with tf.gfile.Open(path, 'rb') as f:
         try:
