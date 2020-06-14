@@ -17,7 +17,7 @@ from luminoth.utils.predicting import PredictorNetwork
 from luminoth.utils.split_train_val import get_image_paths_per_class
 from luminoth.utils.vis import vis_objects
 
-IMAGE_FORMATS = ['jpg', 'jpeg', 'png']
+IMAGE_FORMATS = ['jpg', 'jpeg', 'png', 'tif']
 VIDEO_FORMATS = ['mov', 'mp4', 'avi']  # TODO: check if more formats work
 LUMI_CSV_COLUMNS = [
     'image_id', 'xmin', 'xmax', 'ymin', 'ymax', 'label', 'prob']
