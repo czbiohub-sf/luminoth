@@ -86,7 +86,7 @@ def filter_probabilities(objects, min_prob=None, max_prob=None):
 def predict_image(network, path, only_classes=None, ignore_classes=None,
                   save_path=None, min_prob=None, max_prob=None):
     click.echo('Predicting {}...'.format(path), nl=False)
-    extension = os.path.split(".")[-1]
+    extension = path.split(".")[-1]
     basename = os.path.basename(path)
     if extension == "tif":
         image = Image.open(path).convert('RGB')
