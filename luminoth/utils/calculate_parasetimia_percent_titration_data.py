@@ -4,6 +4,7 @@ import sys
 
 if __name__ == "__main__":
     input_file = sys.argv[1]
+    print(input_file)
     df = pd.read_csv(input_file)
     total_classes = len(df)
     parasite_classes = ["ring", "schizont", "troph"]
