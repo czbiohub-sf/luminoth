@@ -18,14 +18,16 @@ are stored in RBC Instances/405 nm 40x/sl1
 """
 # Constants
 HOME = os.path.expanduser("~")
-DATA_DIR = os.path.join(HOME, "Downloads", "Human Sorted")
+DATA_DIR = os.path.join(HOME, "Downloads", "human_sorted")
 CLASSES = ["healthy", "ring", "schizont", "troph"]
 
 LUMI_CSV_COLUMNS = ['imageId', 'HumanLabels']
 df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
 for label in CLASSES:
     images = natsort.natsorted(
-        glob.glob(os.path.join(DATA_DIR, label + "*.tif")))
+        glob.glob(os.path.join(DATA_DIR, label, "*.tif")))
+    print(os.path.join(DATA_DIR, label, "*.tif"))
+    print(len(images))
     for image in images:
         df = df.append({'imageId': image,
                         'HumanLabels': label},
@@ -64,7 +66,7 @@ image_count = 0
 # are in an image
 indices_seen = []
 
-
+print(len(df))
 while len(df) > 50:
     count = 0
     dicts = []
@@ -258,5 +260,6 @@ while len(df) > 50:
 # Note: Manually remove cells in csv file where an image has less than 20
 # contours per 512 512 image, this might be the last few rows from each time
 # running the above code, check for that
+print(len(output_random_df))
 output_random_df.to_csv(os.path.join(
     DATA_DIR, "random_mosaic/output_random_df_montage_1.csv"))
