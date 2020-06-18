@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import sys
 import os
@@ -44,22 +43,3 @@ if __name__ == "__main__":
     print(
         folder, titration_point, parasitemia_percentages,
         parasitemia_percentage)
-
-    output_df = pd.DataFrame(columns=LUMI_CSV_COLUMNS + ['slice', 'split'])
-    for index, row in df.iterrows():
-        image_path = row["image_id"]
-        split = os.path.basename(image_path).split("sl")
-        slice_no = int(split[1][0])
-        after_sl_ch_name = split[1].split('ch')[-1]
-        output_df = output_df.append(
-            {'image_id': row['image_id'],
-             'xmin': np.int64(row['xmin']),
-             'xmax': np.int64(row['xmax']),
-             'ymin': np.int64(row['ymin']),
-             'ymax': np.int64(row['ymax']),
-             'label': row['label'],
-             'slice': slice_no,
-             'split': after_sl_ch_name + "index_{}".format(index),
-             'prob': row['prob']}, ignore_index=True)
-
-    split_grouped_by = output_df.groupby(["split", "slice"]).prob.max()
