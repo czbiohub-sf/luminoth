@@ -18,7 +18,7 @@ are stored in RBC Instances/405 nm 40x/sl1
 """
 # Constants
 HOME = os.path.expanduser("~")
-DATA_DIR = os.path.join(HOME, "Downloads", "human_sorted")
+DATA_DIR = os.path.join("/data/uv_microscopy_data/", "human_sorted")
 CLASSES = ["healthy", "ring", "schizont", "troph"]
 
 LUMI_CSV_COLUMNS = ['imageId', 'HumanLabels']
