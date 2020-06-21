@@ -24,9 +24,9 @@ if __name__ == "__main__":
             parasitemia_percentages["sl{}_{}".format(i, j)] = (
                 len(slice_filtered_df) / len(slice_total_df)) * 100
             parasitemia_percentages["sl_num{}_{}".format(i, j)] = \
-                len(slice_total_df)
-            parasitemia_percentages["sl_den{}_{}".format(i, j)] = \
                 len(slice_filtered_df)
+            parasitemia_percentages["sl_den{}_{}".format(i, j)] = \
+                len(slice_total_df)
 
     for index, row in df.iterrows():
         image_path = row["image_id"]
