@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import ast
 from collections import defaultdict
+import numpy as np
 
 
 def dsum(dicts):
@@ -12,6 +13,8 @@ def dsum(dicts):
 
 
 x = [18] + [8.5 * 0.5**i for i in range(0, 10)]
+CONFIDENCE_THRESHOLDS = [0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95]
+
 
 # modify point 8 by combining the data
 # iterate through the text lines skip if starts with python3
@@ -46,7 +49,7 @@ for titration_point, dictionary in zip(titration_points, dictionaries):
 
 simplified_dictionary[8] = dsum(eights_dictionaries)
 simplified_dictionary[8]['sl1_0.5'] = \
-    (simplified_dictionary[8]['sl_num1_0.5'] / simplified_dictionary[8]['sl_den1_0.5']) / 100
+    (simplified_dictionary[8]['sl_num1_0.5'] / simplified_dictionary[8]['sl_den1_0.5']) * 100
 simplified_dictionary[8]['sl2_0.5'] = \
     (simplified_dictionary[8]['sl_num2_0.5'] / simplified_dictionary[8]['sl_den2_0.5']) * 100
 simplified_dictionary[8]['sl3_0.5'] = \
@@ -68,41 +71,32 @@ for titration_point, dictionary in simplified_dictionary.items():
             slice_4[titration_point] = value
         if "sl5_0.5" == key:
             slice_5[titration_point] = value
-colors = ['black', 'blue', 'blue', 'blue', 'blue', 'blue']
+labels = ['Y = X', 'Slice 1', 'Slice 2', 'Slice 3', 'Slice 4', 'Slice 5']
+colors = ['black', 'red', 'green', 'blue', 'cyan', 'yellow']
+plt.figure()
+plt.loglog(x, x, color=colors[0], label=labels[0])
+plt.loglog(x, slice_1, marker='o', color=colors[1], label=labels[1])
+plt.loglog(x, slice_2, marker='o', color=colors[2], label=labels[2])
+plt.loglog(x, slice_3, marker='o', color=colors[3], label=labels[3])
+plt.loglog(x, slice_4, marker='o', color=colors[4], label=labels[4])
+plt.loglog(x, slice_5, marker='o', color=colors[5], label=labels[5])
 
-plt.loglog(x, x, color=colors[0])
-plt.loglog(x, slice_1, marker='o', color=colors[1])
-plt.loglog(x, slice_2, marker='o', color=colors[2])
-plt.loglog(x, slice_3, marker='o', color=colors[3])
-plt.loglog(x, slice_4, marker='o', color=colors[4])
-plt.loglog(x, slice_5, marker='o', color=colors[5])
-
-
-plt.legend(
-    ['Y = X', 'Slice 1', 'Slice 2', 'Slice 3', 'Slice 4', 'Slice 5'],
-    loc='lower right')
-
+plt.legend(loc='lower right')
 plt.show()
-
-
-plt.gca().set_color_cycle(['black', 'blue', 'blue', 'blue', 'blue', 'blue'])
-plt.loglog(x, slice_3_confidence_point5)
-plt.loglog(x, slice_3_confidence_point55)
-plt.loglog(x, slice_3_confidence_point6)
-plt.loglog(x, slice_3_confidence_point65)
-plt.loglog(x, slice_3_confidence_point7)
-plt.loglog(x, slice_3_confidence_point75)
-plt.loglog(x, slice_3_confidence_point8)
-plt.loglog(x, slice_3_confidence_point85)
-plt.loglog(x, slice_3_confidence_point9)
-plt.loglog(x, slice_3_confidence_point95)
-
-
-
-
-
-plt.legend(
-    ['Y = X', 'Slice 1', 'Slice 2', 'Slice 3', 'Slice 4', 'Slice 5'],
-    loc='lower right')
-
+slice3_confidences = {confidence: [] for confidence in CONFIDENCE_THRESHOLDS}
+labels = []
+for confidence in CONFIDENCE_THRESHOLDS:
+    for titration_point, dictionary in sorted(simplified_dictionary.items()):
+        for key, value in dictionary.items():
+            if titration_point == 8:
+                value = (simplified_dictionary[8]['sl_num3_{}'.format(confidence)] / simplified_dictionary[8]['sl_den3_{}'.format(confidence)]) * 100
+            if 'sl3_{}'.format(confidence) == key:
+                slice3_confidences[confidence].append(value)
+    labels.append("Confidence threshold {} %".format(confidence))
+n = len(labels)
+plt.figure()
+colors = plt.cm.jet(np.linspace(0, 1, n))
+for i in range(n):
+    plt.loglog(x, slice3_confidences[CONFIDENCE_THRESHOLDS[i]], marker='o', label=labels[i])
+plt.legend(loc='upper left')
 plt.show()
