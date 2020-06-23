@@ -106,19 +106,6 @@ class PredictorNetwork(object):
             if config.train.debug:
                 self.fetches['_debug'] = pred_dict
 
-    def bbs_pixel_apart(self, obj, objects):
-        repeated_indices = []
-        for index, each_obj in enumerate(objects):
-            set_index_flags = 0
-            unique_differences = \
-                np.unique(np.fabs(np.subtract(each_obj, obj))).tolist()
-            for i in unique_differences:
-                if i <= 50:
-                    set_index_flags += 1
-            if set_index_flags == len(unique_differences):
-                repeated_indices.append(index)
-        return repeated_indices
-
     def predict_image(self, image):
         fetched = self.session.run(self.fetches, feed_dict={
             self.image_placeholder: np.array(image)
@@ -150,54 +137,12 @@ class PredictorNetwork(object):
             for obj in objects.tolist()
         ]
 
-        # Save a prediction by suppressing the class with
-        # lowest probability for the same bounding box
-        predictions = [None] * len(objects)
-        assert len(objects) == len(labels) == len(probs)
-        count = 0
-        for obj, label, prob in zip(objects, labels, probs):
-            repeated_indices = self.bbs_pixel_apart(obj, objects)
-            if len(repeated_indices) > 0:
-                repeated_probs = [probs[i] for i in repeated_indices]
-                repeated_probs.append(prob)
-                repeated_indices.append(count)
-                max_prob = max(repeated_probs)
-                assert len(repeated_probs) == len(repeated_indices)
-                prob_index = [
-                    index for index, prob in zip(
-                        repeated_indices, repeated_probs)
-                    if prob == max_prob][0]
-                d = {
-                    'bbox': objects[prob_index],
-                    'label': labels[prob_index],
-                    'prob': round(max_prob, 4)}
-                predictions[prob_index] = d
-            else:
-                if objects.count(obj) == 1:
-                    d = {
-                        'bbox': obj,
-                        'label': label,
-                        'prob': round(prob, 4)}
-                    predictions[count] = d
-                elif objects.count(obj) > 1:
-                    prob_repeated_objs = [
-                        [i, probs[i]] for i, value in enumerate(objects)
-                        if value == obj]
-                    repeated_indices = [i for (i, _) in prob_repeated_objs]
-                    repeated_probs = [j for (_, j) in prob_repeated_objs]
-                    max_prob = max(repeated_probs)
-                    prob_index = [
-                        index for index, prob in zip(
-                            repeated_indices, repeated_probs)
-                        if prob == max_prob][0]
-                    d = {
-                        'bbox': obj,
-                        'label': labels[prob_index],
-                        'prob': round(max_prob, 4)}
-                    predictions[prob_index] = d
-            count += 1
-        predictions = list(filter(None, predictions))
-        predictions = sorted(
-            predictions, key=lambda x: x['prob'], reverse=True)
+        predictions = sorted([
+            {
+                'bbox': obj,
+                'label': label,
+                'prob': round(prob, 4),
+            } for obj, label, prob in zip(objects, labels, probs)
+        ], key=lambda x: x['prob'], reverse=True)
 
         return predictions

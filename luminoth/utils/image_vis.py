@@ -1168,7 +1168,7 @@ def recalculate_objects(pred_dict, image):
     return bboxes, proposals_target
 
 
-def draw_object_prediction(pred_dict, image, topn=50):
+def draw_object_prediction(pred_dict, image):
     logger.debug('Display top scored objects with label.')
     objects = pred_dict['classification_prediction']['objects']
     objects_labels = pred_dict['classification_prediction']['labels']
