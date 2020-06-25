@@ -33,6 +33,13 @@ for label in CLASSES:
                         'HumanLabels': label},
                        ignore_index=True)
 
+# Remove 47000 healthy rows - Specific observation for the groundtruth
+# data in excel sheet above to correct for class imbalancing
+count = 0
+for index, row in df.iterrows():
+    if row["HumanLabels"] == "healthy" and count < 47000:
+        df = df.drop([index])
+        count += 1
 # Randomize rows to not pick two similar labeled cells or same dataset cells
 df = df.sample(frac=1).reset_index(drop=True)
 
@@ -78,7 +85,7 @@ while len(df) > 50:
         # save the image one with tiles randomly placed,
         # doesn't create the directory if it doesn't exist
         saved_random_image_path = os.path.join(
-            DATA_DIR, "random_mosaic", "{}.tif".format(image_count))
+            DATA_DIR, "random_mosaic_1", "{}.tif".format(image_count))
         # First image, create arrays to place the randomized cells and a mask
         # to set the already occupied cell locations to 255
         if count == 0:
@@ -166,7 +173,7 @@ while len(df) > 50:
                             'label': row["HumanLabels"]})
                     indices_seen.append(index)
             count += 1
-        elif count < len(indices):
+        elif count < 600:
             # Repeat above for other indices at count greater than zero
             x, y = indices[count]
             image[image == 255] = BACKGROUND_COLOR
@@ -237,7 +244,7 @@ while len(df) > 50:
                     indices_seen.append(index)
 
             count += 1
-        else:
+        elif count >= 450 or index == len(df):
             # Reset count, increment image count, save image
             count = 0
             cv2.imwrite(saved_random_image_path, random_mosaiced_im)
@@ -262,4 +269,4 @@ while len(df) > 50:
 # running the above code, check for that
 print(len(output_random_df))
 output_random_df.to_csv(os.path.join(
-    DATA_DIR, "random_mosaic/output_random_df_montage_1.csv"))
+    DATA_DIR, "random_mosaic_1/output_random_df_montage_2.csv"))

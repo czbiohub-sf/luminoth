@@ -60,6 +60,7 @@ class RPN(snt.AbstractModule):
         loss_config = config.loss
         if loss_config.type == CROSS_ENTROPY:
             self.loss_type = CROSS_ENTROPY
+            self.loss_weight = loss_config.weight
         elif loss_config.type == FOCAL:
             self.loss_type = FOCAL
             self.focal_gamma = loss_config.get('focal_gamma')
@@ -274,6 +275,9 @@ class RPN(snt.AbstractModule):
                 ce_per_anchor = \
                     tf.nn.softmax_cross_entropy_with_logits_v2(
                         labels=cls_target, logits=cls_score)
+                if self.loss_weight != 1:
+                    ce_per_anchor = \
+                        ce_per_anchor * self.loss_weight
             elif self.loss_type == FOCAL:
                 ce_per_anchor = focal_loss(
                     cls_score, cls_target, self.focal_gamma)

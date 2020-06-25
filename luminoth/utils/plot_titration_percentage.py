@@ -92,7 +92,7 @@ for confidence in CONFIDENCE_THRESHOLDS:
                 value = (simplified_dictionary[8]['sl_num3_{}'.format(confidence)] / simplified_dictionary[8]['sl_den3_{}'.format(confidence)]) * 100
             if 'sl3_{}'.format(confidence) == key:
                 slice3_confidences[confidence].append(value)
-    labels.append("Confidence threshold {} %".format(confidence))
+    labels.append("Confidence threshold {} %".format(int(confidence * 100)))
 n = len(labels)
 plt.figure()
 colors = plt.cm.jet(np.linspace(0, 1, n))

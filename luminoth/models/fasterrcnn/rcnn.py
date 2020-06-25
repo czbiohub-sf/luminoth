@@ -63,6 +63,7 @@ class RCNN(snt.AbstractModule):
         loss_config = config.loss
         if loss_config.type == CROSS_ENTROPY:
             self.loss_type = CROSS_ENTROPY
+            self.loss_weight = loss_config.weight
         elif loss_config.type == FOCAL:
             self.loss_type = FOCAL
             self.focal_gamma = loss_config.get('focal_gamma')
@@ -340,6 +341,9 @@ class RCNN(snt.AbstractModule):
                         logits=cls_score_labeled
                     )
                 )
+                if self.loss_weight != 1:
+                    cross_entropy_per_proposal = \
+                        cross_entropy_per_proposal * self.loss_weight
             elif self.loss_type == FOCAL:
 
                 cross_entropy_per_proposal = focal_loss(

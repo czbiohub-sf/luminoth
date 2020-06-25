@@ -6,7 +6,7 @@ import pandas as pd
 import random
 
 """
-This program is used to preprocess the 2048 x 2048 leica commerical microscope
+This program is used to preprocess the 20g8 x 2048 leica commerical microscope
 images, each image consisting of about 9000 cells. The human annotated data is
 for only random subset of the cells on each image. The dataset folder
 CrossTrain-2019-12-02-15-17-48 consists of two folders SCP-2019-10-24 Malaria,

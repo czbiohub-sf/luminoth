@@ -205,6 +205,8 @@ model:
     loss:
       _replace: True
       type: cross_entropy
+      # The weights are usually inversely proportional to the occurrence frequency of each class.
+      weight: 1
     # loss:
     #   _replace: True
     #   type: focal
@@ -274,6 +276,8 @@ model:
     loss:
       _replace: True
       type: cross_entropy
+      # The weights are usually inversely proportional to the occurrence frequency of each class.
+      weight: 1
     # loss:
     #   _replace: True
     #   type: focal
