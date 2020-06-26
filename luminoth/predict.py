@@ -473,26 +473,26 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
             new_labels=new_labels
         )
 
-    if new_labels is not None:
-        with open(new_labels, "r") as f:
-            new_labels = json.load(f)
-    # TODO: Not writing csv for video files for now.
-    unique_classes = []
-    if objects is not None and file_type == 'image':
-        for obj in objects:
-            if new_labels is not None:
-                label_name = get_key(new_labels, obj['label'])
-            else:
-                label_name = obj['label']
-            unique_classes.append(label_name)
-            df = df.append({'image_id': file,
-                            'xmin': obj['bbox'][0],
-                            'xmax': obj['bbox'][2],
-                            'ymin': obj['bbox'][1],
-                            'ymax': obj['bbox'][3],
-                            'label': label_name,
-                            'prob': obj["prob"]},
-                           ignore_index=True)
+        if new_labels is not None:
+            with open(new_labels, "r") as f:
+                new_labels = json.load(f)
+        # TODO: Not writing csv for video files for now.
+        unique_classes = []
+        if objects is not None and file_type == 'image':
+            for obj in objects:
+                if new_labels is not None:
+                    label_name = get_key(new_labels, obj['label'])
+                else:
+                    label_name = obj['label']
+                unique_classes.append(label_name)
+                df = df.append({'image_id': file,
+                                'xmin': obj['bbox'][0],
+                                'xmax': obj['bbox'][2],
+                                'ymin': obj['bbox'][1],
+                                'ymax': obj['bbox'][3],
+                                'label': label_name,
+                                'prob': obj["prob"]},
+                               ignore_index=True)
 
     get_image_paths_per_class(df)
     # Build the `Formatter` based on the outputs, which automatically writes
