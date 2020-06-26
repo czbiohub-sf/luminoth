@@ -100,9 +100,9 @@ def bbs_pixel_apart(obj, objects, pixel_distance):
 def filter_close_bbs(predictions, pixel_distance):
     # Save a prediction by suppressing the class with
     # lowest probability for the same bounding box
-    objects = predictions["bbox"]
-    labels = predictions["label"]
-    probs = predictions["prob"]
+    objects = [prediction["bbox"] for prediction in predictions]
+    labels = [prediction["label"] for prediction in predictions]
+    probs = [prediction["prob"] for prediction in predictions]
 
     predictions = [None] * len(objects)
     assert len(objects) == len(labels) == len(probs)
@@ -158,10 +158,10 @@ def filter_close_bbs(predictions, pixel_distance):
 def rename_labels(predictions, new_labels):
     with open(new_labels, "r") as f:
         new_labels = json.load(f)
-    objects = predictions["bbox"]
-    labels = predictions["label"]
+    objects = [prediction["bbox"] for prediction in predictions]
+    labels = [prediction["label"] for prediction in predictions]
     new_labels = [new_labels[label] for label in labels]
-    probs = predictions["prob"]
+    probs = [prediction["prob"] for prediction in predictions]
     predictions = [None] * len(objects)
     predictions = sorted([
         {
