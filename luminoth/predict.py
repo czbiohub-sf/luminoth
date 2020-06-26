@@ -351,6 +351,12 @@ def write_xlsx(csv_path, spacing, class_labels_percentage):
     workbook.close()
 
 
+def get_key(new_labels, val):
+    for key, value in new_labels.items():
+        if val == value:
+            return key
+
+
 @click.command(help="Obtain a model's predictions.")
 @click.argument('path-or-dir', nargs=-1)
 @click.option('config_files', '--config', '-c', multiple=True, help='Config to use.')  # noqa
@@ -467,11 +473,17 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
             new_labels=new_labels
         )
 
+    if new_labels is not None:
+        with open(new_labels, "r") as f:
+            new_labels = json.load(f)
         # TODO: Not writing csv for video files for now.
         unique_classes = []
         if objects is not None and file_type == 'image':
             for obj in objects:
-                label_name = obj['label']
+                if new_labels is not None:
+                    label_name = get_key(new_labels, obj['label'])
+                else:
+                    label_name = obj['label']
                 unique_classes.append(label_name)
                 df = df.append({'image_id': file,
                                 'xmin': obj['bbox'][0],
