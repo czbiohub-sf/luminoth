@@ -156,8 +156,6 @@ def filter_close_bbs(predictions, pixel_distance):
 
 
 def rename_labels(predictions, new_labels):
-    with open(new_labels, "r") as f:
-        new_labels = json.load(f)
     objects = [prediction["bbox"] for prediction in predictions]
     labels = [prediction["label"] for prediction in predictions]
     new_labels = [new_labels[label] for label in labels]
@@ -215,7 +213,8 @@ def predict_image(network, path, only_classes=None, ignore_classes=None,
 
     objects = filter_close_bbs(objects, pixel_distance)
 
-    objects = rename_labels(objects, new_labels)
+    if new_labels is not None:
+        objects = rename_labels(objects, new_labels)
 
     # Save predicted image.
     if save_path:
@@ -394,6 +393,10 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
     if classes_json is not None:
         with open(classes_json, "r") as f:
             class_labels_percentage = json.load(f)
+
+    if new_labels is not None:
+        with open(new_labels, "r") as f:
+            new_labels = json.load(f)
     if debug:
         tf.logging.set_verbosity(tf.logging.DEBUG)
     else:
@@ -454,9 +457,6 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
     # Iterate over files and run the model on each.
     df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
 
-    if new_labels is not None:
-        with open(new_labels, "r") as f:
-            new_labels = json.load(f)
     for file in files:
         # Get the media output path, if media storage is requested.
         save_path = os.path.join(
