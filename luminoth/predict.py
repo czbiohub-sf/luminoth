@@ -453,6 +453,10 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
     network = PredictorNetwork(config)
     # Iterate over files and run the model on each.
     df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
+
+    if new_labels is not None:
+        with open(new_labels, "r") as f:
+            new_labels = json.load(f)
     for file in files:
         # Get the media output path, if media storage is requested.
         save_path = os.path.join(
@@ -473,9 +477,6 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
             new_labels=new_labels
         )
 
-        if new_labels is not None:
-            with open(new_labels, "r") as f:
-                new_labels = json.load(f)
         # TODO: Not writing csv for video files for now.
         unique_classes = []
         if objects is not None and file_type == 'image':
