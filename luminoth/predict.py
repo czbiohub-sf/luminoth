@@ -366,8 +366,8 @@ def write_xlsx(csv_path, spacing, class_labels_percentage):
 @click.option('--debug', is_flag=True, help='Set debug level logging.')
 @click.option('--xlsx-spacing', default=2, type=int, help='When inserting images in xlsx, space between rows')  # noqa
 @click.option('--classes-json', required=False, help='path to a json file containing dictionary of class labels as keys and the float between 0 to 1 representing fraction of the rows/objects for the class to be saved in the xlsx as values')  # noqa
-@click.option('--pixel-distance', required=False, help='If 2 bounding boxes are pixel-distance apart, then keep the one with highest confidence/probability and remove the other')  # noqa
-@click.option('--new-labels', required=False, help='path to a json file containing dictionary of class labels as keys and the new label to replace with as value')  # noqa
+@click.option('--pixel-distance', type=int, required=False, help='If 2 bounding boxes are pixel-distance apart, then keep the one with highest confidence/probability and remove the other')  # noqa
+@click.option('--new-labels', type=str, required=False, help='path to a json file containing dictionary of class labels as keys and the new label to replace with as value')  # noqa
 def predict(path_or_dir, config_files, checkpoint, override_params,
             output_path, save_media_to, min_prob, max_prob,
             max_detections, only_class,
