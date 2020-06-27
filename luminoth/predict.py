@@ -371,7 +371,7 @@ def get_key(new_labels, val):
 @click.option('--debug', is_flag=True, help='Set debug level logging.')
 @click.option('--xlsx-spacing', default=2, type=int, help='When inserting images in xlsx, space between rows')  # noqa
 @click.option('--classes-json', required=False, help='path to a json file containing dictionary of class labels as keys and the float between 0 to 1 representing fraction of the rows/objects for the class to be saved in the xlsx as values')  # noqa
-@click.option('--pixel-distance', type=int, required=False, help='If 2 bounding boxes are pixel-distance apart, then keep the one with highest confidence/probability and remove the other')  # noqa
+@click.option('--pixel-distance', default=0, type=int, required=False, help='If 2 bounding boxes are pixel-distance apart, then keep the one with highest confidence/probability and remove the other')  # noqa
 @click.option('--new-labels', type=str, required=False, help='path to a json file containing dictionary of class labels as keys and the new label to replace with as value')  # noqa
 def predict(path_or_dir, config_files, checkpoint, override_params,
             output_path, save_media_to, min_prob, max_prob,
