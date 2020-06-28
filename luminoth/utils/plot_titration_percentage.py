@@ -83,20 +83,20 @@ plt.loglog(x, slice_5, marker='o', color=colors[5], label=labels[5])
 
 plt.legend(loc='lower right')
 plt.show()
-slice3_confidences = {confidence: [] for confidence in CONFIDENCE_THRESHOLDS}
+slice_confidences = {confidence: [] for confidence in CONFIDENCE_THRESHOLDS}
 labels = []
 for confidence in CONFIDENCE_THRESHOLDS:
     for titration_point, dictionary in sorted(simplified_dictionary.items()):
         for key, value in dictionary.items():
             if titration_point == 8:
                 value = (simplified_dictionary[8]['sl_num3_{}'.format(confidence)] / simplified_dictionary[8]['sl_den3_{}'.format(confidence)]) * 100
-            if 'sl3_{}'.format(confidence) == key:
-                slice3_confidences[confidence].append(value)
+            if confidence in key:
+                slice_confidences[confidence].append(value)
     labels.append("Confidence threshold {} %".format(int(confidence * 100)))
 n = len(labels)
 plt.figure()
 colors = plt.cm.jet(np.linspace(0, 1, n))
 for i in range(n):
-    plt.loglog(x, slice3_confidences[CONFIDENCE_THRESHOLDS[i]], marker='o', label=labels[i])
+    plt.loglog(x, slice_confidences[CONFIDENCE_THRESHOLDS[i]], marker='o', label=labels[i])
 plt.legend(loc='upper left')
 plt.show()
