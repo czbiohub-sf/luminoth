@@ -11,7 +11,9 @@ if __name__ == "__main__":
     titration_folder = sys.argv[1]
     output_csv = sys.argv[2]
     dicts = []
-    for input_folder in [x[0] for x in os.walk(titration_folder)]:
+    folders = [
+        x[0] for x in os.walk(titration_folder) if x[0].endswith(os.sep)]
+    for input_folder in folders:
         input_file = os.path.join(input_folder, "preds.csv")
         folder = os.path.dirname(input_file).split(os.sep)[-1]
         df = pd.read_csv(input_file)
