@@ -1,15 +1,6 @@
 import matplotlib.pyplot as plt
 import ast
-from collections import defaultdict
 import numpy as np
-
-
-def dsum(dicts):
-    ret = defaultdict(float)
-    for d in dicts:
-        for k, v in d.items():
-            ret[k] += v
-    return dict(ret)
 
 
 x = [18] + [8.5 * 0.5**i for i in range(0, 10)]
@@ -39,25 +30,8 @@ slice_4 = [0] * 11
 slice_5 = [0] * 11
 
 simplified_dictionary = {}
-eights_dictionaries = []
 for titration_point, dictionary in zip(titration_points, dictionaries):
-    if titration_point == 8:
-        # accumulate the values per slice percentages
-        eights_dictionaries.append(dictionary)
-    else:
-        simplified_dictionary[titration_point] = dictionary
-
-simplified_dictionary[8] = dsum(eights_dictionaries)
-simplified_dictionary[8]['sl1_0.5'] = \
-    (simplified_dictionary[8]['sl_num1_0.5'] / simplified_dictionary[8]['sl_den1_0.5']) * 100
-simplified_dictionary[8]['sl2_0.5'] = \
-    (simplified_dictionary[8]['sl_num2_0.5'] / simplified_dictionary[8]['sl_den2_0.5']) * 100
-simplified_dictionary[8]['sl3_0.5'] = \
-    (simplified_dictionary[8]['sl_num3_0.5'] / simplified_dictionary[8]['sl_den3_0.5']) * 100
-simplified_dictionary[8]['sl4_0.5'] = \
-    (simplified_dictionary[8]['sl_num4_0.5'] / simplified_dictionary[8]['sl_den4_0.5']) * 100
-simplified_dictionary[8]['sl5_0.5'] = \
-    (simplified_dictionary[8]['sl_num5_0.5'] / simplified_dictionary[8]['sl_den5_0.5']) * 100
+    simplified_dictionary[titration_point] = dictionary
 
 for titration_point, dictionary in simplified_dictionary.items():
     for key, value in dictionary.items():
@@ -88,8 +62,6 @@ labels = []
 for confidence in CONFIDENCE_THRESHOLDS:
     for titration_point, dictionary in sorted(simplified_dictionary.items()):
         for key, value in dictionary.items():
-            if titration_point == 8:
-                value = (simplified_dictionary[8]['sl_num3_{}'.format(confidence)] / simplified_dictionary[8]['sl_den3_{}'.format(confidence)]) * 100
             if confidence in key:
                 slice_confidences[confidence].append(value)
     labels.append("Confidence threshold {} %".format(int(confidence * 100)))
@@ -97,6 +69,8 @@ n = len(labels)
 plt.figure()
 colors = plt.cm.jet(np.linspace(0, 1, n))
 for i in range(n):
-    plt.loglog(x, slice_confidences[CONFIDENCE_THRESHOLDS[i]], marker='o', label=labels[i])
+    plt.loglog(
+        x, slice_confidences[CONFIDENCE_THRESHOLDS[i]],
+        marker='o', label=labels[i])
 plt.legend(loc='upper left')
 plt.show()

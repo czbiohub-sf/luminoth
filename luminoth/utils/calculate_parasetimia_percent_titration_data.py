@@ -33,28 +33,28 @@ if __name__ == "__main__":
                 parasitemia_percentages["sl_den{}_{}".format(i, j)] = \
                     len(slice_total_df)
 
-            for index, row in df.iterrows():
-                image_path = row["image_id"]
-                break
-            base_path = os.path.basename(image_path)
-            if "point" in base_path.lower():
-                titration_point = int(
-                    os.path.basename(
-                        image_path).split("Titration_point")[-1].split("_")[0])
-            parasitemia_percentage = (len(filtered_df) / len(df)) * 100
-            parasitemia_percentages["total_cells"] = len(df)
-            parasitemia_percentages["total_parasites"] = len(filtered_df)
-            parasitemia_percentages["Healthy"] = len(
-                df[df['label'].isin(["healthy"])])
-            for parasite in parasite_classes:
-                parasitemia_percentages[parasite] = \
-                    len(df[df['label'].isin([parasite])])
-            parasitemia_percentages["parasitemia_percentage"] = \
-                parasitemia_percentage
-            dicts.append(parasitemia_percentages)
-        result_df = pd.DataFrame.from_dict(parasitemia_percentages)
-
-        result_df.to_csv(output_csv)
+        for index, row in df.iterrows():
+            image_path = row["image_id"]
+            break
+        base_path = os.path.basename(image_path)
+        if "point" in base_path.lower():
+            titration_point = int(
+                os.path.basename(
+                    image_path).split("Titration_point")[-1].split("_")[0])
+        parasitemia_percentage = (len(filtered_df) / len(df)) * 100
+        parasitemia_percentages["total_cells"] = len(df)
+        parasitemia_percentages["total_parasites"] = len(filtered_df)
+        parasitemia_percentages["healthy"] = len(
+            df[df['label'].isin(["healthy"])])
+        for parasite in parasite_classes:
+            parasitemia_percentages[parasite] = \
+                len(df[df['label'].isin([parasite])])
+        parasitemia_percentages["parasitemia_percentage"] = \
+            parasitemia_percentage
+        dicts.append(parasitemia_percentages)
         print(
             folder, titration_point, parasitemia_percentages,
             parasitemia_percentage)
+        result_df = pd.DataFrame.from_dict(parasitemia_percentages)
+
+        result_df.to_csv(output_csv)
