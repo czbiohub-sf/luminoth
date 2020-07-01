@@ -31,7 +31,7 @@ if __name__ == "__main__":
     titration_points = [int(line.split(" ")[1]) for line in lines]
     dictionaries = [
         ast.literal_eval("{" + line.split("{")[1].split("}")[0] + "}")
-        for line in lines if line.contains("2020-06-20")]
+        for line in lines if "2020-06-20" in line]
 
     slice_1 = [0] * 11
     slice_2 = [0] * 11
