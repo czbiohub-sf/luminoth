@@ -63,7 +63,10 @@ class RCNN(snt.AbstractModule):
         loss_config = config.loss
         if loss_config.type == CROSS_ENTROPY:
             self.loss_type = CROSS_ENTROPY
-            self.loss_weight = loss_config.weight
+            if "weight" not in loss_config:
+                self.loss_weight = 1
+            else:
+                self.loss_weight = loss_config.weight
         elif loss_config.type == FOCAL:
             self.loss_type = FOCAL
             self.focal_gamma = loss_config.get('focal_gamma')
