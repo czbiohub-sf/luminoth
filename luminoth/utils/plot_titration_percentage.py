@@ -70,8 +70,7 @@ if __name__ == "__main__":
                 num += dictionary["sl_num{}_{}".format(i, confidence)]
                 den += dictionary["sl_den{}_{}".format(i, confidence)]
             if str(confidence) and ("sl_num" or "sl_den") in key:
-                slice_confidences[confidence].insert(
-                    titration_point, num / den)
+                slice_confidences[confidence][titration_point] = num / den
         labels.append("Confidence threshold {} %".format(int(
             confidence * 100)))
     n = len(labels)
