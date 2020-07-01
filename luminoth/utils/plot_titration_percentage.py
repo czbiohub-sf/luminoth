@@ -33,11 +33,11 @@ if __name__ == "__main__":
         ast.literal_eval("{" + line.split("{")[1].split("}")[0] + "}")
         for line in lines if "2020-06-20" in line]
 
-    slice_1 = [0] * 11
-    slice_2 = [0] * 11
-    slice_3 = [0] * 11
-    slice_4 = [0] * 11
-    slice_5 = [0] * 11
+    slice_1 = [0] * 10
+    slice_2 = [0] * 10
+    slice_3 = [0] * 10
+    slice_4 = [0] * 10
+    slice_5 = [0] * 10
 
     simplified_dictionary = {}
     for titration_point, dictionary in zip(titration_points, dictionaries):
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     maximize_figure()
     plt.show()
     slice_confidences = {
-        confidence: [0] * 11 for confidence in CONFIDENCE_THRESHOLDS}
+        confidence: [0] * 10 for confidence in CONFIDENCE_THRESHOLDS}
     labels = []
     for confidence in CONFIDENCE_THRESHOLDS:
         for titration_point, dictionary in zip(titration_points, dictionaries):
