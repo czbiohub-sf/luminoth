@@ -347,6 +347,7 @@ class RCNN(snt.AbstractModule):
                         labels=onehot_labels,
                         logits=cls_score_labeled)
                 if class_weights != 1:
+                    class_weights = tf.constant([class_weights])
                     weights = tf.reduce_sum(
                         class_weights * onehot_labels, axis=1)
                     # apply the weights, relying on broadcasting
