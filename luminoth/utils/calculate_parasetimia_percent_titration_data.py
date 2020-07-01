@@ -41,6 +41,8 @@ if __name__ == "__main__":
         if "point" in base_path:
             titration_point = int(base_path.split("point")[-1].split("_")[0])
         parasitemia_percentage = (len(filtered_df) / len(df)) * 100
+        parasitemia_percentages["input_folder"] = input_folder
+        parasitemia_percentages["titration_point"] = titration_point
         parasitemia_percentages["total_cells"] = len(df)
         parasitemia_percentages["total_parasites"] = len(filtered_df)
         parasitemia_percentages["healthy"] = len(
@@ -54,6 +56,7 @@ if __name__ == "__main__":
         print(
             folder, titration_point, parasitemia_percentages,
             parasitemia_percentage)
+    print(len(dicts))
     result_df = pd.DataFrame.from_dict(dicts)
 
     result_df.to_csv(output_csv)
