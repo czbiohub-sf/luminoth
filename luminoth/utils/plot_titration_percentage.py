@@ -60,7 +60,7 @@ if __name__ == "__main__":
     plt.legend(loc='lower right')
     plt.show()
     slice_confidences = {
-        confidence: [] for confidence in CONFIDENCE_THRESHOLDS}
+        confidence: [0] * 11 for confidence in CONFIDENCE_THRESHOLDS}
     labels = []
     for confidence in CONFIDENCE_THRESHOLDS:
         for titration_point, dictionary in zip(titration_points, dictionaries):
