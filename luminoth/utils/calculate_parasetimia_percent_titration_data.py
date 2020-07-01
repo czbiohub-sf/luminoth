@@ -11,8 +11,7 @@ if __name__ == "__main__":
     titration_folder = sys.argv[1]
     output_csv = sys.argv[2]
     dicts = []
-    folders = [
-        x[0] for x in os.walk(titration_folder) if x[0].endswith(os.sep)]
+    folders = [f.path for f in os.scandir(titration_folder) if f.is_dir()]
     for input_folder in folders:
         input_file = os.path.join(input_folder, "preds.csv")
         folder = os.path.dirname(input_file).split(os.sep)[-1]
@@ -38,11 +37,10 @@ if __name__ == "__main__":
         for index, row in df.iterrows():
             image_path = row["image_id"]
             break
-        base_path = os.path.basename(image_path)
-        if "point" in base_path.lower():
-            titration_point = int(
-                os.path.basename(
-                    image_path).split("Titration_point")[-1].split("_")[0])
+        base_path = os.path.basename(image_path).lower()
+        print(base_path)
+        if "point" in base_path:
+            titration_point = int(base_path.split("point")[-1].split("_")[0])
         parasitemia_percentage = (len(filtered_df) / len(df)) * 100
         parasitemia_percentages["total_cells"] = len(df)
         parasitemia_percentages["total_parasites"] = len(filtered_df)
@@ -57,6 +55,6 @@ if __name__ == "__main__":
         print(
             folder, titration_point, parasitemia_percentages,
             parasitemia_percentage)
-        result_df = pd.DataFrame.from_dict(parasitemia_percentages)
+    result_df = pd.DataFrame.from_dict(parasitemia_percentages)
 
-        result_df.to_csv(output_csv)
+    result_df.to_csv(output_csv)
