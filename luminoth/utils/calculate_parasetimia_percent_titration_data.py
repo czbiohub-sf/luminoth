@@ -56,7 +56,6 @@ if __name__ == "__main__":
         print(
             folder, titration_point, parasitemia_percentages,
             parasitemia_percentage)
-    print(len(dicts))
     result_df = pd.DataFrame.from_dict(dicts)
 
     result_df.to_csv(output_csv)
