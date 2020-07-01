@@ -63,11 +63,15 @@ if __name__ == "__main__":
         confidence: [] for confidence in CONFIDENCE_THRESHOLDS}
     labels = []
     for confidence in CONFIDENCE_THRESHOLDS:
-        for titration_point, dictionary in sorted(
-                simplified_dictionary.items()):
-            for key, value in dictionary.items():
-                if confidence in key:
-                    slice_confidences[confidence].append(value)
+        for titration_point, dictionary in zip(titration_points, dictionaries):
+            num = 0
+            den = 0
+            for i in range(1, 6):
+                num += dictionary["sl_num{}_{}".format(i, confidence)]
+                den += dictionary["sl_den{}_{}".format(i, confidence)]
+            if str(confidence) and ("sl_num" or "sl_den") in key:
+                slice_confidences[confidence].insert(
+                    titration_point, num / den)
         labels.append("Confidence threshold {} %".format(int(
             confidence * 100)))
     n = len(labels)
