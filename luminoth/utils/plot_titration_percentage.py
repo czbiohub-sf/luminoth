@@ -2,10 +2,17 @@ import matplotlib.pyplot as plt
 import ast
 import sys
 import numpy as np
+import os
 
 
 x = [18] + [8.5 * 0.5**i for i in range(0, 10)]
 CONFIDENCE_THRESHOLDS = [0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95]
+
+
+def maximize_figure():
+    figure_manager = plt.get_current_fig_manager()
+    # From https://stackoverflow.com/a/51731824/1628971
+    figure_manager.full_screen_toggle()
 
 
 # modify point 8 by combining the data
@@ -18,6 +25,7 @@ CONFIDENCE_THRESHOLDS = [0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95]
 
 if __name__ == "__main__":
     f = open(sys.argv[1])
+    output_folder = sys.argv[2]
     lines = f.readlines()
     lines = [line for line in lines if not line.startswith("python")]
     titration_points = [int(line.split(" ")[1]) for line in lines]
@@ -58,6 +66,7 @@ if __name__ == "__main__":
     plt.loglog(x, slice_5, marker='o', color=colors[5], label=labels[5])
 
     plt.legend(loc='lower right')
+    maximize_figure()
     plt.show()
     slice_confidences = {
         confidence: [0] * 11 for confidence in CONFIDENCE_THRESHOLDS}
@@ -81,4 +90,10 @@ if __name__ == "__main__":
             x, slice_confidences[CONFIDENCE_THRESHOLDS[i]],
             marker='o', label=labels[i])
     plt.legend(loc='upper left')
+    maximize_figure()
     plt.show()
+
+    for i in plt.get_fignums():
+        fig = plt.figure(i)
+        fig.savefig(os.path.join(output_folder, "figure%d.png" % i))
+        fig.savefig(os.path.join(output_folder, "figure%d.pdf" % i))
