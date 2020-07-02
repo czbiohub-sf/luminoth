@@ -107,39 +107,39 @@ dataset:
     # that aren't partially outside the image.
     # To understand and set your own params below, go to luminoth/utils/image.py and read up
     # on docstrings to find sane size params etc for your case of image sizes
-    - resize:
-        min_size: 600
-        max_size: 1024
-        prob: 0.2
-    - rotate:
-        prob: 0.5
-    - gaussian:
-        prob: 0.5
-        min_height: 600
-        min_width: 600
-        min_gaussian_stddev: 0
-        max_gaussian_stddev: 1.0
-    - expand:
-        prob: 0.5
-        fill: 0
-        min_ratio: 1
-        max_ratio: 4
-    - patch:
-        min_height: 600
-        min_width: 600
-        prob: 0.2
-    - distortion:
-        brightness:
-          max_delta: 0.2
-        hue:
-          max_delta: 0.2
-        saturation:
-          lower: 0.5
-          upper: 1.5
-        contrast:
-          lower: 0.5
-          upper: 1.5
-        prob: 0.3
+    # - resize:
+    #     min_size: 600
+    #     max_size: 1024
+    #     prob: 0.2
+    # - rotate:
+    #     prob: 0.5
+    # - gaussian:
+    #     prob: 0.5
+    #     target_height: 50
+    #     target_width: 60
+    #     min_gaussian_stddev: 0
+    #     max_gaussian_stddev: 1.0
+    # - expand:
+    #     prob: 0.5
+    #     fill: 0
+    #     min_ratio: 1
+    #     max_ratio: 4
+    # - patch:
+    #     min_height: 600
+    #     min_width: 600
+    #     prob: 0.2
+    # - distortion:
+    #     brightness:
+    #       max_delta: 0.2
+    #     hue:
+    #       max_delta: 0.2
+    #     saturation:
+    #       lower: 0.5
+    #       upper: 1.5
+    #     contrast:
+    #       lower: 0.5
+    #       upper: 1.5
+    #     prob: 0.3
 
 model:
   type: fasterrcnn
@@ -205,8 +205,6 @@ model:
     loss:
       _replace: True
       type: cross_entropy
-      # The weights are usually inversely proportional to the occurrence frequency of each class.
-      weight: 1
     # loss:
     #   _replace: True
     #   type: focal
@@ -276,8 +274,6 @@ model:
     loss:
       _replace: True
       type: cross_entropy
-      # The weights are usually inversely proportional to the occurrence frequency of each class.
-      weight: 1
     # loss:
     #   _replace: True
     #   type: focal
