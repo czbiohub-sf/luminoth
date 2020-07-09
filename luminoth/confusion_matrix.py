@@ -598,7 +598,7 @@ def display(
         confusion_matrix = np.delete(confusion_matrix, -2, 0)
         confusion_matrix = np.delete(confusion_matrix, -2, 1)
     else:
-        labels.insert(-1, "Unmatched")
+        labels = inclusive_labels
     # Plot confusion matrix
     plot_cm(confusion_matrix, labels, output_fig)
     if binary_classes != "":

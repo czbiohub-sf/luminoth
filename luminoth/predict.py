@@ -6,6 +6,7 @@ import cv2
 import skvideo.io
 import sys
 import time
+import tempfile
 import tensorflow as tf
 import xlsxwriter
 import json
@@ -82,10 +83,109 @@ def filter_probabilities(objects, min_prob=None, max_prob=None):
     return objects
 
 
-def predict_image(network, path, only_classes=None, ignore_classes=None,
-                  save_path=None, min_prob=None, max_prob=None):
-    click.echo('Predicting {}...'.format(path), nl=False)
+def bbs_pixel_apart(obj, objects, pixel_distance):
+    repeated_indices = []
+    for index, each_obj in enumerate(objects):
+        set_index_flags = 0
+        unique_differences = \
+            np.unique(np.fabs(np.subtract(each_obj, obj))).tolist()
+        for i in unique_differences:
+            if i <= pixel_distance:
+                set_index_flags += 1
+        if set_index_flags == len(unique_differences):
+            repeated_indices.append(index)
+    return repeated_indices
 
+
+def filter_close_bbs(predictions, pixel_distance):
+    # Save a prediction by suppressing the class with
+    # lowest probability for the same bounding box
+    objects = [prediction["bbox"] for prediction in predictions]
+    labels = [prediction["label"] for prediction in predictions]
+    probs = [prediction["prob"] for prediction in predictions]
+
+    predictions = [None] * len(objects)
+    assert len(objects) == len(labels) == len(probs)
+    count = 0
+    for obj, label, prob in zip(objects, labels, probs):
+        repeated_indices = bbs_pixel_apart(obj, objects, pixel_distance)
+        if len(repeated_indices) > 0:
+            repeated_probs = [probs[i] for i in repeated_indices]
+            repeated_probs.append(prob)
+            repeated_indices.append(count)
+            max_prob = max(repeated_probs)
+            assert len(repeated_probs) == len(repeated_indices)
+            prob_index = [
+                index for index, prob in zip(
+                    repeated_indices, repeated_probs)
+                if prob == max_prob][0]
+            d = {
+                'bbox': objects[prob_index],
+                'label': labels[prob_index],
+                'prob': round(max_prob, 4)}
+            predictions[prob_index] = d
+        else:
+            if objects.count(obj) == 1:
+                d = {
+                    'bbox': obj,
+                    'label': label,
+                    'prob': round(prob, 4)}
+                predictions[count] = d
+            elif objects.count(obj) > 1:
+                prob_repeated_objs = [
+                    [i, probs[i]] for i, value in enumerate(objects)
+                    if value == obj]
+                repeated_indices = [i for (i, _) in prob_repeated_objs]
+                repeated_probs = [j for (_, j) in prob_repeated_objs]
+                max_prob = max(repeated_probs)
+                prob_index = [
+                    index for index, prob in zip(
+                        repeated_indices, repeated_probs)
+                    if prob == max_prob][0]
+                d = {
+                    'bbox': obj,
+                    'label': labels[prob_index],
+                    'prob': round(max_prob, 4)}
+                predictions[prob_index] = d
+        count += 1
+    predictions = list(filter(None, predictions))
+    predictions = sorted(
+        predictions, key=lambda x: x['prob'], reverse=True)
+
+    return predictions
+
+
+def rename_labels(predictions, new_labels):
+    objects = [prediction["bbox"] for prediction in predictions]
+    labels = [prediction["label"] for prediction in predictions]
+    new_labels = [new_labels[label] for label in labels]
+    probs = [prediction["prob"] for prediction in predictions]
+    predictions = [None] * len(objects)
+    predictions = sorted([
+        {
+            'bbox': obj,
+            'label': label,
+            'prob': round(prob, 4),
+        } for obj, label, prob in zip(objects, new_labels, probs)
+    ], key=lambda x: x['prob'], reverse=True)
+    return predictions
+
+
+def predict_image(network, path, only_classes=None, ignore_classes=None,
+                  save_path=None, min_prob=None, max_prob=None,
+                  pixel_distance=0, new_labels=None):
+    click.echo('Predicting {}...'.format(path), nl=False)
+    extension = path.split(".")[-1]
+    basename = os.path.basename(path)
+
+    # Write to only a png - as jpg creates all zeros uint16 data and conversion
+    # to rgb, pil and tiffle can't handle uin16 data conversiont to RGB as wekk
+    if extension == "tif":
+        image = Image.open(path)
+        image = cv2.cvtColor(np.array(image), cv2.COLOR_GRAY2BGR)
+        tempname = basename.replace("." + extension, "." + "png")
+        path = os.path.join(tempfile.mkdtemp(prefix='lumi'), tempname)
+        cv2.imwrite(path, image)
     # Open and read the image to predict.
     with tf.gfile.Open(path, 'rb') as f:
         try:
@@ -111,6 +211,11 @@ def predict_image(network, path, only_classes=None, ignore_classes=None,
         min_prob=min_prob,
         max_prob=max_prob)
 
+    objects = filter_close_bbs(objects, pixel_distance)
+
+    if new_labels is not None:
+        objects = rename_labels(objects, new_labels)
+
     # Save predicted image.
     if save_path:
         image = cv2.cvtColor(
@@ -123,7 +228,8 @@ def predict_image(network, path, only_classes=None, ignore_classes=None,
 
 
 def predict_video(network, path, only_classes=None, ignore_classes=None,
-                  save_path=None, min_prob=None, max_prob=None):
+                  save_path=None, min_prob=None, max_prob=None,
+                  pixel_distance=0, new_labels=None):
     if save_path:
         # We hardcode the video output to mp4 for the time being.
         save_path = os.path.splitext(save_path)[0] + '.mp4'
@@ -168,6 +274,10 @@ def predict_video(network, path, only_classes=None, ignore_classes=None,
                     objects,
                     min_prob=min_prob,
                     max_prob=max_prob)
+
+                objects = filter_close_bbs(objects, pixel_distance)
+
+                objects = rename_labels(objects, new_labels)
 
                 objects_per_frame.append({
                     'frame': idx,
@@ -240,6 +350,12 @@ def write_xlsx(csv_path, spacing, class_labels_percentage):
     workbook.close()
 
 
+def get_key(new_labels, val):
+    for key, value in new_labels.items():
+        if val == value:
+            return key
+
+
 @click.command(help="Obtain a model's predictions.")
 @click.argument('path-or-dir', nargs=-1)
 @click.option('config_files', '--config', '-c', multiple=True, help='Config to use.')  # noqa
@@ -255,11 +371,13 @@ def write_xlsx(csv_path, spacing, class_labels_percentage):
 @click.option('--debug', is_flag=True, help='Set debug level logging.')
 @click.option('--xlsx-spacing', default=2, type=int, help='When inserting images in xlsx, space between rows')  # noqa
 @click.option('--classes-json', required=False, help='path to a json file containing dictionary of class labels as keys and the float between 0 to 1 representing fraction of the rows/objects for the class to be saved in the xlsx as values')  # noqa
+@click.option('--pixel-distance', default=0, type=int, required=False, help='If 2 bounding boxes are pixel-distance apart, then keep the one with highest confidence/probability and remove the other')  # noqa
+@click.option('--new-labels', type=str, required=False, help='path to a json file containing dictionary of class labels as keys and the new label to replace with as value')  # noqa
 def predict(path_or_dir, config_files, checkpoint, override_params,
             output_path, save_media_to, min_prob, max_prob,
             max_detections, only_class,
             ignore_class, debug, xlsx_spacing,
-            classes_json):
+            classes_json, pixel_distance, new_labels):
     """Obtain a model's predictions.
 
     Receives either `config_files` or `checkpoint` in order to load the correct
@@ -275,6 +393,10 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
     if classes_json is not None:
         with open(classes_json, "r") as f:
             class_labels_percentage = json.load(f)
+
+    if new_labels is not None:
+        with open(new_labels, "r") as f:
+            new_labels = json.load(f)
     if debug:
         tf.logging.set_verbosity(tf.logging.DEBUG)
     else:
@@ -334,6 +456,7 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
     network = PredictorNetwork(config)
     # Iterate over files and run the model on each.
     df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
+
     for file in files:
         # Get the media output path, if media storage is requested.
         save_path = os.path.join(
@@ -349,14 +472,19 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
             ignore_classes=ignore_class,
             save_path=save_path,
             min_prob=min_prob,
-            max_prob=max_prob
+            max_prob=max_prob,
+            pixel_distance=pixel_distance,
+            new_labels=new_labels
         )
 
         # TODO: Not writing csv for video files for now.
         unique_classes = []
         if objects is not None and file_type == 'image':
             for obj in objects:
-                label_name = obj['label']
+                if new_labels is not None:
+                    label_name = get_key(new_labels, obj['label'])
+                else:
+                    label_name = obj['label']
                 unique_classes.append(label_name)
                 df = df.append({'image_id': file,
                                 'xmin': obj['bbox'][0],

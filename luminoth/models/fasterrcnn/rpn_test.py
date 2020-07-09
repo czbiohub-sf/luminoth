@@ -36,6 +36,7 @@ class RPNTest(tf.test.TestCase):
             'l1_sigma': 3.0,
             'loss': {
                 'type': 'cross_entropy',
+                'weight': [0.5, 1]
             },
             'activation_function': 'relu6',
             'proposals': {

@@ -63,6 +63,10 @@ class RCNN(snt.AbstractModule):
         loss_config = config.loss
         if loss_config.type == CROSS_ENTROPY:
             self.loss_type = CROSS_ENTROPY
+            if "weight" not in loss_config:
+                self.loss_weight = 1
+            else:
+                self.loss_weight = loss_config.weight
         elif loss_config.type == FOCAL:
             self.loss_type = FOCAL
             self.focal_gamma = loss_config.get('focal_gamma')
@@ -333,13 +337,24 @@ class RCNN(snt.AbstractModule):
 
             if self.loss_type == CROSS_ENTROPY:
 
-                # We get cross entropy loss of each proposal.
-                cross_entropy_per_proposal = (
-                    tf.nn.softmax_cross_entropy_with_logits_v2(
-                        labels=tf.stop_gradient(cls_target_one_hot),
-                        logits=cls_score_labeled
-                    )
-                )
+                # your class weights
+                class_weights = self.loss_weight
+                onehot_labels = tf.stop_gradient(cls_target_one_hot)
+                # deduce weights for batch samples based on their true label
+                # compute your (unweighted) softmax cross entropy loss
+                cross_entropy_per_proposal = \
+                    tf.nn.softmax_cross_entropy_with_logits(
+                        labels=onehot_labels,
+                        logits=cls_score_labeled)
+                if class_weights != 1:
+                    class_weights = tf.constant(
+                        [class_weights], dtype=tf.float32)
+                    weights = tf.reduce_sum(
+                        class_weights * onehot_labels, axis=1)
+                    # apply the weights, relying on broadcasting
+                    # of the multiplication
+                    cross_entropy_per_proposal = \
+                        cross_entropy_per_proposal * weights
             elif self.loss_type == FOCAL:
 
                 cross_entropy_per_proposal = focal_loss(

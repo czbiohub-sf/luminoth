@@ -1,0 +1,4 @@
+ignore:
+  - luminoth/utils/mosaic_gt_tiles_leica_no_xlsx.py
+  - luminoth/utils/plot_titration_percentage.py
+  - luminoth/utils/calculate_parasetimia_percent_titration_data.py'
