@@ -54,7 +54,7 @@ class RCNNTest(tf.test.TestCase):
             'l1_sigma': 3.0,
             'loss': {
                 'type': 'cross_entropy',
-                'weight': [0.01, 0.05, 0.02, 0.1, 0.005]
+                'weight': [1, 0.01, 0.05, 0.02, 0.1, 0.005]
             },
             'roi': {
                 'pooling_mode': 'crop',
