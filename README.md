@@ -51,11 +51,6 @@ We also provide **pre-trained checkpoints** for the Faster R-CNN trained on RBC 
 1a0f3002f674 - Faster R-CNN with customized UV microscope dataset to detect healthy/ring/schizont/normal RBC
 1fbb5e928fd5 - Faster R-CNN with Leica commercial microscope dataset to detect healthy/ring/schizont/normal RBC
 
-We also provide **pre-trained checkpoints** for the Faster R-CNN trained on RBC cell detection/parasite stage classification are available in release https://github.com/czbiohub/luminoth-uv-imaging/releases/tag/v0.3.0
-
-68b8787e0bae - Faster R-CNN with commercial microscope dataset to detect healthy/ring/schizont/normal RBC
-e6fa22ca6045 - Faster R-CNN with commercial microscope dataset to healthy/unhealthy RBC
-
 Use `lumi predict` and the checkpoints above to test on your own dataset with similar 4 or 2 classes as mentioned above 
 
 # Usage
