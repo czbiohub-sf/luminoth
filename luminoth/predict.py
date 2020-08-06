@@ -203,7 +203,7 @@ def run_image_through_network(
         cv2.imwrite(save_path, image)
 
     click.echo(' done.')
-    return objects
+    return image, objects
 
 
 def predict_image(network, path, only_classes=None, ignore_classes=None,
