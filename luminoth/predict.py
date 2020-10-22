@@ -276,8 +276,8 @@ def predict_video(network, path, only_classes=None, ignore_classes=None,
                     max_prob=max_prob)
 
                 objects = filter_close_bbs(objects, pixel_distance)
-
-                objects = rename_labels(objects, new_labels)
+                if new_labels is not None:
+                    objects = rename_labels(objects, new_labels)
 
                 objects_per_frame.append({
                     'frame': idx,
@@ -436,7 +436,7 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
 
     if override_params:
         config = override_config_params(config, override_params)
-
+    print(config)
     # Filter bounding boxes according to `min_prob` and `max_detections`.
     if config.model.type == 'fasterrcnn':
         if config.model.network.with_rcnn:
