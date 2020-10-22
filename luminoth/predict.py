@@ -231,7 +231,10 @@ def predict_image(network, path, only_classes=None, ignore_classes=None,
             return
 
     # Run image through the network.
-    return run_image_through_network(objects)
+    return run_image_through_network(
+        network, image, only_classes, ignore_classes,
+        save_path, min_prob, max_prob,
+        pixel_distance, new_labels)
 
 
 def predict_video(network, path, only_classes=None, ignore_classes=None,
