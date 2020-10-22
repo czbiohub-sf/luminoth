@@ -74,6 +74,8 @@ def overlay_bb_labels(
             int(row.xmin), int(row.ymin))
         right_bottom_corner = (int(row.xmax), int(row.ymax))
 
+        assert int(row.xmax) > int(row.xmin)
+        assert int(row.ymax) > int(row.ymin)
         cv2.rectangle(
             im_rgb,
             left_corner_of_text,

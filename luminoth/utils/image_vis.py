@@ -253,8 +253,8 @@ def imgcat_pil(image_pil):
 
 
 def get_image_draw(image):
-    image_pil = Image.fromarray(
-        np.uint8(np.squeeze(image))).convert('RGB')
+    image = ((image - image.min()) / (image.max() - image.min()) * 255).astype(np.uint8)
+    image_pil = Image.fromarray(np.squeeze(image)).convert('RGB')
     draw = ImageDraw.Draw(image_pil, 'RGBA')
     return image_pil, draw
 
