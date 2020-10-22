@@ -19,7 +19,7 @@ from luminoth.utils.homedir import get_luminoth_home
 CHECKPOINT_INDEX = 'checkpoints.json'
 CHECKPOINT_PATH = 'checkpoints'
 REMOTE_INDEX_URL = (
-    'https://github.com/czbiohub/luminoth-uv-imaging/releases/download/v0.3.0/'
+    'https://github.com/czbiohub/luminoth-uv-imaging/releases/download/v0.4.0/'
     'checkpoints.json'
 )
 

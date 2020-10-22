@@ -47,10 +47,9 @@ Currently, we support the following models:
 
 We also provide **pre-trained checkpoints** for the above models trained on popular datasets such as [COCO](http://cocodataset.org/) and [Pascal](http://host.robots.ox.ac.uk/pascal/VOC/).
 
-We also provide **pre-trained checkpoints** for the Faster R-CNN trained on RBC cell detection/parasite stage classification are available in release https://github.com/czbiohub/luminoth-uv-imaging/releases/tag/v0.3.0
-
-68b8787e0bae - Faster R-CNN with commercial microscope dataset to detect healthy/ring/schizont/normal RBC
-e6fa22ca6045 - Faster R-CNN with commercial microscope dataset to healthy/unhealthy RBC
+We also provide **pre-trained checkpoints** for the Faster R-CNN trained on RBC cell detection/parasite stage classification are available in release https://github.com/czbiohub/luminoth-uv-imaging/releases/tag/v0.4.0
+1a0f3002f674 - Faster R-CNN with customized UV microscope dataset to detect healthy/ring/schizont/normal RBC
+1fbb5e928fd5 - Faster R-CNN with Leica commercial microscope dataset to detect healthy/ring/schizont/normal RBC
 
 Use `lumi predict` and the checkpoints above to test on your own dataset with similar 4 or 2 classes as mentioned above 
 
@@ -90,7 +89,7 @@ tensorboard --logdir path/to/jobs
 ## Dataset to model to prediction in a few steps
 
 ``` bash
-lumi split_train_val annotated_bounding_boxes.txt annotated_bounding_boxes_1.txt annotated_bounding_boxes_2.txt --output_dir all_data_lumi_csv --percentage 0.9 --random_seed 42 --input_image_format .tif
+lumi split_train_val annotated_bounding_boxes.csv annotated_bounding_boxes_1.csv annotated_bounding_boxes_2.csv --output_dir lumi_csv --percentage 0.9 --random_seed 42 --input_image_format .tif
 lumi dataset transform --type csv --data-dir /lumi_csv/ --output-dir /tfdata/ --split train --split val --only-classes=table
 lumi train -c config.yml
 lumi eval --split train -c config.yml --no-watch
