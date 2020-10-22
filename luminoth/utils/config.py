@@ -144,7 +144,6 @@ def merge_into(new_config, base_config, overwrite=False, warn_overwrite=False):
                 base_config[key] = value
                 if warn_overwrite:
                     tf.logging.warn('Overwrote key "{}"'.format(key))
-        print(key, value)
     return base_config
 
 
@@ -167,7 +166,6 @@ def parse_override(override_options):
             local_override_dict = local_override_dict[nested_key]
 
         local_override_dict[nested_keys[-1]] = parse_config_value(value)
-    print(override_dict)
     return override_dict
 
 
@@ -228,6 +226,5 @@ def get_model_config(base_config, custom_config, override_params):
 def override_config_params(config, params):
     """Overrides `config` with `params` and returns it."""
     override_config = EasyDict(parse_override(params))
-    print(override_config)
     config = merge_into(override_config, config, overwrite=True)
     return config
