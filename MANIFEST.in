@@ -1,4 +1,4 @@
-include *.md *.txt tox.ini LICENSE *.yml
+include *.md *.txt tox.ini LICENSE *.yml Dockerfile
 graft luminoth
 recursive-include docs *
 recursive-include examples *
