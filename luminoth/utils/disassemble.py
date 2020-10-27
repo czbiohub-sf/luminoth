@@ -80,7 +80,9 @@ def disassemble_images(input_dir, fmt, tile_size, output_dir):
         tile_size = _set_tile_size(image, tile_size)
         split_images = split_mosaic(image, tile_size)
         for index, image in enumerate(split_images):
-            image = ((image - image.min()) / (image.max() - image.min()) * 255).astype(np.uint8)
+            image = (
+                (image - image.min()) / (
+                    image.max() - image.min()) * 255).astype(np.uint8)
             path = os.path.join(
                 output_dir,
                 "{}_{}.{}".format(

@@ -213,8 +213,8 @@ def predict_image(network, path, only_classes=None, ignore_classes=None,
     extension = path.split(".")[-1]
     basename = os.path.basename(path)
 
-    # Write to only a png - as jpg creates all zeros on uint16 data and conversion
-    # to rgb, pil and tiffle can't handle uin16 data conversion to RGB as well
+    # Convert tif to a png acceptable by tensorflow in next steps below
+    # Tried jpg creates all zeros on uint16 data -also jpg is lossy compression
     if extension == "tif":
         image = Image.open(path)
         image = cv2.cvtColor(np.array(image), cv2.COLOR_GRAY2BGR)

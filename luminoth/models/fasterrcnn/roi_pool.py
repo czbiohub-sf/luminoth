@@ -72,8 +72,6 @@ class ROIPoolingLayer(snt.AbstractModule):
         bboxes_shape = tf.shape(bboxes)
         batch_ids = tf.zeros((bboxes_shape[0], ), dtype=tf.int32)
         # Apply crop and resize with extracting a crop double the desired size.
-        gpu_options = tf.GPUOptions(allow_growth=True)
-        session = tf.InteractiveSession(config=tf.ConfigProto(gpu_options=gpu_options))
         crops = tf.image.crop_and_resize(
             conv_feature_map, bboxes, batch_ids,
             [self._pooled_width * 2, self._pooled_height * 2], name="crops"
