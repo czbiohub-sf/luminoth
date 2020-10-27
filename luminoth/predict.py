@@ -171,31 +171,10 @@ def rename_labels(predictions, new_labels):
     return predictions
 
 
-def predict_image(network, path, only_classes=None, ignore_classes=None,
-                  save_path=None, min_prob=None, max_prob=None,
-                  pixel_distance=0, new_labels=None):
-    click.echo('Predicting {}...'.format(path), nl=False)
-    extension = path.split(".")[-1]
-    basename = os.path.basename(path)
-
-    # Write to only a png - as jpg creates all zeros uint16 data and conversion
-    # to rgb, pil and tiffle can't handle uin16 data conversiont to RGB as wekk
-    if extension == "tif":
-        image = Image.open(path)
-        image = cv2.cvtColor(np.array(image), cv2.COLOR_GRAY2BGR)
-        tempname = basename.replace("." + extension, "." + "png")
-        path = os.path.join(tempfile.mkdtemp(prefix='lumi'), tempname)
-        cv2.imwrite(path, image)
-    # Open and read the image to predict.
-    with tf.gfile.Open(path, 'rb') as f:
-        try:
-            image = Image.open(f).convert('RGB')
-        except (tf.errors.OutOfRangeError, OSError) as e:
-            click.echo()
-            click.echo('Error while processing {}: {}'.format(path, e))
-            return
-
-    # Run image through the network.
+def run_image_through_network(
+        network, image, only_classes=None, ignore_classes=None,
+        save_path=None, min_prob=None, max_prob=None,
+        pixel_distance=0, new_labels=None):
     objects = network.predict_image(image)
 
     # Filter the results according to the user input.
@@ -225,6 +204,37 @@ def predict_image(network, path, only_classes=None, ignore_classes=None,
 
     click.echo(' done.')
     return objects
+
+
+def predict_image(network, path, only_classes=None, ignore_classes=None,
+                  save_path=None, min_prob=None, max_prob=None,
+                  pixel_distance=0, new_labels=None):
+    click.echo('Predicting {}...'.format(path), nl=False)
+    extension = path.split(".")[-1]
+    basename = os.path.basename(path)
+
+    # Convert tif to a png acceptable by tensorflow in next steps below
+    # Tried jpg creates all zeros on uint16 data -also jpg is lossy compression
+    if extension == "tif":
+        image = Image.open(path)
+        image = cv2.cvtColor(np.array(image), cv2.COLOR_GRAY2BGR)
+        tempname = basename.replace("." + extension, "." + "png")
+        path = os.path.join(tempfile.mkdtemp(prefix='lumi'), tempname)
+        cv2.imwrite(path, image)
+    # Open and read the image to predict.
+    with tf.gfile.Open(path, 'rb') as f:
+        try:
+            image = Image.open(f).convert('RGB')
+        except (tf.errors.OutOfRangeError, OSError) as e:
+            click.echo()
+            click.echo('Error while processing {}: {}'.format(path, e))
+            return
+
+    # Run image through the network.
+    return run_image_through_network(
+        network, image, only_classes, ignore_classes,
+        save_path, min_prob, max_prob,
+        pixel_distance, new_labels)
 
 
 def predict_video(network, path, only_classes=None, ignore_classes=None,
@@ -276,8 +286,8 @@ def predict_video(network, path, only_classes=None, ignore_classes=None,
                     max_prob=max_prob)
 
                 objects = filter_close_bbs(objects, pixel_distance)
-
-                objects = rename_labels(objects, new_labels)
+                if new_labels is not None:
+                    objects = rename_labels(objects, new_labels)
 
                 objects_per_frame.append({
                     'frame': idx,
@@ -436,7 +446,6 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
 
     if override_params:
         config = override_config_params(config, override_params)
-
     # Filter bounding boxes according to `min_prob` and `max_detections`.
     if config.model.type == 'fasterrcnn':
         if config.model.network.with_rcnn:

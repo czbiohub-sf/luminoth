@@ -232,9 +232,9 @@ model:
 
     proposals:
       # Total proposals to use before running NMS (sorted by score).
-      pre_nms_top_n: 12000
+      pre_nms_top_n: 1200
       # Total proposals to use after NMS (sorted by score).
-      post_nms_top_n: 2000
+      post_nms_top_n: 200
       # Option to apply NMS.
       apply_nms: True
       # NMS threshold used when removing "almost duplicates".

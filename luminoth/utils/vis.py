@@ -44,7 +44,10 @@ SYSTEM_FONT = get_font()
 def draw_label(im_rgb, coords, label, prob, color, scale=1):
     """Draw a box with the label and probability."""
     # Attempt to get a native TTF font. If not, use the default bitmap font.
-
+    # Rescale unit16 or other images to uint8
+    im_rgb = (
+        (im_rgb - im_rgb.min()) / (im_rgb.max() - im_rgb.min()) * 255).astype(
+        np.uint8)
     global SYSTEM_FONT
     if SYSTEM_FONT:
         label_font = SYSTEM_FONT.font_variant(size=int(round(16 * scale)))
@@ -67,7 +70,6 @@ def draw_label(im_rgb, coords, label, prob, color, scale=1):
     # Convert the image to RGB (OpenCV uses BGR)
     # Pass the image to PIL
     pil_im = Image.fromarray(im_rgb)
-
     draw = ImageDraw.Draw(pil_im)
 
     # Then write the two pieces of text.
@@ -89,12 +91,12 @@ def draw_label(im_rgb, coords, label, prob, color, scale=1):
 
 
 def vis_objects(
-        image, objects, color=[BB_COLOR, FONT_COLOR], labels=True,
+        im_rgb, objects, color=[BB_COLOR, FONT_COLOR], labels=True,
         scale=FONT_SCALE, line_width=BB_LINE_WIDTH):
     """Visualize objects as returned by `Detector`.
 
     Arguments:
-        image (numpy.ndarray): Image to draw the bounding boxes on.
+        im_rgb (numpy.ndarray): Image to draw the bounding boxes on.
         objects (list of dicts or dict): List of objects as returned by a
             `Detector` instance.
         color (list of 3-tuples): List of 2 rgb tuples indicating the color for
@@ -107,14 +109,15 @@ def vis_objects(
     Returns:
         numpy.ndarray: Color image with bounding box and labels drawn on
     """
-    im_rgb = image.astype(np.uint8)
-
-    if len(image.shape) == 3:
-        if image.shape[2] == 1:
+    # Rescale unit16 or other images to uint8
+    im_rgb = (
+        (im_rgb - im_rgb.min()) / (im_rgb.max() - im_rgb.min()) * 255).astype(
+        np.uint8)
+    if len(im_rgb.shape) == 3:
+        if im_rgb.shape[2] == 1:
             im_rgb = cv2.cvtColor(im_rgb, cv2.COLOR_GRAY2RGB)
-    elif len(image.shape) == 2:
+    elif len(im_rgb.shape) == 2:
         im_rgb = cv2.cvtColor(im_rgb, cv2.COLOR_GRAY2RGB)
-
     if not isinstance(objects, list):
         objects = [objects]
 

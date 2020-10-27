@@ -224,7 +224,10 @@ def write_lumi_images_csv(
 
         image = cv2.imread(
             original_path, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
-        image = (image / image.max() * 255).astype(np.uint8)
+        # Rescale unit16 or other images to uint8
+        image = (
+            (image - image.min()) / (
+                image.max() - image.min()) * 255).astype(np.uint8)
 
         cv2.imwrite(new_path, image)
 

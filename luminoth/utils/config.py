@@ -144,7 +144,6 @@ def merge_into(new_config, base_config, overwrite=False, warn_overwrite=False):
                 base_config[key] = value
                 if warn_overwrite:
                     tf.logging.warn('Overwrote key "{}"'.format(key))
-
     return base_config
 
 
@@ -167,7 +166,6 @@ def parse_override(override_options):
             local_override_dict = local_override_dict[nested_key]
 
         local_override_dict[nested_keys[-1]] = parse_config_value(value)
-
     return override_dict
 
 
