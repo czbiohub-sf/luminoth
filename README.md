@@ -30,7 +30,7 @@ First, clone the repo on your machine and then install with `pip`:
 ```bash
 git clone https://github.com/czbiohub/luminoth-uv-imaging.git
 cd luminoth
-pip install -e .
+python setup.py install
 ```
 
 ## Check that the installation worked
@@ -121,7 +121,7 @@ ffmpeg -i in.MOV  -pix_fmt rgb24 output_tflite.gif
 ffmpeg -i in.m4v out.mp4
 ffmpeg -i out.mp4 -vf format=gray gray.mp4` 
 If you have any trouble please print `lumi command --help` example `lumi predict --help` or refer to documentation files in ./docs/tutorial/
-1. Use the first command below, To test if your bounding boxes and objects in csv file and images look right i.e align u
+1. Use the first command below, To test if your bounding boxes and objects in csv file and images look right
 2. Split data given a csv file containing path to image and bounding boxes with extreme corners of rectangles of objects with labels. The csv file contains
 xmin, xmax, ymin, ymax, label, image_id. Given that csv file creates 2 folders with train, val and 2 csv files with train.csv and val.csv
 3. Third command below converts different images and csv files to tensorflow record files, and depending on percentage paramter creates - train.tfrecords containing that fraction of data 1-fraction of data into val.tfrecords
@@ -133,6 +133,7 @@ xmin, xmax, ymin, ymax, label, image_id. Given that csv file creates 2 folders w
 9. Predict on a dataset given a checkpoint creates a pred_val.csv file and boundary boxes overlaid images in a folder as well
 10. Print confusion matrix and confusion matrix png and other metrics comparing ground truth csv file and prediction csv file
 ``` bash
+lumi overlay_bbs --im_dir "/set_2" --csv_path "set_2/bb_labels.csv" --output_dir overlaid_mosaic_cells/ --input_image_format tif
 lumi split_train_val annotated_bounding_boxes.csv annotated_bounding_boxes_1.csv annotated_bounding_boxes_2.csv --output_dir lumi_csv --percentage 0.9 --random_seed 42 --input_image_format .tif
 lumi dataset transform --type csv --data-dir /lumi_csv/ --output-dir /tfdata/ --split train --split val --only-classes=table
 lumi train -c config.yml
