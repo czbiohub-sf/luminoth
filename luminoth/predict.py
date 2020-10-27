@@ -446,7 +446,6 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
 
     if override_params:
         config = override_config_params(config, override_params)
-    print(config)
     # Filter bounding boxes according to `min_prob` and `max_detections`.
     if config.model.type == 'fasterrcnn':
         if config.model.network.with_rcnn:
