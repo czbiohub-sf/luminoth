@@ -90,6 +90,16 @@ Now you want to start a Docker container from your image, which is the virtual e
 ```buildoutcfg
 nvidia-docker run -it -p <your port>:<exposed port> -v <your dir>:/<dirname inside docker> imaging_docker:gpu_py36_cu90 bash
 ```
+Once docker is run from cloned luminoth-uv-imaging folder run the below command, make sure you have tensorflow-gpu and not tensorflow
+```
+python setup.py install
+```
+This will install luminoth, test it by running 
+```
+lumi --help
+```
+If you encounter any error with export LANG errors, run them as the error suggests and it should work
+
 If you look in the Dockerfile, you can see that there are two ports exposed, one is typically used for Jupyter (8888)
 and one for Tensorboard (6006). To be able to view these in your browser, you need map the port with the -p argument.
 The -v arguments similarly maps directories. You can use multiple -p and -v arguments if you want to map multiple things.
