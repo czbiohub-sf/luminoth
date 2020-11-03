@@ -143,7 +143,7 @@ xmin, xmax, ymin, ymax, label, image_id. Given that csv file creates 2 folders w
 9. Predict on a dataset given a checkpoint creates a pred_val.csv file and boundary boxes overlaid images in a folder as well
 10. Print confusion matrix and confusion matrix png and other metrics comparing ground truth csv file and prediction csv file
 ``` bash
-lumi overlay_bbs --im_dir "/set_2" --csv_path "set_2/bb_labels.csv" --output_dir overlaid_mosaic_cells/ --input_image_format tif
+lumi overlay_bbs --im_dir "images" --csv_path "bb_labels.csv" --output_dir overlaid_mosaic_cells/ --input_image_format tif
 lumi split_train_val annotated_bounding_boxes.csv annotated_bounding_boxes_1.csv annotated_bounding_boxes_2.csv --output_dir lumi_csv --percentage 0.9 --random_seed 42 --input_image_format .tif
 lumi dataset transform --type csv --data-dir /lumi_csv/ --output-dir /tfdata/ --split train --split val --only-classes=table
 lumi train -c config.yml
