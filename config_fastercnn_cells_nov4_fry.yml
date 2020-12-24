@@ -1,0 +1,41 @@
+train:
+  # Run name for the training session.
+  run_name: fastercnn_cells_nov4_fry
+  # Directory in which model checkpoints & summaries (for Tensorboard) will be saved.
+  job_dir: /data/set_2/jobs_fastercnn_cells_nov4_fry
+  learning_rate:
+    learning_rate: 0.00003
+
+dataset:
+  # From which directory to read the dataset.
+  dir: '/data/set_2/tfdata'
+  # Resize image according to min_size and max_size.
+  image_preprocessing:
+    min_size: 948
+    max_size: 1948
+
+model:
+  type: fasterrcnn
+  network:
+    # Total number of classes to predict.
+    num_classes: 1
+    # Use RCNN or just RPN.
+    with_rcnn: False
+
+  rpn:
+    proposals:
+      # Total proposals to use before running NMS (sorted by score).
+      pre_nms_top_n: 2400
+      # Total proposals to use after NMS (sorted by score).
+      post_nms_top_n: 2000
+
+  rcnn:
+    proposals:
+      # Maximum number of detections for each class.
+      class_max_detections: 2000
+      # NMS threshold used to remove "almost duplicate" of the same class.
+      class_nms_threshold: 0.5
+      # Maximum total detections for an image (sorted by score).
+      total_max_detections: 2400
+      # Minimum prob to be used as proposed object.
+      min_prob_threshold: 0.5

@@ -51,7 +51,7 @@ INSTALL_REQUIRES = [
     'click>=6.7,<7',
     'matplotlib',
     'natsort==6.2.0',
-    'opencv-python==3.4.2.17',
+    # 'opencv-python==3.4.2.17',
     'joblib==0.14.1',
     # Sonnet 1.25+ requires tensorflow_probability which we do not need here.
     'dm-sonnet>=1.12,<=1.23',
