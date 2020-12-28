@@ -519,7 +519,8 @@ def display(
         input_image_format,
         num_cpus,
         keep_unmatched,
-        binary_classes):
+        binary_classes,
+        fontsize):
     """
     Save and display confusion matrix, precision, recall scores of each of
     the unique labels
@@ -600,7 +601,7 @@ def display(
     else:
         labels = inclusive_labels
     # Plot confusion matrix
-    plot_cm(confusion_matrix, labels, output_fig)
+    plot_cm(confusion_matrix, labels, output_fig, fontsize)
     if binary_classes != "":
         with open(binary_classes, "r") as f:
             binary_classes = json.load(f)
@@ -727,7 +728,7 @@ def format_element_to_matlab_confusion_matrix(row, col, confusion_matrix):
     return txt
 
 
-def plot_cm(confusion_matrix, labels, output_fig):
+def plot_cm(confusion_matrix, labels, output_fig, fontsize=8):
     """
     Save confusion matrix, precision, recall scores of each of
     the unique labels to a figure
@@ -738,6 +739,8 @@ def plot_cm(confusion_matrix, labels, output_fig):
         labels: list of unqiue names of the objects present
         output_fig: str output figure file containing confusion matrix,
             precision, recall per class (format can be png, pdf, eps, svg)
+        fontisze: int fontsize of the content inside
+            confusion matrix, default 8
 
     Returns:
         Plots and saves matlab like confusion matrix with
@@ -768,7 +771,7 @@ def plot_cm(confusion_matrix, labels, output_fig):
     # set ticklabels rotation
     ax.set_xticks(np.arange(confusion_matrix.shape[1]))
     ax.set_yticks(np.arange(confusion_matrix.shape[0]))
-    ax.set_xticklabels(labels, rotation=45, fontsize=10)
+    ax.set_xticklabels(labels, rotation=45, fontsize=10, horizontalalignment="right")
     ax.set_yticklabels(labels, rotation=0, fontsize=10)
 
     # Turn off all the ticks
@@ -787,7 +790,7 @@ def plot_cm(confusion_matrix, labels, output_fig):
                 row, col,
                 format_element_to_matlab_confusion_matrix(
                     row, col, confusion_matrix),
-                ha="center", va="center", color="black", fontsize=8)
+                ha="center", va="center", color="black", fontsize=fontsize)
 
     # Turn spines off and create black grid.
     for edge, spine in ax.spines.items():
@@ -820,6 +823,7 @@ def plot_cm(confusion_matrix, labels, output_fig):
 @click.option('--classes_json', required=True, help='path to a json file containing list of class label for the objects, labels are alphabetically sorted')  # noqa
 @click.option('--binary_classes', required=False, default="", help='path to a json file containing a dictionary with 2 keys and values as the classes that belongs to each of the 2 classes,ex:{"0": [healthy],"1": ["schizont", "ring", "troph"],"binary_labels": ["healthy", "unhealthy"]}')  # noqa
 @click.option('--num_cpus', required=False, default=NUM_CPUS, type=int, help='number of cpus to run comparison between groundtruth and predicted to obtain matched classses')  # noqa
+@click.option('--fontsize', required=False, default=8, type=int, help='fontsize of the contents inside confusion matrix')  # noqa
 @click.option('--keep_unmatched', type=bool, required=False, default=True, help='if true, keeps unmatched classes percentage in the confusion matrix plot')  # noqa
 def confusion_matrix(
         groundtruth_csv,
@@ -832,7 +836,8 @@ def confusion_matrix(
         binary_classes,
         num_cpus,
         input_image_format,
-        keep_unmatched):
+        keep_unmatched,
+        fontsize):
     # Read class labels as a list
     with open(classes_json, "r") as f:
         class_labels = json.load(f)
@@ -847,7 +852,8 @@ def confusion_matrix(
         input_image_format,
         num_cpus,
         keep_unmatched,
-        binary_classes
+        binary_classes,
+        fontsize
     )
 
 
