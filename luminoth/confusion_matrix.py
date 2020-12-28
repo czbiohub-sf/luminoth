@@ -787,7 +787,7 @@ def plot_cm(confusion_matrix, labels, output_fig):
                 row, col,
                 format_element_to_matlab_confusion_matrix(
                     row, col, confusion_matrix),
-                ha="center", va="center", color="black")
+                ha="center", va="center", color="black", fontsize=4)
 
     # Turn spines off and create black grid.
     for edge, spine in ax.spines.items():
