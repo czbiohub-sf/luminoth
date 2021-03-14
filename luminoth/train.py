@@ -74,7 +74,6 @@ def run(config, target='', cluster_spec=None, is_chief=True, job_name=None,
         # trainable vars collection? We should probably improve our
         # usage of collections.
         trainable_vars = model.get_trainable_vars()
-        print(trainable_vars)
 
         # Compute, clip and apply gradients
         with tf.name_scope('gradients'):
