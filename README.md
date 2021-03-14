@@ -30,7 +30,7 @@ First, clone the repo on your machine and then install with `pip`:
 ```bash
 git clone https://github.com/czbiohub/luminoth-uv-imaging.git
 cd luminoth
-pip install -e .
+python setup.py install
 ```
 
 ## Check that the installation worked
@@ -90,6 +90,16 @@ Now you want to start a Docker container from your image, which is the virtual e
 ```buildoutcfg
 nvidia-docker run -it -p <your port>:<exposed port> -v <your dir>:/<dirname inside docker> imaging_docker:gpu_py36_cu90 bash
 ```
+Once docker is run from cloned luminoth-uv-imaging folder run the below command, make sure you have tensorflow-gpu and not tensorflow
+```
+python setup.py install
+```
+This will install luminoth, test it by running 
+```
+lumi --help
+```
+If you encounter any error with export LANG errors, run them as the error suggests and it should work
+
 If you look in the Dockerfile, you can see that there are two ports exposed, one is typically used for Jupyter (8888)
 and one for Tensorboard (6006). To be able to view these in your browser, you need map the port with the -p argument.
 The -v arguments similarly maps directories. You can use multiple -p and -v arguments if you want to map multiple things.
@@ -113,15 +123,35 @@ You will need to copy/paste the token generated in your Docker container.
 >
 
 ## Dataset to model to prediction in a few steps
-
+Also if you have image formats that are not compatible with lumi, use imagemagick to convert image from one format to another 
+`brew install imagemagick`  and it installs mogrify in addition to a command called convert `mogrify -format png *.tif` or for videos use ffmpeg  
+`brew install ffmpeg 
+ffmpeg -pattern_type glob -i '*.jpg' -vf "setpts=5*PTS" test_r5.mp4
+ffmpeg -i in.MOV  -pix_fmt rgb24 output_tflite.gif
+ffmpeg -i in.m4v out.mp4
+ffmpeg -i out.mp4 -vf format=gray gray.mp4` 
+If you have any trouble please print `lumi command --help` example `lumi predict --help` or refer to documentation files in ./docs/tutorial/
+1. Use the first command below, To test if your bounding boxes and objects in csv file and images look right
+2. Split data given a csv file containing path to image and bounding boxes with extreme corners of rectangles of objects with labels. The csv file contains
+xmin, xmax, ymin, ymax, label, image_id. Given that csv file creates 2 folders with train, val and 2 csv files with train.csv and val.csv
+3. Third command below converts different images and csv files to tensorflow record files, and depending on percentage paramter creates - train.tfrecords containing that fraction of data 1-fraction of data into val.tfrecords
+4. Fourth command, Train using the config, example config is examples folder, change and copy the dictionary from base_config.yml if any other parameters should be changed for your training, dataset and it your config.yml
+5. Fifth command below, Evaluate training data -  prints precision, losses for each class on training data
+6. Sixth command below, Evaluate validation -  data prints precision, losses for each class on validation data
+7. Checkpoint creation, Create checkpoint to save the model so far created
+8. Export the checkpoint to a .tar folder of same name as checkpoint so if you lose it or the docker exits you can import it using `lumi checkpoint import cb0e5d92a854.tar`
+9. Predict on a dataset given a checkpoint creates a pred_val.csv file and boundary boxes overlaid images in a folder as well
+10. Print confusion matrix and confusion matrix png and other metrics comparing ground truth csv file and prediction csv file
 ``` bash
+lumi overlay_bbs --im_dir "images" --csv_path "bb_labels.csv" --output_dir overlaid_mosaic_cells/ --input_image_format tif
 lumi split_train_val annotated_bounding_boxes.csv annotated_bounding_boxes_1.csv annotated_bounding_boxes_2.csv --output_dir lumi_csv --percentage 0.9 --random_seed 42 --input_image_format .tif
 lumi dataset transform --type csv --data-dir /lumi_csv/ --output-dir /tfdata/ --split train --split val --only-classes=table
 lumi train -c config.yml
 lumi eval --split train -c config.yml --no-watch
 lumi eval --split val -c config.yml --no-watch
 lumi checkpoint create config.yml -e name='Faster RCNN' -e alias=cnn_trial
-lumi predict val/ -d preds_val/ --checkpoint trial -f objects.csv
+lumi checkpoint export cb0e5d92a854
+lumi predict val/ -d preds_val/ --checkpoint trial -f pred_val.csv
 lumi confusion_matrix --groundtruth_csv val.csv --predicted_csv pred_val.csv --output_txt output.txt --classes_json classes.json
 ```
 
