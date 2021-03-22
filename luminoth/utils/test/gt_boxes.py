@@ -27,7 +27,7 @@ def generate_gt_boxes(total_boxes, image_size, min_size=10,
         size=(total_boxes, 2)
     )
 
-    # Generate random starting points for boundind boxes (left top point)
+    # Generate random starting points for bounding boxes (left top point)
     random_leftop = np.random.randint(
         low=0, high=max_size, size=(total_boxes, 2)
     )

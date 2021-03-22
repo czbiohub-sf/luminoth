@@ -519,4 +519,5 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
             unique_classes = list(set(unique_classes))
             class_labels_percentage = \
                 {unique_class: 1.0 for unique_class in unique_classes}
-        write_xlsx(output_path, xlsx_spacing, class_labels_percentage)
+        if debug:
+            write_xlsx(output_path, xlsx_spacing, class_labels_percentage)
