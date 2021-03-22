@@ -5,7 +5,7 @@ Confusion matrix comparing ground truth and predicted bounding boxes detected by
 
 Assuming you already have both your dataset and predicted output ready to evaluate using confusion matrix, other validation metrics::
 
-  $ lumi confusion_matrix --groundtruth_csv lumi_csv/val.csv --predicted_csv preds_val/objects.csv --output_txt cm.txt --output_fif cm.png --classes_json all_data/classes.json --input_image_format .jpg --num_cpus 4
+  $ lumi confusion_matrix --groundtruth_csv lumi_csv/val.csv --predicted_csv preds_val/objects.csv --output_txt cm.txt --output_fifgcm.png --classes_json all_data/classes.json --input_image_format .jpg --num_cpus 4
 
 The ``lumi confusion_matrix`` CLI tool provides the following options related to evaluation.
 
