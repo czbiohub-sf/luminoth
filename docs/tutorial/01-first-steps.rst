@@ -43,7 +43,7 @@ You will see the following output:
 
    Found 1 files to predict.
    Neither checkpoint not config specified, assuming `accurate`.
-   Checkpoint not found. Check remote repository? [y/N]:
+   Checkpoint not found. Checking remote repository
 
 What happens is that you didn't tell Luminoth what an “object” is for you, nor have taught
 it how to recognize said objects.
@@ -62,12 +62,11 @@ Luminoth assumes that by default you want the most accurate predictions, and it 
 the most accurate model that it knows about. At this time, it is Faster R-CNN, but that
 could be replaced in the future and you, as a user, wouldn't have to change your code.
 
-Type ‘y' and Luminoth will check the remote index, to see what checkpoints are available.
+Luminoth will check the remote index, to see what checkpoints are available.
 Luminoth currently hosts pre-trained checkpoints for Faster R-CNN (COCO) and SSD (Pascal
 VOC), though more will be added.
 
-Type ‘y' again after it prompts you to download the checkpoint. The checkpoints will be
-stored in ``~/.luminoth`` folder.
+The checkpoints will be download and stored in ``~/.luminoth`` folder.
 
 After the download finishes, you will get the predictions for your image in JSON format in
 the standard output:
