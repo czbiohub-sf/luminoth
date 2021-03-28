@@ -180,8 +180,8 @@ def get_checkpoint_config(id_or_alias, prompt=True):
     if prompt and not checkpoint:
         # Checkpoint not found in database. Prompt for refreshing the index and
         # try again.
-        click.confirm(
-            'Checkpoint not found. Check remote repository?', abort=True
+        click.echo(
+            'Checkpoint not found. Checking remote repository?'
         )
         db = refresh_remote_index()
         checkpoint = get_checkpoint(db, id_or_alias)
@@ -198,8 +198,8 @@ def get_checkpoint_config(id_or_alias, prompt=True):
     if prompt and checkpoint['status'] == 'NOT_DOWNLOADED':
         # Checkpoint hasn't been downloaded yet. Prompt for downloading it
         # before continuing.
-        click.confirm(
-            'Checkpoint not present locally. Want to download it?', abort=True
+        click.echo(
+            'Checkpoint not present locally. Downloading it?'
         )
         download_remote_checkpoint(db, checkpoint)
     elif checkpoint['status'] == 'NOT_DOWNLOADED':
