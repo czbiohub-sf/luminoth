@@ -314,6 +314,7 @@ def download_remote_checkpoint(db, checkpoint):
         with progressbar as content:
             for chunk in content:
                 f.write(chunk)
+    click.echo("checkpoint path is {}".format(path))
 
     # Import the checkpoint from the tar.
     click.echo("Importing checkpoint... ", nl=False)
