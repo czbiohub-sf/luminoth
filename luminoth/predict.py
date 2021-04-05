@@ -15,7 +15,6 @@ from PIL import Image
 from luminoth.tools.checkpoint import get_checkpoint_config
 from luminoth.utils.config import get_config, override_config_params
 from luminoth.utils.predicting import PredictorNetwork
-from luminoth.utils.split_train_val import get_image_paths_per_class
 from luminoth.utils.vis import vis_objects
 
 IMAGE_FORMATS = ['jpg', 'jpeg', 'png', 'tif']
@@ -366,39 +365,12 @@ def get_key(new_labels, val):
             return key
 
 
-@click.command(help="Obtain a model's predictions.")
-@click.argument('path-or-dir', nargs=-1)
-@click.option('config_files', '--config', '-c', multiple=True, help='Config to use.')  # noqa
-@click.option('--checkpoint', help='Checkpoint to use.')
-@click.option('override_params', '--override', '-o', multiple=True, help='Override model config params.')  # noqa
-@click.option('output_path', '--output', '-f', default='-', help='Output file with the predictions (for example, csv bounding boxes) containing image_id,xmin,ymin,xmax,ymax,label')  # noqa
-@click.option('--save-media-to', '-d', help='Directory to store media to.')
-@click.option('--min-prob', default=0.5, type=float, help='When drawing, only draw bounding boxes with probability larger than.')  # noqa
-@click.option('--max-prob', default=1.0, type=float, help='When drawing, only draw bounding boxes with probability lesser than.')  # noqa
-@click.option('--max-detections', default=100, type=int, help='Maximum number of detections per image.')  # noqa
-@click.option('--only-class', '-k', default=None, multiple=True, help='Class to include when predicting.')  # noqa
-@click.option('--ignore-class', '-K', default=None, multiple=True, help='Class to ignore when predicting.')  # noqa
-@click.option('--debug', is_flag=True, help='Set debug level logging.')
-@click.option('--xlsx-spacing', default=2, type=int, help='When inserting images in xlsx, space between rows')  # noqa
-@click.option('--classes-json', required=False, help='path to a json file containing dictionary of class labels as keys and the float between 0 to 1 representing fraction of the rows/objects for the class to be saved in the xlsx as values')  # noqa
-@click.option('--pixel-distance', default=0, type=int, required=False, help='If 2 bounding boxes are pixel-distance apart, then keep the one with highest confidence/probability and remove the other')  # noqa
-@click.option('--new-labels', type=str, required=False, help='path to a json file containing dictionary of class labels as keys and the new label to replace with as value')  # noqa
-def predict(path_or_dir, config_files, checkpoint, override_params,
-            output_path, save_media_to, min_prob, max_prob,
-            max_detections, only_class,
-            ignore_class, debug, xlsx_spacing,
-            classes_json, pixel_distance, new_labels):
-    """Obtain a model's predictions.
-
-    Receives either `config_files` or `checkpoint` in order to load the correct
-    model. Afterwards, runs the model through the inputs specified by
-    `path-or-dir`, returning predictions according to the format specified by
-    `output`.
-
-    Additional model behavior may be modified with `min-prob`, `only-class` and
-    `ignore-class`.
-    """
-    # Read class labels as a list
+def predict_function(
+        path_or_dir, config_files, checkpoint, override_params,
+        output_path, save_media_to, min_prob, max_prob,
+        max_detections, only_class,
+        ignore_class, debug, xlsx_spacing,
+        classes_json, pixel_distance, new_labels):
     class_labels_percentage = {}
     if classes_json is not None:
         with open(classes_json, "r") as f:
@@ -504,7 +476,6 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
                                 'prob': obj["prob"]},
                                ignore_index=True)
 
-    get_image_paths_per_class(df)
     # Build the `Formatter` based on the outputs, which automatically writes
     # the formatted output to all the requested output files.
     if output_path == '-':
@@ -521,3 +492,44 @@ def predict(path_or_dir, config_files, checkpoint, override_params,
                 {unique_class: 1.0 for unique_class in unique_classes}
         if debug:
             write_xlsx(output_path, xlsx_spacing, class_labels_percentage)
+
+
+@click.command(help="Obtain a model's predictions.")
+@click.argument('path-or-dir', nargs=-1)
+@click.option('config_files', '--config', '-c', multiple=True, help='Config to use.')  # noqa
+@click.option('--checkpoint', help='Checkpoint to use.')
+@click.option('override_params', '--override', '-o', multiple=True, help='Override model config params.')  # noqa
+@click.option('output_path', '--output', '-f', default='-', help='Output file with the predictions (for example, csv bounding boxes) containing image_id,xmin,ymin,xmax,ymax,label')  # noqa
+@click.option('--save-media-to', '-d', help='Directory to store media to.')
+@click.option('--min-prob', default=0.5, type=float, help='When drawing, only draw bounding boxes with probability larger than.')  # noqa
+@click.option('--max-prob', default=1.0, type=float, help='When drawing, only draw bounding boxes with probability lesser than.')  # noqa
+@click.option('--max-detections', default=100, type=int, help='Maximum number of detections per image.')  # noqa
+@click.option('--only-class', '-k', default=None, multiple=True, help='Class to include when predicting.')  # noqa
+@click.option('--ignore-class', '-K', default=None, multiple=True, help='Class to ignore when predicting.')  # noqa
+@click.option('--debug', is_flag=True, help='Set debug level logging.')
+@click.option('--xlsx-spacing', default=2, type=int, help='When inserting images in xlsx, space between rows')  # noqa
+@click.option('--classes-json', required=False, help='path to a json file containing dictionary of class labels as keys and the float between 0 to 1 representing fraction of the rows/objects for the class to be saved in the xlsx as values')  # noqa
+@click.option('--pixel-distance', default=0, type=int, required=False, help='If 2 bounding boxes are pixel-distance apart, then keep the one with highest confidence/probability and remove the other')  # noqa
+@click.option('--new-labels', type=str, required=False, help='path to a json file containing dictionary of class labels as keys and the new label to replace with as value')  # noqa
+def predict(path_or_dir, config_files, checkpoint, override_params,
+            output_path, save_media_to, min_prob, max_prob,
+            max_detections, only_class,
+            ignore_class, debug, xlsx_spacing,
+            classes_json, pixel_distance, new_labels):
+    """Obtain a model's predictions.
+
+    Receives either `config_files` or `checkpoint` in order to load the correct
+    model. Afterwards, runs the model through the inputs specified by
+    `path-or-dir`, returning predictions according to the format specified by
+    `output`.
+
+    Additional model behavior may be modified with `min-prob`, `only-class` and
+    `ignore-class`.
+    """
+    # Read class labels as a list
+    predict_function(
+        path_or_dir, config_files, checkpoint, override_params,
+        output_path, save_media_to, min_prob, max_prob,
+        max_detections, only_class,
+        ignore_class, debug, xlsx_spacing,
+        classes_json, pixel_distance, new_labels)
