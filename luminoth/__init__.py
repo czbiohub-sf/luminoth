@@ -13,7 +13,7 @@ __copyright__ = 'Copyright (c) 2018 Tryolabs S.A.'
 
 __min_tf_version__ = '1.5'
 
-
+import sys
 # Check for a current TensorFlow installation.
 try:
     import tensorflow  # noqa: F401
