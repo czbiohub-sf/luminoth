@@ -75,10 +75,10 @@ def overlay_bb_labels(
             int(row.xmin), int(row.ymin))
         right_bottom_corner = (int(row.xmax), int(row.ymax))
 
-        assert int(row.xmax) > int(row.xmin)
-        assert int(row.ymax) > int(row.ymin)
-        assert (int(row.xmin) > 0 and int(row.xmax) < shape[0])
-        assert (int(row.ymin) > 0 and int(row.ymax) < shape[1])
+        assert int(row.xmax) > int(row.xmin), "row is {}".format(row)
+        assert int(row.ymax) > int(row.ymin), "row is {}".format(row)
+        assert (int(row.xmin) > 0 and int(row.xmax) < shape[0]), "row is {}".format(row)
+        assert (int(row.ymin) > 0 and int(row.ymax) < shape[1]), "row is {}".format(row)
 
         cv2.rectangle(
             im_rgb,

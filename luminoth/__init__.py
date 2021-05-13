@@ -18,11 +18,9 @@ __min_tf_version__ = '1.5'
 try:
     import tensorflow  # noqa: F401
 except ImportError:
-	import sys
-    sys.exit("""Luminoth requires a TensorFlow >= {} installation.
-
-Depending on your use case, you should install either `tensorflow` or
-`tensorflow-gpu` packages manually or via PyPI.""".format(__min_tf_version__))
+    import sys
+    sys.exit("""Luminoth requires a TensorFlow >= {} installation.Depending on your use case, you should install either `tensorflow` or
+             `tensorflow-gpu` packages manually or via PyPI.""".format(__min_tf_version__))
 
 
 # Import functions that are part of Luminoth's public interface.
