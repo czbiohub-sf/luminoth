@@ -5,7 +5,7 @@ import numpy as np
 import os
 
 
-x = [18] + [8.5 * 0.5**i for i in range(1, 10)]
+x = [18] + [8.5 * 0.5 ** i for i in range(1, 10)]
 CONFIDENCE_THRESHOLDS = [0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95]
 
 
@@ -31,7 +31,9 @@ if __name__ == "__main__":
     titration_points = [int(line.split(" ")[1]) for line in lines]
     dictionaries = [
         ast.literal_eval("{" + line.split("{")[1].split("}")[0] + "}")
-        for line in lines if "2020-06-20" in line]
+        for line in lines
+        if "2020-06-20" in line
+    ]
 
     slice_1 = [0] * 10
     slice_2 = [0] * 10
@@ -55,21 +57,20 @@ if __name__ == "__main__":
                 slice_4[titration_point] = value
             if "sl5_0.5" == key:
                 slice_5[titration_point] = value
-    labels = ['Y = X', 'Slice 1', 'Slice 2', 'Slice 3', 'Slice 4', 'Slice 5']
-    colors = ['black', 'red', 'green', 'blue', 'cyan', 'yellow']
+    labels = ["Y = X", "Slice 1", "Slice 2", "Slice 3", "Slice 4", "Slice 5"]
+    colors = ["black", "red", "green", "blue", "cyan", "yellow"]
     plt.figure()
     plt.loglog(x, x, color=colors[0], label=labels[0])
-    plt.loglog(x, slice_1, marker='o', color=colors[1], label=labels[1])
-    plt.loglog(x, slice_2, marker='o', color=colors[2], label=labels[2])
-    plt.loglog(x, slice_3, marker='o', color=colors[3], label=labels[3])
-    plt.loglog(x, slice_4, marker='o', color=colors[4], label=labels[4])
-    plt.loglog(x, slice_5, marker='o', color=colors[5], label=labels[5])
+    plt.loglog(x, slice_1, marker="o", color=colors[1], label=labels[1])
+    plt.loglog(x, slice_2, marker="o", color=colors[2], label=labels[2])
+    plt.loglog(x, slice_3, marker="o", color=colors[3], label=labels[3])
+    plt.loglog(x, slice_4, marker="o", color=colors[4], label=labels[4])
+    plt.loglog(x, slice_5, marker="o", color=colors[5], label=labels[5])
 
-    plt.legend(loc='lower right')
+    plt.legend(loc="lower right")
     maximize_figure()
     plt.show()
-    slice_confidences = {
-        confidence: [0] * 10 for confidence in CONFIDENCE_THRESHOLDS}
+    slice_confidences = {confidence: [0] * 10 for confidence in CONFIDENCE_THRESHOLDS}
     labels = []
     for confidence in CONFIDENCE_THRESHOLDS:
         for titration_point, dictionary in zip(titration_points, dictionaries):
@@ -79,16 +80,15 @@ if __name__ == "__main__":
                 num += dictionary["sl_num{}_{}".format(i, confidence)]
                 den += dictionary["sl_den{}_{}".format(i, confidence)]
             slice_confidences[confidence][titration_point] = num / den
-        labels.append("Confidence threshold {} %".format(int(
-            confidence * 100)))
+        labels.append("Confidence threshold {} %".format(int(confidence * 100)))
     n = len(labels)
     plt.figure()
     colors = plt.cm.jet(np.linspace(0, 1, n))
     for i in range(n):
         plt.loglog(
-            x, slice_confidences[CONFIDENCE_THRESHOLDS[i]],
-            marker='o', label=labels[i])
-    plt.legend(loc='upper left')
+            x, slice_confidences[CONFIDENCE_THRESHOLDS[i]], marker="o", label=labels[i]
+        )
+    plt.legend(loc="upper left")
     maximize_figure()
     plt.show()
 

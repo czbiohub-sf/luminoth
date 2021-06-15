@@ -9,20 +9,20 @@ class AnchorsTest(tf.test.TestCase):
         tf.reset_default_graph()
 
     def _get_widths_heights(self, anchor_reference):
-        return np.column_stack((
-            (anchor_reference[:, 2] - anchor_reference[:, 0] + 1),
-            (anchor_reference[:, 3] - anchor_reference[:, 1] + 1)
-        ))
+        return np.column_stack(
+            (
+                (anchor_reference[:, 2] - anchor_reference[:, 0] + 1),
+                (anchor_reference[:, 3] - anchor_reference[:, 1] + 1),
+            )
+        )
 
     def testAnchorReference(self):
         # Test simple case with one aspect ratio and one scale.
         base_size = 256
-        aspect_ratios = [1.]
-        scales = [1.]
+        aspect_ratios = [1.0]
+        scales = [1.0]
         anchor_reference = generate_anchors_reference(
-            base_size=base_size,
-            aspect_ratios=aspect_ratios,
-            scales=scales
+            base_size=base_size, aspect_ratios=aspect_ratios, scales=scales
         )
 
         # Should return a single anchor.
@@ -30,17 +30,17 @@ class AnchorsTest(tf.test.TestCase):
         self.assertAllEqual(
             anchor_reference[0],
             [
-                -(base_size - 1) / 2.0, -(base_size - 1) / 2.0,
-                (base_size - 1) / 2.0, (base_size - 1) / 2.0
-            ]
+                -(base_size - 1) / 2.0,
+                -(base_size - 1) / 2.0,
+                (base_size - 1) / 2.0,
+                (base_size - 1) / 2.0,
+            ],
         )
 
         # Test with fixed ratio and different scales.
-        scales = np.array([0.5, 1., 2., 4.])
+        scales = np.array([0.5, 1.0, 2.0, 4.0])
         anchor_reference = generate_anchors_reference(
-            base_size=base_size,
-            aspect_ratios=aspect_ratios,
-            scales=scales
+            base_size=base_size, aspect_ratios=aspect_ratios, scales=scales
         )
 
         # Check that we have the correct number of anchors.
@@ -53,27 +53,25 @@ class AnchorsTest(tf.test.TestCase):
         # Check exact values.
         self.assertAllEqual(
             anchor_reference,
-            np.array([
-                [-63.5, -63.5, 63.5, 63.5],
-                [-127.5, -127.5, 127.5, 127.5],
-                [-255.5, -255.5, 255.5, 255.5],
-                [-511.5, -511.5, 511.5, 511.5]
-            ])
+            np.array(
+                [
+                    [-63.5, -63.5, 63.5, 63.5],
+                    [-127.5, -127.5, 127.5, 127.5],
+                    [-255.5, -255.5, 255.5, 255.5],
+                    [-511.5, -511.5, 511.5, 511.5],
+                ]
+            ),
         )
 
         # Test with different ratios and scales.
-        scales = np.array([0.5, 1., 2.])
-        aspect_ratios = np.array([0.5, 1., 2.])
+        scales = np.array([0.5, 1.0, 2.0])
+        aspect_ratios = np.array([0.5, 1.0, 2.0])
         anchor_reference = generate_anchors_reference(
-            base_size=base_size,
-            aspect_ratios=aspect_ratios,
-            scales=scales
+            base_size=base_size, aspect_ratios=aspect_ratios, scales=scales
         )
 
         # Check we have the correct number of anchors.
-        self.assertEqual(
-            anchor_reference.shape, (len(scales) * len(aspect_ratios), 4)
-        )
+        self.assertEqual(anchor_reference.shape, (len(scales) * len(aspect_ratios), 4))
 
         width_heights = self._get_widths_heights(anchor_reference)
 
@@ -86,11 +84,11 @@ class AnchorsTest(tf.test.TestCase):
 
         # Test that all ratios are used in the correct order.
         self.assertAllClose(
-            anchor_ratios, [0.5, 0.5, 0.5, 1., 1., 1., 2., 2., 2.]
+            anchor_ratios, [0.5, 0.5, 0.5, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0]
         )
         # Test that all scales are used in the correct order.
         self.assertAllClose(
-            anchor_scales, [0.5, 1., 2., 0.5, 1., 2., 0.5, 1., 2.]
+            anchor_scales, [0.5, 1.0, 2.0, 0.5, 1.0, 2.0, 0.5, 1.0, 2.0]
         )
 
     def testInvalidValues(self):
@@ -101,15 +99,13 @@ class AnchorsTest(tf.test.TestCase):
         scales = [0.5]
         try:
             generate_anchors_reference(
-                base_size=base_size,
-                aspect_ratios=aspect_ratios,
-                scales=scales
+                base_size=base_size, aspect_ratios=aspect_ratios, scales=scales
             )
         except ValueError:
             return
 
-        self.fail('Should have thrown an exception.')
+        self.fail("Should have thrown an exception.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     tf.test.main()

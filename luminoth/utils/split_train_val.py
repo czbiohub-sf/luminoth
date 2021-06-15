@@ -43,7 +43,7 @@ unless you explicitly know the behaviour and need it
 """
 
 # Constants for dataframe lumi csv headers
-LUMI_CSV_COLUMNS = ['image_id', 'xmin', 'xmax', 'ymin', 'ymax', 'label']
+LUMI_CSV_COLUMNS = ["image_id", "xmin", "xmax", "ymin", "ymax", "label"]
 # Constant for luminoth accepted images for training/validation
 OUTPUT_IMAGE_FORMAT = ".jpg"
 
@@ -75,19 +75,21 @@ def add_basename_gather_df(filenames, input_image_format):
 
     # Add base_path columns
     base_names = [
-        os.path.dirname(row["image_id"]).replace(os.sep, "_") + "_" +
-        os.path.basename(row["image_id"]).replace(input_image_format, "")
-        for index, row in bb_labels_df.iterrows()]
+        os.path.dirname(row["image_id"]).replace(os.sep, "_")
+        + "_"
+        + os.path.basename(row["image_id"]).replace(input_image_format, "")
+        for index, row in bb_labels_df.iterrows()
+    ]
     bb_labels_df["base_path"] = pd.Series(base_names)
 
-    label_name_type = type(bb_labels_df['label'].iloc[0])
+    label_name_type = type(bb_labels_df["label"].iloc[0])
 
     # Cast required columns to integers
     if label_name_type is str:
-        cols = ['xmin', 'xmax', 'ymin', 'ymax']
+        cols = ["xmin", "xmax", "ymin", "ymax"]
         bb_labels_df[cols] = bb_labels_df[cols].applymap(np.int64)
     elif label_name_type is np.float64:
-        cols = ['xmin', 'xmax', 'ymin', 'ymax', 'label']
+        cols = ["xmin", "xmax", "ymin", "ymax", "label"]
         bb_labels_df[cols] = bb_labels_df[cols].applymap(np.int64)
 
     bb_labels_df.reset_index(drop=True, inplace=True)
@@ -109,18 +111,18 @@ def get_image_paths_per_class(bb_labels_df):
             list of image paths containing the label annotation as values
     """
     # Print meta for each unique label
-    class_labels = np.unique(bb_labels_df['label'])
+    class_labels = np.unique(bb_labels_df["label"])
     image_paths_per_class = {}
     for label in class_labels:
         # This dict collects all the unique images that contains a label
-        filtered_df = bb_labels_df[bb_labels_df['label'] == label]
-        images = np.unique(filtered_df['image_id']).tolist()
+        filtered_df = bb_labels_df[bb_labels_df["label"] == label]
+        images = np.unique(filtered_df["image_id"]).tolist()
         image_paths_per_class[label] = images
         print(
-            'There are {} images with {} {} labeled classes in dataset'.format(
-                len(image_paths_per_class[label]),
-                len(filtered_df),
-                label))
+            "There are {} images with {} {} labeled classes in dataset".format(
+                len(image_paths_per_class[label]), len(filtered_df), label
+            )
+        )
     return image_paths_per_class
 
 
@@ -149,7 +151,7 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
         # Add all the bounding boxes for the images to the dataframe
         count = 0
         for index, row in tmp_df.iterrows():
-            label_name = row['label']
+            label_name = row["label"]
 
             if count == 0:
                 label_name_type = type(label_name)
@@ -157,19 +159,23 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
             if label_name_type is float or label_name_type is int:
                 label_name = np.int64(label_name)
 
-            df = df.append({'image_id': img_name,
-                            'xmin': np.int64(row['xmin']),
-                            'xmax': np.int64(row['xmax']),
-                            'ymin': np.int64(row['ymin']),
-                            'ymax': np.int64(row['ymax']),
-                            'label': label_name},
-                           ignore_index=True)
+            df = df.append(
+                {
+                    "image_id": img_name,
+                    "xmin": np.int64(row["xmin"]),
+                    "xmax": np.int64(row["xmax"]),
+                    "ymin": np.int64(row["ymin"]),
+                    "ymax": np.int64(row["ymax"]),
+                    "label": label_name,
+                },
+                ignore_index=True,
+            )
             count += 1
 
     if type(label_name) is str:
-        cols = ['xmin', 'xmax', 'ymin', 'ymax']
+        cols = ["xmin", "xmax", "ymin", "ymax"]
     else:
-        cols = ['xmin', 'xmax', 'ymin', 'ymax', 'label']
+        cols = ["xmin", "xmax", "ymin", "ymax", "label"]
 
     df[cols] = df[cols].applymap(np.int64)
     df.reset_index(drop=True, inplace=True)
@@ -177,12 +183,8 @@ def get_lumi_csv_df(bb_labels, images, output_image_format):
 
 
 def write_lumi_images_csv(
-        images,
-        path,
-        input_image_format,
-        output_image_format,
-        bb_labels,
-        output_csv_path):
+    images, path, input_image_format, output_image_format, bb_labels, output_csv_path
+):
     """
     Write images to 'path' with 'output_image_format'
     and writes a csv containing LUMI_CSV_COLUMNS
@@ -218,24 +220,21 @@ def write_lumi_images_csv(
 
         base_path = os.path.dirname(original_path).replace(os.sep, "_")
         basename = os.path.basename(original_path).replace(
-            input_image_format, output_image_format)
+            input_image_format, output_image_format
+        )
         basename = base_path + "_" + basename
         new_path = os.path.join(path, basename)
 
-        image = cv2.imread(
-            original_path, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
+        image = cv2.imread(original_path, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
         # Rescale unit16 or other images to uint8
-        image = (
-            (image - image.min()) / (
-                image.max() - image.min()) * 255).astype(np.uint8)
+        image = ((image - image.min()) / (image.max() - image.min()) * 255).astype(
+            np.uint8
+        )
 
         cv2.imwrite(new_path, image)
 
-    images = natsort.natsorted(
-        glob.glob(os.path.join(path, "*" + output_image_format)))
-    print(
-        'number of images in path {} : {}'.format(
-            path, len(images)))
+    images = natsort.natsorted(glob.glob(os.path.join(path, "*" + output_image_format)))
+    print("number of images in path {} : {}".format(path, len(images)))
 
     # Write to csv
     df = get_lumi_csv_df(bb_labels, images, output_image_format)
@@ -259,11 +258,12 @@ def filter_dense_annotation(image_paths_per_class):
         after removing the key,value pair with dense annotation class
     """
     # Get highest number of classes/labels/annotations in images
-    max_class_count = max(
-        [len(value) for key, value in image_paths_per_class.items()])
+    max_class_count = max([len(value) for key, value in image_paths_per_class.items()])
     max_class_count_name = [
-        key for key, value in image_paths_per_class.items() if len(
-            value) == max_class_count][0]
+        key
+        for key, value in image_paths_per_class.items()
+        if len(value) == max_class_count
+    ][0]
 
     # Remove the dense annotation class
     image_paths_per_class.pop(max_class_count_name)
@@ -271,13 +271,14 @@ def filter_dense_annotation(image_paths_per_class):
 
 
 def split_data_to_train_val(
-        filenames,
-        percentage,
-        random_seed,
-        filter_dense_anns,
-        input_image_format,
-        output_dir,
-        output_image_format):
+    filenames,
+    percentage,
+    random_seed,
+    filter_dense_anns,
+    input_image_format,
+    output_dir,
+    output_image_format,
+):
     """
     Writes to output_dir two folders train, val images and two csv files,
     train.csv, val.csv
@@ -330,7 +331,8 @@ def split_data_to_train_val(
         input_image_format,
         output_image_format,
         bb_labels,
-        os.path.join(output_dir, 'train.csv'))
+        os.path.join(output_dir, "train.csv"),
+    )
 
     write_lumi_images_csv(
         all_imgs[training_image_index:all_imgs_length],
@@ -338,27 +340,57 @@ def split_data_to_train_val(
         input_image_format,
         output_image_format,
         bb_labels,
-        os.path.join(output_dir, 'val.csv'))
+        os.path.join(output_dir, "val.csv"),
+    )
 
 
-@click.command(help="Split and arrange images into 2 folders for grayscale jpgs for train, and validation, save bounding boxes and labels for the corresponding images in train.csv and val.csv")  # noqa
-@click.argument("filenames", nargs=-1) # noqa
-@click.option("--percentage", help="Percentage of images to split into training folder, rest of the images are saved to validation, default 0.8", required=False, type=float, default=0.8) # noqa
-@click.option("--random_seed", help="Random seed to split data into training, validation images, default 43", required=False, type=int, default=43) # noqa
-@click.option('--filter_dense_anns', help="Filter out images with only the dense class annotations, default they are not filtered", required=False, default=False)  # noqa
-@click.option('--input_image_format', help="input image data format", required=True, type=str)  # noqa
-@click.option('--output_dir', help="Absolute path to folder containing train, validation scaled uint8 jpg images and their annotations in csv file", required=True, type=str)  # noqa
+@click.command(
+    help="Split and arrange images into 2 folders for grayscale jpgs for train, and validation, save bounding boxes and labels for the corresponding images in train.csv and val.csv"
+)  # noqa
+@click.argument("filenames", nargs=-1)  # noqa
+@click.option(
+    "--percentage",
+    help="Percentage of images to split into training folder, rest of the images are saved to validation, default 0.8",
+    required=False,
+    type=float,
+    default=0.8,
+)  # noqa
+@click.option(
+    "--random_seed",
+    help="Random seed to split data into training, validation images, default 43",
+    required=False,
+    type=int,
+    default=43,
+)  # noqa
+@click.option(
+    "--filter_dense_anns",
+    help="Filter out images with only the dense class annotations, default they are not filtered",
+    required=False,
+    default=False,
+)  # noqa
+@click.option(
+    "--input_image_format", help="input image data format", required=True, type=str
+)  # noqa
+@click.option(
+    "--output_dir",
+    help="Absolute path to folder containing train, validation scaled uint8 jpg images and their annotations in csv file",
+    required=True,
+    type=str,
+)  # noqa
 def split_train_val(
-        filenames,
-        percentage,
-        random_seed,
-        filter_dense_anns,
-        input_image_format,
-        output_dir):
+    filenames,
+    percentage,
+    random_seed,
+    filter_dense_anns,
+    input_image_format,
+    output_dir,
+):
 
-    print("Note: If giving multiple filenames, the output directory " +
-          "will contain images with long names to prevent the " +
-          "overwriting image of same name from a different sample")
+    print(
+        "Note: If giving multiple filenames, the output directory "
+        + "will contain images with long names to prevent the "
+        + "overwriting image of same name from a different sample"
+    )
 
     assert percentage < 1.0
     split_data_to_train_val(
@@ -368,10 +400,11 @@ def split_train_val(
         filter_dense_anns,
         input_image_format,
         output_dir,
-        OUTPUT_IMAGE_FORMAT)
+        OUTPUT_IMAGE_FORMAT,
+    )
 
     print("Formatted lumi csv folder at: {}".format(output_dir))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     split_train_val()

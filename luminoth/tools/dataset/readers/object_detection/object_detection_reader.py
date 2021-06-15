@@ -28,8 +28,15 @@ class ObjectDetectionReader(BaseReader):
     Additionally, must use the `_per_class_counter` variable to honor the max
     number of examples per class in an efficient way.
     """
-    def __init__(self, only_classes=None, only_images=None,
-                 limit_examples=None, class_examples=None, **kwargs):
+
+    def __init__(
+        self,
+        only_classes=None,
+        only_images=None,
+        limit_examples=None,
+        class_examples=None,
+        **kwargs
+    ):
         """
         Args:
             - only_classes: string or list of strings used as a class
@@ -43,12 +50,12 @@ class ObjectDetectionReader(BaseReader):
         super(ObjectDetectionReader, self).__init__()
         if isinstance(only_classes, six.string_types):
             # We can get one class as string.
-            only_classes = only_classes.split(',')
+            only_classes = only_classes.split(",")
         self._only_classes = only_classes
 
         if isinstance(only_images, six.string_types):
             # We can get one class as string.
-            only_images = only_images.split(',')
+            only_images = only_images.split(",")
         self._only_images = only_images
 
         self._total = None
@@ -160,24 +167,27 @@ class ObjectDetectionReader(BaseReader):
         Called whenever a new record is to be added.
         """
         # Adjust per-class counter from totals from current record
-        for box in record['gt_boxes']:
-            self._per_class_counter[self.classes[box['label']]] += 1
+        for box in record["gt_boxes"]:
+            self._per_class_counter[self.classes[box["label"]]] += 1
 
         if self._class_examples is not None:
             # Check which classes we have maxed out.
             old_maxed_out = self._maxed_out_classes.copy()
 
-            self._maxed_out_classes |= set([
-                label
-                for label, count in self._per_class_counter.items()
-                if count >= self._class_examples
-            ])
+            self._maxed_out_classes |= set(
+                [
+                    label
+                    for label, count in self._per_class_counter.items()
+                    if count >= self._class_examples
+                ]
+            )
 
             for label in self._maxed_out_classes - old_maxed_out:
-                tf.logging.debug('Maxed out "{}" at {} examples'.format(
-                    self.pretty_name(label),
-                    self._per_class_counter[label]
-                ))
+                tf.logging.debug(
+                    'Maxed out "{}" at {} examples'.format(
+                        self.pretty_name(label), self._per_class_counter[label]
+                    )
+                )
 
     @abc.abstractmethod
     def iterate(self):

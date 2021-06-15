@@ -33,9 +33,12 @@ def split_mosaic(image, tile_size):
     indices = list(itertools.product(range(x_tiles), range(y_tiles)))
     for index in range(len(indices)):
         x, y = indices[index]
-        images.append(image[
-            x * tile_size_x: tile_size_x * (x + 1),
-            y * tile_size_y: tile_size_y * (y + 1)])
+        images.append(
+            image[
+                x * tile_size_x : tile_size_x * (x + 1),
+                y * tile_size_y : tile_size_y * (y + 1),
+            ]
+        )
     return images
 
 
@@ -44,8 +47,10 @@ def _set_tile_size(image, tile_size):
     shape = image.shape
     if tile_size is not None and tile_size != ():
         if type(tile_size[0]) is str:
-            tile_size = [int(
-                tile_size[0].split(",")[0]), int(tile_size[0].split(",")[1])]
+            tile_size = [
+                int(tile_size[0].split(",")[0]),
+                int(tile_size[0].split(",")[1]),
+            ]
     else:
         tile_size = [shape[0], shape[1]]
     return tile_size
@@ -68,26 +73,24 @@ def disassemble_images(input_dir, fmt, tile_size, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     else:
-        print("Path {} already exists, might be overwriting data".format(
-            output_dir))
+        print("Path {} already exists, might be overwriting data".format(output_dir))
 
-    images = natsort.natsorted(
-        glob.glob(os.path.join(input_dir, "*" + fmt)))
+    images = natsort.natsorted(glob.glob(os.path.join(input_dir, "*" + fmt)))
     result_images = []
     for input_img in images:
-        image = cv2.imread(
-            input_img, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
+        image = cv2.imread(input_img, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR)
         tile_size = _set_tile_size(image, tile_size)
         split_images = split_mosaic(image, tile_size)
         for index, image in enumerate(split_images):
-            image = (
-                (image - image.min()) / (
-                    image.max() - image.min()) * 255).astype(np.uint8)
+            image = ((image - image.min()) / (image.max() - image.min()) * 255).astype(
+                np.uint8
+            )
             path = os.path.join(
                 output_dir,
                 "{}_{}.{}".format(
-                    os.path.basename(input_img).split(".")[0],
-                    index, "jpg"))
+                    os.path.basename(input_img).split(".")[0], index, "jpg"
+                ),
+            )
             cv2.imwrite(path, image)
             result_images.append(path)
 
@@ -95,13 +98,22 @@ def disassemble_images(input_dir, fmt, tile_size, output_dir):
 
 
 @click.command(help="Save disassembled mosaic images in a directory")  # noqa
-@click.option("--input_dir", help="Directory containing input images", required=True, type=str) # noqa
-@click.option("--fmt", help="Format of input images", required=True, type=str) # noqa
-@click.option("--tile_size", help="[x,y] list of tile size in x, y", required=False, multiple=True) # noqa
-@click.option("--output_dir", help="Absolute path to name to save the disassembled scaled uint8 jpg images to", required=True, type=str) # noqa
+@click.option(
+    "--input_dir", help="Directory containing input images", required=True, type=str
+)  # noqa
+@click.option("--fmt", help="Format of input images", required=True, type=str)  # noqa
+@click.option(
+    "--tile_size", help="[x,y] list of tile size in x, y", required=False, multiple=True
+)  # noqa
+@click.option(
+    "--output_dir",
+    help="Absolute path to name to save the disassembled scaled uint8 jpg images to",
+    required=True,
+    type=str,
+)  # noqa
 def disassemble(input_dir, fmt, tile_size, output_dir):
     disassemble_images(input_dir, fmt, tile_size, output_dir)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     disassemble()

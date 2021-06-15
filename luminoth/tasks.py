@@ -27,7 +27,7 @@ class Detector(object):
           the graph and makes the checkpoint loading fail).
     """
 
-    DEFAULT_CHECKPOINT = 'accurate'
+    DEFAULT_CHECKPOINT = "accurate"
 
     def __init__(self, checkpoint=None, config=None, prob=0.7, classes=None):
         """Instantiate a detector object with the appropriate config.
@@ -45,8 +45,8 @@ class Detector(object):
         """
         if checkpoint is not None and config is not None:
             raise ValueError(
-                'Only one of `checkpoint` or `config` must be specified in '
-                'order to instantiate a Detector.'
+                "Only one of `checkpoint` or `config` must be specified in "
+                "order to instantiate a Detector."
             )
 
         if checkpoint is None and config is None:
@@ -61,9 +61,9 @@ class Detector(object):
         # value of 0.5 is in use in the configs).
         # TODO: A model should always return all of its predictions. The
         # filtering should be done (if at all) by PredictorNetwork.
-        if config.model.type == 'fasterrcnn':
+        if config.model.type == "fasterrcnn":
             config.model.rcnn.proposals.min_prob_threshold = 0.0
-        elif config.model.type == 'ssd':
+        elif config.model.type == "ssd":
             config.model.proposals.min_prob_threshold = 0.0
 
         # TODO: Remove dependency on `PredictorNetwork` or clearly separate
@@ -74,15 +74,16 @@ class Detector(object):
 
         # Use the labels when available, integers when not.
         self._model_classes = (
-            self._network.class_labels if self._network.class_labels
+            self._network.class_labels
+            if self._network.class_labels
             else list(range(config.model.network.num_classes))
         )
         if classes:
             self.classes = set(classes)
             if not set(self._model_classes).issuperset(self.classes):
                 raise ValueError(
-                    '`classes` must be contained in the detector\'s classes. '
-                    'Available classes are: {}.'.format(self._model_classes)
+                    "`classes` must be contained in the detector's classes. "
+                    "Available classes are: {}.".format(self._model_classes)
                 )
         else:
             self.classes = set(self._model_classes)
@@ -148,10 +149,13 @@ class Detector(object):
         # now.
         predictions = []
         for image in images:
-            predictions.append([
-                pred for pred in self._network.predict_image(image)
-                if pred['prob'] >= prob and pred['label'] in classes
-            ])
+            predictions.append(
+                [
+                    pred
+                    for pred in self._network.predict_image(image)
+                    if pred["prob"] >= prob and pred["label"] in classes
+                ]
+            )
 
         if single_image:
             predictions = predictions[0]

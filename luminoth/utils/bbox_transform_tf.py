@@ -2,53 +2,54 @@ import tensorflow as tf
 
 
 def get_width_upright(bboxes):
-    with tf.name_scope('BoundingBoxTransform/get_width_upright'):
+    with tf.name_scope("BoundingBoxTransform/get_width_upright"):
         bboxes = tf.cast(bboxes, tf.float32)
         x1, y1, x2, y2 = tf.split(bboxes, 4, axis=1)
-        width = x2 - x1 + 1.
-        height = y2 - y1 + 1.
+        width = x2 - x1 + 1.0
+        height = y2 - y1 + 1.0
 
         # Calculate up right point of bbox (urx = up right x)
-        urx = x1 + .5 * width
-        ury = y1 + .5 * height
+        urx = x1 + 0.5 * width
+        ury = y1 + 0.5 * height
 
         return width, height, urx, ury
 
 
 def encode(bboxes, gt_boxes, variances=None):
-    with tf.name_scope('BoundingBoxTransform/encode'):
-        (bboxes_width, bboxes_height,
-         bboxes_urx, bboxes_ury) = get_width_upright(bboxes)
+    with tf.name_scope("BoundingBoxTransform/encode"):
+        (bboxes_width, bboxes_height, bboxes_urx, bboxes_ury) = get_width_upright(
+            bboxes
+        )
 
-        (gt_boxes_width, gt_boxes_height,
-         gt_boxes_urx, gt_boxes_ury) = get_width_upright(gt_boxes)
+        (
+            gt_boxes_width,
+            gt_boxes_height,
+            gt_boxes_urx,
+            gt_boxes_ury,
+        ) = get_width_upright(gt_boxes)
 
         if variances is None:
-            variances = [1., 1.]
+            variances = [1.0, 1.0]
 
-        targets_dx = (
-            gt_boxes_urx - bboxes_urx) / (bboxes_width * variances[0])
-        targets_dy = (
-            gt_boxes_ury - bboxes_ury) / (bboxes_height * variances[0])
+        targets_dx = (gt_boxes_urx - bboxes_urx) / (bboxes_width * variances[0])
+        targets_dy = (gt_boxes_ury - bboxes_ury) / (bboxes_height * variances[0])
 
         targets_dw = tf.log(gt_boxes_width / bboxes_width) / variances[1]
         targets_dh = tf.log(gt_boxes_height / bboxes_height) / variances[1]
 
-        targets = tf.concat(
-            [targets_dx, targets_dy, targets_dw, targets_dh], axis=1)
+        targets = tf.concat([targets_dx, targets_dy, targets_dw, targets_dh], axis=1)
 
         return targets
 
 
 def decode(roi, deltas, variances=None):
-    with tf.name_scope('BoundingBoxTransform/decode'):
-        (roi_width, roi_height,
-         roi_urx, roi_ury) = get_width_upright(roi)
+    with tf.name_scope("BoundingBoxTransform/decode"):
+        (roi_width, roi_height, roi_urx, roi_ury) = get_width_upright(roi)
 
         dx, dy, dw, dh = tf.split(deltas, 4, axis=1)
 
         if variances is None:
-            variances = [1., 1.]
+            variances = [1.0, 1.0]
 
         pred_ur_x = dx * roi_width * variances[0] + roi_urx
         pred_ur_y = dy * roi_height * variances[0] + roi_ury
@@ -59,11 +60,10 @@ def decode(roi, deltas, variances=None):
         bbox_y1 = pred_ur_y - 0.5 * pred_h
 
         # This -1. extra is different from reference implementation.
-        bbox_x2 = pred_ur_x + 0.5 * pred_w - 1.
-        bbox_y2 = pred_ur_y + 0.5 * pred_h - 1.
+        bbox_x2 = pred_ur_x + 0.5 * pred_w - 1.0
+        bbox_y2 = pred_ur_y + 0.5 * pred_h - 1.0
 
-        bboxes = tf.concat(
-            [bbox_x1, bbox_y1, bbox_x2, bbox_y2], axis=1)
+        bboxes = tf.concat([bbox_x1, bbox_y1, bbox_x2, bbox_y2], axis=1)
 
         return bboxes
 
@@ -83,7 +83,7 @@ def clip_boxes(bboxes, imshape):
         Tensor with same shape as bboxes but making sure that none
         of the bboxes are outside the image.
     """
-    with tf.name_scope('BoundingBoxTransform/clip_bboxes'):
+    with tf.name_scope("BoundingBoxTransform/clip_bboxes"):
         bboxes = tf.cast(bboxes, dtype=tf.float32)
         imshape = tf.cast(imshape, dtype=tf.float32)
 
@@ -118,17 +118,13 @@ def change_order(bboxes):
     Returns:
         bboxes: A Tensor of shape (total_bboxes, 4) with the order swaped.
     """
-    with tf.name_scope('BoundingBoxTransform/change_order'):
-        first_min, second_min, first_max, second_max = tf.unstack(
-            bboxes, axis=1
-        )
-        bboxes = tf.stack(
-            [second_min, first_min, second_max, first_max], axis=1
-        )
+    with tf.name_scope("BoundingBoxTransform/change_order"):
+        first_min, second_min, first_max, second_max = tf.unstack(bboxes, axis=1)
+        bboxes = tf.stack([second_min, first_min, second_max, first_max], axis=1)
         return bboxes
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import numpy as np
 
     bboxes = tf.placeholder(tf.float32)
@@ -145,10 +141,13 @@ if __name__ == '__main__':
     final_decoded_bboxes = clip_boxes(decoded_bboxes, imshape)
 
     with tf.Session() as sess:
-        final_decoded_bboxes = sess.run(final_decoded_bboxes, feed_dict={
-            bboxes: bboxes_val,
-            gt_boxes: gt_boxes_val,
-            imshape: imshape_val,
-        })
+        final_decoded_bboxes = sess.run(
+            final_decoded_bboxes,
+            feed_dict={
+                bboxes: bboxes_val,
+                gt_boxes: gt_boxes_val,
+                imshape: imshape_val,
+            },
+        )
 
         assert np.all(gt_boxes_val == final_decoded_bboxes)

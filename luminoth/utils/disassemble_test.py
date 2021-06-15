@@ -15,6 +15,7 @@ class DisassembleTest(tf.test.TestCase):
     """
     Tests for disassemble
     """
+
     def setUp(self):
         self.tempfiles_to_delete = []
         self.gray_image_shape = [50, 40]
@@ -36,8 +37,7 @@ class DisassembleTest(tf.test.TestCase):
         # Write input image to test
         location = tempfile.mkdtemp()
         for i in range(num_images):
-            im_filename = "test_bb_labels_{}{}".format(
-                i, self.input_image_format)
+            im_filename = "test_bb_labels_{}{}".format(i, self.input_image_format)
             image_save_path = os.path.join(location, im_filename)
             cv2.imwrite(image_save_path, self._gen_image(*shape))
             self.tempfiles_to_delete.append(image_save_path)
@@ -50,11 +50,12 @@ class DisassembleTest(tf.test.TestCase):
         tile_size = [10, 8]
         im_dir = self.write_test_data(2, self.gray_image_shape)
         images = natsort.natsorted(
-            glob.glob(os.path.join(im_dir, "*" + self.input_image_format)))
+            glob.glob(os.path.join(im_dir, "*" + self.input_image_format))
+        )
 
         split_images = split_mosaic(
-            cv2.imread(images[0], cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR),
-            tile_size)
+            cv2.imread(images[0], cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR), tile_size
+        )
 
         # Assert mosaiced_image expected shape
         assert len(split_images) == 25
@@ -69,11 +70,12 @@ class DisassembleTest(tf.test.TestCase):
         tile_size = [10, 8]
         im_dir = self.write_test_data(1, self.color_image_shape)
         images = natsort.natsorted(
-            glob.glob(os.path.join(im_dir, "*" + self.input_image_format)))
+            glob.glob(os.path.join(im_dir, "*" + self.input_image_format))
+        )
 
         split_images = split_mosaic(
-            cv2.imread(images[0], cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR),
-            tile_size)
+            cv2.imread(images[0], cv2.IMREAD_ANYDEPTH | cv2.IMREAD_ANYCOLOR), tile_size
+        )
 
         # Assert mosaiced_image expected shape
         assert len(split_images) == 25
@@ -89,14 +91,10 @@ class DisassembleTest(tf.test.TestCase):
         im_dir = self.write_test_data(2, self.gray_image_shape)
         output_dir = tempfile.mkdtemp()
 
-        disassemble_images(
-            im_dir,
-            self.input_image_format,
-            tile_size,
-            output_dir)
+        disassemble_images(im_dir, self.input_image_format, tile_size, output_dir)
         split_images = natsort.natsorted(
-            glob.glob(
-                os.path.join(output_dir, "*" + self.output_image_format)))
+            glob.glob(os.path.join(output_dir, "*" + self.output_image_format))
+        )
         # Assert mosaiced_image expected shape
         assert len(split_images) == 50
         for path in split_images:
@@ -112,14 +110,10 @@ class DisassembleTest(tf.test.TestCase):
         im_dir = self.write_test_data(3, self.color_image_shape)
         output_dir = tempfile.mkdtemp()
 
-        disassemble_images(
-            im_dir,
-            self.input_image_format,
-            tile_size,
-            output_dir)
+        disassemble_images(im_dir, self.input_image_format, tile_size, output_dir)
         split_images = natsort.natsorted(
-            glob.glob(
-                os.path.join(output_dir, "*" + self.output_image_format)))
+            glob.glob(os.path.join(output_dir, "*" + self.output_image_format))
+        )
         # Assert mosaiced_image expected shape
         assert len(split_images) == 75
         for path in split_images:
@@ -128,5 +122,5 @@ class DisassembleTest(tf.test.TestCase):
             assert image.shape == tuple((tile_size[0], tile_size[1], 3))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     tf.test.main()

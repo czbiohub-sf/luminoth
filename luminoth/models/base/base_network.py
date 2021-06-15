@@ -15,16 +15,18 @@ _R_MEAN = 123.68
 _G_MEAN = 116.78
 _B_MEAN = 103.94
 
-VALID_ARCHITECTURES = set([
-    'resnet_v1_50',
-    'resnet_v1_101',
-    'resnet_v1_152',
-    'resnet_v2_50',
-    'resnet_v2_101',
-    'resnet_v2_152',
-    'vgg_16',
-    'truncated_vgg_16',
-])
+VALID_ARCHITECTURES = set(
+    [
+        "resnet_v1_50",
+        "resnet_v1_101",
+        "resnet_v1_152",
+        "resnet_v2_50",
+        "resnet_v2_101",
+        "resnet_v2_152",
+        "vgg_16",
+        "truncated_vgg_16",
+    ]
+)
 
 
 class BaseNetwork(snt.AbstractModule):
@@ -36,21 +38,21 @@ class BaseNetwork(snt.AbstractModule):
     helpful additions.
     """
 
-    def __init__(self, config, name='base_network'):
+    def __init__(self, config, name="base_network"):
         super(BaseNetwork, self).__init__(name=name)
-        if config.get('architecture') not in VALID_ARCHITECTURES:
-            raise ValueError('Invalid architecture: "{}"'.format(
-                config.get('architecture')
-            ))
+        if config.get("architecture") not in VALID_ARCHITECTURES:
+            raise ValueError(
+                'Invalid architecture: "{}"'.format(config.get("architecture"))
+            )
 
-        self._architecture = config.get('architecture')
+        self._architecture = config.get("architecture")
         self._config = config
 
         self.pretrained_weights_scope = None
 
     @property
     def arg_scope(self):
-        arg_scope_kwargs = self._config.get('arg_scope', {})
+        arg_scope_kwargs = self._config.get("arg_scope", {})
 
         if self.vgg_type:
             return vgg.vgg_arg_scope(**arg_scope_kwargs)
@@ -62,16 +64,16 @@ class BaseNetwork(snt.AbstractModule):
             # It's the same arg_scope for v1 or v2.
             return resnet_v2.resnet_utils.resnet_arg_scope(**arg_scope_kwargs)
 
-        raise ValueError('Invalid architecture: "{}"'.format(
-            self._config.get('architecture')
-        ))
+        raise ValueError(
+            'Invalid architecture: "{}"'.format(self._config.get("architecture"))
+        )
 
     def network(self, is_training=False):
         if self.vgg_type:
             return functools.partial(
                 getattr(vgg, self._architecture),
                 is_training=is_training,
-                spatial_squeeze=self._config.get('spatial_squeeze', False),
+                spatial_squeeze=self._config.get("spatial_squeeze", False),
             )
         elif self.truncated_vgg_type:
             return functools.partial(
@@ -80,53 +82,51 @@ class BaseNetwork(snt.AbstractModule):
             )
 
         elif self.resnet_v1_type:
-            output_stride = self._config.get('output_stride')
-            train_batch_norm = (
-                is_training and self._config.get('train_batch_norm')
-            )
+            output_stride = self._config.get("output_stride")
+            train_batch_norm = is_training and self._config.get("train_batch_norm")
             return functools.partial(
                 getattr(resnet_v1, self._architecture),
                 is_training=train_batch_norm,
                 num_classes=None,
                 global_pool=False,
-                output_stride=output_stride
+                output_stride=output_stride,
             )
         elif self.resnet_v2_type:
-            output_stride = self._config.get('output_stride')
+            output_stride = self._config.get("output_stride")
             return functools.partial(
                 getattr(resnet_v2, self._architecture),
                 is_training=is_training,
-                num_classes=self._config.get('num_classes'),
+                num_classes=self._config.get("num_classes"),
                 output_stride=output_stride,
             )
 
     @property
     def vgg_type(self):
-        return self._architecture.startswith('vgg')
+        return self._architecture.startswith("vgg")
 
     @property
     def vgg_16_type(self):
-        return self._architecture.startswith('vgg_16')
+        return self._architecture.startswith("vgg_16")
 
     @property
     def truncated_vgg_type(self):
-        return self._architecture.startswith('truncated_vgg')
+        return self._architecture.startswith("truncated_vgg")
 
     @property
     def truncated_vgg_16_type(self):
-        return self._architecture.startswith('truncated_vgg_16')
+        return self._architecture.startswith("truncated_vgg_16")
 
     @property
     def resnet_type(self):
-        return self._architecture.startswith('resnet')
+        return self._architecture.startswith("resnet")
 
     @property
     def resnet_v1_type(self):
-        return self._architecture.startswith('resnet_v1')
+        return self._architecture.startswith("resnet_v1")
 
     @property
     def resnet_v2_type(self):
-        return self._architecture.startswith('resnet_v2')
+        return self._architecture.startswith("resnet_v2")
 
     @property
     def default_image_size(self):
@@ -146,8 +146,8 @@ class BaseNetwork(snt.AbstractModule):
             net, end_points = self.network(is_training=is_training)(inputs)
 
             return {
-                'net': net,
-                'end_points': end_points,
+                "net": net,
+                "end_points": end_points,
             }
 
     def preprocess(self, inputs):
@@ -186,8 +186,8 @@ class BaseNetwork(snt.AbstractModule):
             outputs: A Tensor of images normalized between -1 and 1.
                 Its shape is the same as the input.
         """
-        inputs = inputs / 255.
-        inputs = (inputs - 0.5) * 2.
+        inputs = inputs / 255.0
+        inputs = (inputs - 0.5) * 2.0
         return inputs
 
     def get_checkpoint_file(self):
@@ -198,8 +198,7 @@ class BaseNetwork(snt.AbstractModule):
         if self.pretrained_weights_scope:
             # We may have defined the base network in a particular scope
             module_variables = tf.get_collection(
-                tf.GraphKeys.MODEL_VARIABLES,
-                scope=self.pretrained_weights_scope
+                tf.GraphKeys.MODEL_VARIABLES, scope=self.pretrained_weights_scope
             )
         else:
             module_variables = snt.get_variables_in_module(
@@ -224,7 +223,7 @@ class BaseNetwork(snt.AbstractModule):
         """
         all_variables = snt.get_variables_in_module(self)
 
-        fine_tune_from = self._config.get('fine_tune_from')
+        fine_tune_from = self._config.get("fine_tune_from")
         if fine_tune_from is None:
             return all_variables
 
@@ -235,7 +234,7 @@ class BaseNetwork(snt.AbstractModule):
         except StopIteration:
             raise ValueError(
                 '"{}" is an invalid value of fine_tune_from for this '
-                'architecture.'.format(fine_tune_from)
+                "architecture.".format(fine_tune_from)
             )
 
         return all_variables[index:]

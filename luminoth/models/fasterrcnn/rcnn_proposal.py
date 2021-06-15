@@ -23,8 +23,8 @@ class RCNNProposal(snt.AbstractModule):
     and in general. These values are easily modifiable in the configuration
     files.
     """
-    def __init__(self, num_classes, config, variances=None,
-                 name='rcnn_proposal'):
+
+    def __init__(self, num_classes, config, variances=None, name="rcnn_proposal"):
         """
         Args:
             num_classes: Total number of classes RCNN is classifying.
@@ -78,7 +78,7 @@ class RCNNProposal(snt.AbstractModule):
             # Apply the class-specific transformations to the proposals to
             # obtain the current class' prediction.
             class_prob = cls_prob[:, class_id + 1]  # 0 is background class.
-            class_bboxes = bbox_pred[:, (4 * class_id):(4 * class_id + 4)]
+            class_bboxes = bbox_pred[:, (4 * class_id) : (4 * class_id + 4)]
             raw_class_objects = decode(
                 proposals,
                 class_bboxes,
@@ -90,15 +90,11 @@ class RCNNProposal(snt.AbstractModule):
 
             # Filter objects based on the min probability threshold and on them
             # having a valid area.
-            prob_filter = tf.greater_equal(
-                class_prob, self._min_prob_threshold
-            )
+            prob_filter = tf.greater_equal(class_prob, self._min_prob_threshold)
 
             (x_min, y_min, x_max, y_max) = tf.unstack(class_objects, axis=1)
             area_filter = tf.greater(
-                tf.maximum(x_max - x_min, 0.0)
-                * tf.maximum(y_max - y_min, 0.0),
-                0.0
+                tf.maximum(x_max - x_min, 0.0) * tf.maximum(y_max - y_min, 0.0), 0.0
             )
 
             object_filter = tf.logical_and(area_filter, prob_filter)
@@ -112,8 +108,10 @@ class RCNNProposal(snt.AbstractModule):
 
             # Apply class NMS.
             class_selected_idx = tf.image.non_max_suppression(
-                class_objects_tf, class_prob, self._class_max_detections,
-                iou_threshold=self._class_nms_threshold
+                class_objects_tf,
+                class_prob,
+                self._class_max_detections,
+                iou_threshold=self._class_nms_threshold,
             )
 
             # Using NMS resulting indices, gather values from Tensors.
@@ -140,25 +138,20 @@ class RCNNProposal(snt.AbstractModule):
         proposal_label = tf.concat(selected_labels, axis=0)
         proposal_label_prob = tf.concat(selected_probs, axis=0)
 
-        tf.summary.histogram(
-            'proposal_cls_scores', proposal_label_prob, ['rcnn']
-        )
+        tf.summary.histogram("proposal_cls_scores", proposal_label_prob, ["rcnn"])
 
         # Get top-k detections of all classes.
-        k = tf.minimum(
-            self._total_max_detections,
-            tf.shape(proposal_label_prob)[0]
-        )
+        k = tf.minimum(self._total_max_detections, tf.shape(proposal_label_prob)[0])
         top_k = tf.nn.top_k(proposal_label_prob, k=k)
         top_k_proposal_label_prob = top_k.values
         top_k_objects = tf.gather(objects, top_k.indices)
         top_k_proposal_label = tf.gather(proposal_label, top_k.indices)
 
         return {
-            'objects': top_k_objects,
-            'proposal_label': top_k_proposal_label,
-            'proposal_label_prob': top_k_proposal_label_prob,
-            'selected_boxes': selected_boxes,
-            'selected_probs': selected_probs,
-            'selected_labels': selected_labels,
+            "objects": top_k_objects,
+            "proposal_label": top_k_proposal_label,
+            "proposal_label_prob": top_k_proposal_label_prob,
+            "selected_boxes": selected_boxes,
+            "selected_probs": selected_probs,
+            "selected_labels": selected_labels,
         }

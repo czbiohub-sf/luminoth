@@ -37,10 +37,13 @@ def encode(proposals, gt_boxes):
             two boxes.
     """
 
-    (proposal_widths, proposal_heights,
-     proposal_center_x, proposal_center_y) = get_bbox_properties(proposals)
-    (gt_widths, gt_heights,
-     gt_center_x, gt_center_y) = get_bbox_properties(gt_boxes)
+    (
+        proposal_widths,
+        proposal_heights,
+        proposal_center_x,
+        proposal_center_y,
+    ) = get_bbox_properties(proposals)
+    (gt_widths, gt_heights, gt_center_x, gt_center_y) = get_bbox_properties(gt_boxes)
 
     # We need to apply targets as specified by the paper parametrization
     # Faster RCNN 3.1.2
@@ -88,12 +91,14 @@ def decode(bboxes, deltas):
     pred_h = np.exp(dh) * heights
 
     # Calculate (x_min, y_min, x_max, y_max) and pack them together.
-    pred_boxes = np.column_stack((
-        pred_ctr_x - 0.5 * pred_w,
-        pred_ctr_y - 0.5 * pred_h,
-        pred_ctr_x + 0.5 * pred_w - 1.0,
-        pred_ctr_y + 0.5 * pred_h - 1.0,
-    ))
+    pred_boxes = np.column_stack(
+        (
+            pred_ctr_x - 0.5 * pred_w,
+            pred_ctr_y - 0.5 * pred_h,
+            pred_ctr_x + 0.5 * pred_w - 1.0,
+            pred_ctr_y + 0.5 * pred_h - 1.0,
+        )
+    )
 
     return pred_boxes
 
@@ -127,11 +132,11 @@ def unmap(data, count, inds, fill=0):
     count)
     """
     if len(data.shape) == 1:
-        ret = np.empty((count, ), dtype=np.float32)
+        ret = np.empty((count,), dtype=np.float32)
         ret.fill(fill)
         ret[inds] = data
     else:
-        ret = np.empty((count, ) + data.shape[1:], dtype=np.float32)
+        ret = np.empty((count,) + data.shape[1:], dtype=np.float32)
         ret.fill(fill)
         ret[inds, :] = data
     return ret

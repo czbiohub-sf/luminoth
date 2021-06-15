@@ -2,18 +2,25 @@ import tensorflow as tf
 
 from luminoth.datasets.base_dataset import BaseDataset
 from luminoth.utils.image import (
-    resize_image_fixed, resize_image, flip_image, random_patch, random_resize,
-    random_distortion, expand,
-    rot90, random_patch_gaussian)
+    resize_image_fixed,
+    resize_image,
+    flip_image,
+    random_patch,
+    random_resize,
+    random_distortion,
+    expand,
+    rot90,
+    random_patch_gaussian,
+)
 
 DATA_AUGMENTATION_STRATEGIES = {
-    'flip': flip_image,
-    'patch': random_patch,
-    'resize': random_resize,
-    'distortion': random_distortion,
-    'expand': expand,
-    'rotate': rot90,
-    'gaussian': random_patch_gaussian,
+    "flip": flip_image,
+    "patch": random_patch,
+    "resize": random_resize,
+    "distortion": random_distortion,
+    "expand": expand,
+    "rotate": rot90,
+    "gaussian": random_patch_gaussian,
 }
 
 
@@ -40,22 +47,22 @@ class ObjectDetectionDataset(BaseDataset):
     """
 
     CONTEXT_FEATURES = {
-        'image_raw': tf.FixedLenFeature([], tf.string),
-        'filename': tf.FixedLenFeature([], tf.string),
-        'width': tf.FixedLenFeature([], tf.int64),
-        'height': tf.FixedLenFeature([], tf.int64),
-        'depth': tf.FixedLenFeature([], tf.int64),
+        "image_raw": tf.FixedLenFeature([], tf.string),
+        "filename": tf.FixedLenFeature([], tf.string),
+        "width": tf.FixedLenFeature([], tf.int64),
+        "height": tf.FixedLenFeature([], tf.int64),
+        "depth": tf.FixedLenFeature([], tf.int64),
     }
 
     SEQUENCE_FEATURES = {
-        'label': tf.VarLenFeature(tf.int64),
-        'xmin': tf.VarLenFeature(tf.int64),
-        'xmax': tf.VarLenFeature(tf.int64),
-        'ymin': tf.VarLenFeature(tf.int64),
-        'ymax': tf.VarLenFeature(tf.int64),
+        "label": tf.VarLenFeature(tf.int64),
+        "xmin": tf.VarLenFeature(tf.int64),
+        "xmax": tf.VarLenFeature(tf.int64),
+        "ymin": tf.VarLenFeature(tf.int64),
+        "ymax": tf.VarLenFeature(tf.int64),
     }
 
-    def __init__(self, config, name='object_detection_dataset', **kwargs):
+    def __init__(self, config, name="object_detection_dataset", **kwargs):
         """
         Save general purpose attributes for Dataset module.
 
@@ -63,10 +70,8 @@ class ObjectDetectionDataset(BaseDataset):
             config: Config object with all the session properties.
         """
         super(ObjectDetectionDataset, self).__init__(config, **kwargs)
-        self._image_min_size = config.dataset.image_preprocessing.get(
-            'min_size')
-        self._image_max_size = config.dataset.image_preprocessing.get(
-            'max_size')
+        self._image_min_size = config.dataset.image_preprocessing.get("min_size")
+        self._image_max_size = config.dataset.image_preprocessing.get("max_size")
         # In case no keys are defined, default to empty list.
         self._data_augmentation = config.dataset.data_augmentation or []
 
@@ -79,10 +84,14 @@ class ObjectDetectionDataset(BaseDataset):
         image, bboxes, applied_augmentations = self._augment(image, bboxes)
         image, bboxes, scale_factor = self._resize_image(image, bboxes)
 
-        return image, bboxes, {
-            'scale_factor': scale_factor,
-            'applied_augmentations': applied_augmentations,
-        }
+        return (
+            image,
+            bboxes,
+            {
+                "scale_factor": scale_factor,
+                "applied_augmentations": applied_augmentations,
+            },
+        )
 
     def read_record(self, record):
         """Parse record TFRecord into a set a set of values, names and types
@@ -98,44 +107,42 @@ class ObjectDetectionDataset(BaseDataset):
         context_example, sequence_example = tf.parse_single_sequence_example(
             record,
             context_features=self.CONTEXT_FEATURES,
-            sequence_features=self.SEQUENCE_FEATURES
+            sequence_features=self.SEQUENCE_FEATURES,
         )
 
         # Decode image
-        image_raw = tf.image.decode_image(
-            context_example['image_raw'], channels=3
-        )
+        image_raw = tf.image.decode_image(context_example["image_raw"], channels=3)
 
         image = tf.cast(image_raw, tf.float32)
 
-        height = tf.cast(context_example['height'], tf.int32)
-        width = tf.cast(context_example['width'], tf.int32)
+        height = tf.cast(context_example["height"], tf.int32)
+        width = tf.cast(context_example["width"], tf.int32)
         image_shape = tf.stack([height, width, 3])
         image = tf.reshape(image, image_shape)
 
-        label = self._sparse_to_tensor(sequence_example['label'])
-        xmin = self._sparse_to_tensor(sequence_example['xmin'])
-        xmax = self._sparse_to_tensor(sequence_example['xmax'])
-        ymin = self._sparse_to_tensor(sequence_example['ymin'])
-        ymax = self._sparse_to_tensor(sequence_example['ymax'])
+        label = self._sparse_to_tensor(sequence_example["label"])
+        xmin = self._sparse_to_tensor(sequence_example["xmin"])
+        xmax = self._sparse_to_tensor(sequence_example["xmax"])
+        ymin = self._sparse_to_tensor(sequence_example["ymin"])
+        ymax = self._sparse_to_tensor(sequence_example["ymax"])
 
         # Stack parsed tensors to define bounding boxes of shape (num_boxes, 5)
         bboxes = tf.stack([xmin, ymin, xmax, ymax, label], axis=1)
 
         image, bboxes, preprocessing_details = self.preprocess(image, bboxes)
 
-        filename = tf.cast(context_example['filename'], tf.string)
+        filename = tf.cast(context_example["filename"], tf.string)
 
         # TODO: Send additional metadata through the queue (scale_factor,
         # applied_augmentations)
 
         queue_dtypes = [tf.float32, tf.int32, tf.string, tf.float32]
-        queue_names = ['image', 'bboxes', 'filename', 'scale_factor']
+        queue_names = ["image", "bboxes", "filename", "scale_factor"]
         queue_values = {
-            'image': image,
-            'bboxes': bboxes,
-            'filename': filename,
-            'scale_factor': preprocessing_details['scale_factor'],
+            "image": image,
+            "bboxes": bboxes,
+            "filename": filename,
+            "scale_factor": preprocessing_details["scale_factor"],
         }
 
         return queue_values, queue_dtypes, queue_names
@@ -165,35 +172,31 @@ class ObjectDetectionDataset(BaseDataset):
         for aug_config in self._data_augmentation:
             if len(aug_config.keys()) != 1:
                 raise ValueError(
-                    'Invalid data_augmentation definition: "{}"'.format(
-                        aug_config))
+                    'Invalid data_augmentation definition: "{}"'.format(aug_config)
+                )
 
             aug_type = list(aug_config.keys())[0]
             if aug_type not in DATA_AUGMENTATION_STRATEGIES:
                 tf.logging.warning(
-                    'Invalid data augmentation strategy "{}". Ignoring'.format(
-                        aug_type))
+                    'Invalid data augmentation strategy "{}". Ignoring'.format(aug_type)
+                )
                 continue
 
             aug_config = aug_config[aug_type]
             aug_fn = DATA_AUGMENTATION_STRATEGIES[aug_type]
 
             random_number = tf.random_uniform([], seed=self._seed)
-            prob = tf.to_float(aug_config.pop('prob', default_prob))
+            prob = tf.to_float(aug_config.pop("prob", default_prob))
             apply_aug_strategy = tf.less(random_number, prob)
 
             augmented = aug_fn(image, bboxes, **aug_config)
 
             image = tf.cond(
-                apply_aug_strategy,
-                lambda: augmented['image'],
-                lambda: image
+                apply_aug_strategy, lambda: augmented["image"], lambda: image
             )
             if bboxes is not None:
                 bboxes = tf.cond(
-                    apply_aug_strategy,
-                    lambda: augmented.get('bboxes'),
-                    lambda: bboxes
+                    apply_aug_strategy, lambda: augmented.get("bboxes"), lambda: bboxes
                 )
             applied_data_augmentation.append({aug_type: apply_aug_strategy})
 
@@ -222,16 +225,17 @@ class ObjectDetectionDataset(BaseDataset):
         """
         if self._fixed_resize:
             resized = resize_image_fixed(
-                image, self._image_fixed_height, self._image_fixed_width,
-                bboxes=bboxes
+                image, self._image_fixed_height, self._image_fixed_width, bboxes=bboxes
             )
         else:
             resized = resize_image(
-                image, bboxes=bboxes, min_size=self._image_min_size,
-                max_size=self._image_max_size
+                image,
+                bboxes=bboxes,
+                min_size=self._image_min_size,
+                max_size=self._image_max_size,
             )
 
-        return resized['image'], resized.get('bboxes'), resized['scale_factor']
+        return resized["image"], resized.get("bboxes"), resized["scale_factor"]
 
     def _sparse_to_tensor(self, sparse_tensor, dtype=tf.int32, axis=[1]):
         return tf.squeeze(

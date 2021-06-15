@@ -30,8 +30,9 @@ def smooth_l1_loss(bbox_prediction, bbox_target, sigma=3.0):
         tf.where(
             abs_diff_lt_sigma2,
             0.5 * sigma2 * tf.square(abs_diff),
-            abs_diff - 0.5 / sigma2
-        ), [1]
+            abs_diff - 0.5 / sigma2,
+        ),
+        [1],
     )
     return bbox_loss
 
@@ -64,9 +65,7 @@ def focal_loss(prediction_tensor, target_tensor, gamma=None):
     epsilon = 1e-9
     y_pred = tf.nn.softmax(prediction_tensor)  # [num_anchors, num_classes]
 
-    loss = -target_tensor * \
-        ((1 - y_pred) ** gamma) * \
-        tf.math.log(y_pred + epsilon)
+    loss = -target_tensor * ((1 - y_pred) ** gamma) * tf.math.log(y_pred + epsilon)
 
     # Reducing the loss across classes dimensions to [num_anchors]
     loss = tf.reduce_sum(loss, axis=1)

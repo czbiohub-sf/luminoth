@@ -14,4 +14,4 @@ def read_image(path):
         `numpy.ndarray` of size `(height, width, channels)`.
     """
     full_path = os.path.expanduser(path)
-    return np.array(Image.open(full_path).convert('RGB'))
+    return np.array(Image.open(full_path).convert("RGB"))

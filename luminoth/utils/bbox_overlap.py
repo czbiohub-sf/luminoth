@@ -23,7 +23,7 @@ def bbox_overlap_tf(bboxes1, bboxes2):
         with the IoU (intersection over union) of bboxes1[i] and bboxes2[j]
         in [i, j].
     """
-    with tf.name_scope('bbox_overlap'):
+    with tf.name_scope("bbox_overlap"):
         x11, y11, x12, y12 = tf.split(bboxes1, 4, axis=1)
         x21, y21, x22, y22 = tf.split(bboxes2, 4, axis=1)
 
@@ -33,9 +33,8 @@ def bbox_overlap_tf(bboxes1, bboxes2):
         xI2 = tf.minimum(x12, tf.transpose(x22))
         yI2 = tf.minimum(y12, tf.transpose(y22))
 
-        intersection = (
-            tf.maximum(xI2 - xI1 + 1., 0.) *
-            tf.maximum(yI2 - yI1 + 1., 0.)
+        intersection = tf.maximum(xI2 - xI1 + 1.0, 0.0) * tf.maximum(
+            yI2 - yI1 + 1.0, 0.0
         )
 
         bboxes1_area = (x12 - x11 + 1) * (y12 - y11 + 1)
@@ -69,18 +68,13 @@ def bbox_overlap(bboxes1, bboxes2):
     xI2 = np.minimum(bboxes1[:, [2]], bboxes2[:, [2]].T)
     yI2 = np.minimum(bboxes1[:, [3]], bboxes2[:, [3]].T)
 
-    intersection = (
-        np.maximum(xI2 - xI1 + 1, 0.) *
-        np.maximum(yI2 - yI1 + 1, 0.)
-    )
+    intersection = np.maximum(xI2 - xI1 + 1, 0.0) * np.maximum(yI2 - yI1 + 1, 0.0)
 
-    bboxes1_area = (
-        (bboxes1[:, [2]] - bboxes1[:, [0]] + 1) *
-        (bboxes1[:, [3]] - bboxes1[:, [1]] + 1)
+    bboxes1_area = (bboxes1[:, [2]] - bboxes1[:, [0]] + 1) * (
+        bboxes1[:, [3]] - bboxes1[:, [1]] + 1
     )
-    bboxes2_area = (
-        (bboxes2[:, [2]] - bboxes2[:, [0]] + 1) *
-        (bboxes2[:, [3]] - bboxes2[:, [1]] + 1)
+    bboxes2_area = (bboxes2[:, [2]] - bboxes2[:, [0]] + 1) * (
+        bboxes2[:, [3]] - bboxes2[:, [1]] + 1
     )
 
     # Calculate the union as the sum of areas minus intersection
@@ -90,5 +84,5 @@ def bbox_overlap(bboxes1, bboxes2):
     iou = np.zeros((bboxes1.shape[0], bboxes2.shape[0]))
 
     # Only divide where the intersection is > 0
-    np.divide(intersection, union, out=iou, where=intersection > 0.)
+    np.divide(intersection, union, out=iou, where=intersection > 0.0)
     return iou

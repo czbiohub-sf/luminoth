@@ -17,10 +17,15 @@ from luminoth.predict import predict
 from luminoth.tools import checkpoint, cloud, dataset, server
 from luminoth.train import train
 from luminoth.utils import (
-    split_train_val, mosaic, disassemble, overlay_bbs, data_aug_demo)
+    split_train_val,
+    mosaic,
+    disassemble,
+    overlay_bbs,
+    data_aug_demo,
+)
 
 
-CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)

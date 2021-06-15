@@ -7,9 +7,7 @@ import tensorflow as tf
 from PIL import Image
 
 from luminoth.tools.dataset.readers import InvalidDataDirectory
-from luminoth.tools.dataset.readers.object_detection import (
-    ObjectDetectionReader
-)
+from luminoth.tools.dataset.readers.object_detection import ObjectDetectionReader
 from luminoth.utils.config import is_basestring
 from luminoth.utils.dataset import read_image
 
@@ -50,7 +48,7 @@ class CSVReader(ObjectDetectionReader):
     *must* be present. Extra columns will be ignored.
     """
 
-    DEFAULT_COLUMNS = ['image_id', 'xmin', 'ymin', 'xmax', 'ymax', 'label']
+    DEFAULT_COLUMNS = ["image_id", "xmin", "ymin", "xmax", "ymax", "label"]
 
     def __init__(self, data_dir, split, headers=True, columns=None, **kwargs):
         """Initializes the reader, allowing to override internal settings.
@@ -72,24 +70,24 @@ class CSVReader(ObjectDetectionReader):
         self._split = split
 
         self._annotations_path = os.path.join(
-            self._data_dir, '{}.csv'.format(self._split)
+            self._data_dir, "{}.csv".format(self._split)
         )
         if not tf.gfile.Exists(self._annotations_path):
             raise InvalidDataDirectory(
-                'CSV annotation file not found. Should be located at '
-                '`{}`'.format(self._annotations_path)
+                "CSV annotation file not found. Should be located at "
+                "`{}`".format(self._annotations_path)
             )
 
         self._images_dir = os.path.join(self._data_dir, self._split)
         if not tf.gfile.Exists(self._images_dir):
             raise InvalidDataDirectory(
-                'Image directory not found. Should be located at '
-                '`{}`'.format(self._images_dir)
+                "Image directory not found. Should be located at "
+                "`{}`".format(self._images_dir)
             )
 
         if columns is not None:
             if is_basestring(columns):
-                columns = columns.split(',')
+                columns = columns.split(",")
         else:
             columns = self.DEFAULT_COLUMNS
         self._columns = columns
@@ -111,11 +109,15 @@ class CSVReader(ObjectDetectionReader):
         return len(self._get_records())
 
     def get_classes(self):
-        return sorted(set([
-            a['label']
-            for annotations in self._get_records().values()
-            for a in annotations
-        ]))
+        return sorted(
+            set(
+                [
+                    a["label"]
+                    for annotations in self._get_records().values()
+                    for a in annotations
+                ]
+            )
+        )
 
     def iterate(self):
         records = self._get_records()
@@ -131,7 +133,7 @@ class CSVReader(ObjectDetectionReader):
                 image = read_image(image_path)
             except tf.errors.NotFoundError:
                 tf.logging.warning(
-                    'Image `{}` at `{}` couldn\'t be opened.'.format(
+                    "Image `{}` at `{}` couldn't be opened.".format(
                         image_id, image_path
                     )
                 )
@@ -145,33 +147,35 @@ class CSVReader(ObjectDetectionReader):
             gt_boxes = []
             for annotation in annotations:
                 try:
-                    label_id = self.classes.index(annotation['label'])
+                    label_id = self.classes.index(annotation["label"])
                 except ValueError:
                     tf.logging.warning(
-                        'Error finding id for image `{}`, label `{}`.'.format(
-                            image_id, annotation['label']
+                        "Error finding id for image `{}`, label `{}`.".format(
+                            image_id, annotation["label"]
                         )
                     )
                     continue
 
-                gt_boxes.append({
-                    'label': label_id,
-                    'xmin': annotation['xmin'],
-                    'ymin': annotation['ymin'],
-                    'xmax': annotation['xmax'],
-                    'ymax': annotation['ymax'],
-                })
+                gt_boxes.append(
+                    {
+                        "label": label_id,
+                        "xmin": annotation["xmin"],
+                        "ymin": annotation["ymin"],
+                        "xmax": annotation["xmax"],
+                        "ymax": annotation["ymax"],
+                    }
+                )
 
             if len(gt_boxes) == 0:
                 continue
 
             record = {
-                'width': width,
-                'height': height,
-                'depth': 3,
-                'filename': image_id,
-                'image_raw': image,
-                'gt_boxes': gt_boxes,
+                "width": width,
+                "height": height,
+                "depth": 3,
+                "filename": image_id,
+                "image_raw": image,
+                "gt_boxes": gt_boxes,
             }
             self._will_add_record(record)
             self.yielded_records += 1
@@ -193,9 +197,7 @@ class CSVReader(ObjectDetectionReader):
                 else:
                     # If file has no headers, pass the field names to the CSV
                     # reader.
-                    reader = csv.DictReader(
-                        annotations, fieldnames=self._columns
-                    )
+                    reader = csv.DictReader(annotations, fieldnames=self._columns)
 
             images_gt_boxes = {}
 
@@ -206,7 +208,7 @@ class CSVReader(ObjectDetectionReader):
                 # Then proceed as normal, reading each row and aggregating
                 # bounding boxes by image.
                 label = self._normalize_row(row)
-                image_id = label.pop('image_id')
+                image_id = label.pop("image_id")
                 images_gt_boxes.setdefault(image_id, []).append(label)
 
             self._records = images_gt_boxes
@@ -223,13 +225,10 @@ class CSVReader(ObjectDetectionReader):
             missing_keys = self._column_names - set(row.keys())
             if missing_keys:
                 raise InvalidDataDirectory(
-                    'Columns missing from CSV: {}'.format(missing_keys)
+                    "Columns missing from CSV: {}".format(missing_keys)
                 )
             self._csv_checked = True
 
     def _normalize_row(self, row):
         """Normalizes a row from the CSV file by removing extra keys."""
-        return {
-            key: value for key, value in row.items()
-            if key in self._column_names
-        }
+        return {key: value for key, value in row.items() if key in self._column_names}

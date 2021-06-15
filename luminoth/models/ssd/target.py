@@ -17,8 +17,8 @@ class SSDTarget(snt.AbstractModule):
     Bounding box targets are just the encoded coordinates that anchors labeled
     as foreground should target.
     """
-    def __init__(self, num_classes, config, variances, seed=None,
-                 name='ssd_target'):
+
+    def __init__(self, num_classes, config, variances, seed=None, name="ssd_target"):
         """
         Args:
             num_classes: Number of possible classes.
@@ -58,10 +58,7 @@ class SSDTarget(snt.AbstractModule):
         # `gt_boxes`. Start by filling the labels with -1, marking them as
         # unknown.
         anchors_label_shape = tf.gather(tf.shape(all_anchors), [0])
-        anchors_label = tf.fill(
-            dims=anchors_label_shape,
-            value=-1.
-        )
+        anchors_label = tf.fill(dims=anchors_label_shape, value=-1.0)
 
         overlaps = bbox_overlap_tf(all_anchors, gt_boxes[:, :4])
         max_overlaps = tf.reduce_max(overlaps, axis=1)
@@ -73,27 +70,23 @@ class SSDTarget(snt.AbstractModule):
         # the label for each gt box and sum 1 to it because 0 is used for
         # background.
         best_fg_labels_for_anchors = tf.add(
-            tf.gather(gt_boxes[:, 4], best_gtbox_for_anchors_idx),
-            1.
+            tf.gather(gt_boxes[:, 4], best_gtbox_for_anchors_idx), 1.0
         )
-        iou_is_fg = tf.greater_equal(
-            max_overlaps, self._foreground_threshold
-        )
+        iou_is_fg = tf.greater_equal(max_overlaps, self._foreground_threshold)
         # We update anchors_label with the value in
         # best_fg_labels_for_anchors only when the box is foreground.
         # TODO: Replace with a sparse_to_dense with -1 default_value
         anchors_label = tf.where(
-            condition=iou_is_fg,
-            x=best_fg_labels_for_anchors,
-            y=anchors_label
+            condition=iou_is_fg, x=best_fg_labels_for_anchors, y=anchors_label
         )
 
         best_anchor_idxs = tf.argmax(overlaps, axis=0)
         is_best_box = tf.sparse_to_dense(
             sparse_indices=best_anchor_idxs,
-            sparse_values=True, default_value=False,
+            sparse_values=True,
+            default_value=False,
             output_shape=tf.cast(anchors_label_shape, tf.int64),
-            validate_indices=False
+            validate_indices=False,
         )
 
         # Now we need to find the anchors that are the best for each of the
@@ -105,13 +98,13 @@ class SSDTarget(snt.AbstractModule):
             default_value=-1,
             output_shape=tf.cast(anchors_label_shape, tf.int64),
             validate_indices=False,
-            name="get_right_labels_for_bestboxes"
+            name="get_right_labels_for_bestboxes",
         )
         anchors_label = tf.where(
             condition=is_best_box,
             x=best_anchors_gt_labels,
             y=anchors_label,
-            name="update_labels_for_bestbox_anchors"
+            name="update_labels_for_bestbox_anchors",
         )
 
         # Use the worst backgrounds (the bgs whose probability of being fg is
@@ -131,7 +124,7 @@ class SSDTarget(snt.AbstractModule):
         max_cls_probs = tf.where(
             condition=bg_overlaps_filter,
             x=max_cls_probs,
-            y=tf.fill(dims=anchors_label_shape, value=-1.),
+            y=tf.fill(dims=anchors_label_shape, value=-1.0),
         )
 
         # We calculate up to how many backgrounds we desire based on the
@@ -144,15 +137,16 @@ class SSDTarget(snt.AbstractModule):
 
         set_bg = tf.sparse_to_dense(
             sparse_indices=top_k_bg.indices,
-            sparse_values=True, default_value=False,
+            sparse_values=True,
+            default_value=False,
             output_shape=anchors_label_shape,
-            validate_indices=False
+            validate_indices=False,
         )
 
         anchors_label = tf.where(
             condition=set_bg,
-            x=tf.fill(dims=anchors_label_shape, value=0.),
-            y=anchors_label
+            x=tf.fill(dims=anchors_label_shape, value=0.0),
+            y=anchors_label,
         )
 
         # Next step is to calculate the proper bbox targets for the labeled
@@ -161,32 +155,18 @@ class SSDTarget(snt.AbstractModule):
         # the proper gt_boxes
 
         # Get the ids of the anchors that mater for bbox_target comparison.
-        is_anchor_with_target = tf.greater(
-            anchors_label, 0
-        )
-        anchors_with_target_idx = tf.where(
-            condition=is_anchor_with_target
-        )
+        is_anchor_with_target = tf.greater(anchors_label, 0)
+        anchors_with_target_idx = tf.where(condition=is_anchor_with_target)
         # Get the corresponding ground truth box only for the anchors with
         # target.
-        gt_boxes_idxs = tf.gather(
-            best_gtbox_for_anchors_idx,
-            anchors_with_target_idx
-        )
+        gt_boxes_idxs = tf.gather(best_gtbox_for_anchors_idx, anchors_with_target_idx)
         # Get the values of the ground truth boxes.
-        anchors_gt_boxes = tf.gather_nd(
-            gt_boxes[:, :4], gt_boxes_idxs
-        )
+        anchors_gt_boxes = tf.gather_nd(gt_boxes[:, :4], gt_boxes_idxs)
         # We create the same array but with the anchors
-        anchors_with_target = tf.gather_nd(
-            all_anchors,
-            anchors_with_target_idx
-        )
+        anchors_with_target = tf.gather_nd(all_anchors, anchors_with_target_idx)
         # We create our targets with bbox_transform
         bbox_targets = encode(
-            anchors_with_target,
-            anchors_gt_boxes,
-            variances=self._variances
+            anchors_with_target, anchors_gt_boxes, variances=self._variances
         )
 
         # We unmap targets to anchor_labels (containing the length of
@@ -194,7 +174,7 @@ class SSDTarget(snt.AbstractModule):
         bbox_targets = tf.scatter_nd(
             indices=anchors_with_target_idx,
             updates=bbox_targets,
-            shape=tf.cast(tf.shape(all_anchors), tf.int64)
+            shape=tf.cast(tf.shape(all_anchors), tf.int64),
         )
 
         return anchors_label, bbox_targets

@@ -11,6 +11,7 @@ class BBoxOverlapTest(tf.test.TestCase):
     We test both at the same time by getting both values and making sure they
     are both equal before doing any assertions.
     """
+
     def tearDown(self):
         tf.reset_default_graph()
 
@@ -32,10 +33,13 @@ class BBoxOverlapTest(tf.test.TestCase):
         iou = bbox_overlap_tf(bbox1, bbox2)
 
         with self.test_session() as sess:
-            iou_val_tf = sess.run(iou, feed_dict={
-                bbox1: np.array(bbox1_val),
-                bbox2: np.array(bbox2_val),
-            })
+            iou_val_tf = sess.run(
+                iou,
+                feed_dict={
+                    bbox1: np.array(bbox1_val),
+                    bbox2: np.array(bbox2_val),
+                },
+            )
 
         iou_val_np = bbox_overlap(np.array(bbox1_val), np.array(bbox2_val))
         self.assertAllClose(iou_val_np, iou_val_tf)
@@ -44,27 +48,25 @@ class BBoxOverlapTest(tf.test.TestCase):
     def testNoOverlap(self):
         # Single box test
         iou = self._get_iou([[0, 0, 10, 10]], [[11, 11, 20, 20]])
-        self.assertAllEqual(iou, [[0.]])
+        self.assertAllEqual(iou, [[0.0]])
 
         # Multiple boxes.
         iou = self._get_iou(
-            [[0, 0, 10, 10], [5, 5, 10, 10]],
-            [[11, 11, 20, 20], [15, 15, 20, 20]]
+            [[0, 0, 10, 10], [5, 5, 10, 10]], [[11, 11, 20, 20], [15, 15, 20, 20]]
         )
-        self.assertAllEqual(iou, [[0., 0.], [0., 0.]])
+        self.assertAllEqual(iou, [[0.0, 0.0], [0.0, 0.0]])
 
     def testAllOverlap(self):
         # Equal boxes
         iou = self._get_iou([[0, 0, 10, 10]], [[0, 0, 10, 10]])
-        self.assertAllEqual(iou, [[1.]])
+        self.assertAllEqual(iou, [[1.0]])
 
         # Crossed equal boxes.
         iou = self._get_iou(
-            [[0, 0, 10, 10], [11, 11, 20, 20]],
-            [[0, 0, 10, 10], [11, 11, 20, 20]]
+            [[0, 0, 10, 10], [11, 11, 20, 20]], [[0, 0, 10, 10], [11, 11, 20, 20]]
         )
         # We should get an identity matrix.
-        self.assertAllEqual(iou, [[1., 0.], [0., 1.]])
+        self.assertAllEqual(iou, [[1.0, 0.0], [0.0, 1.0]])
 
     def testInvalidBoxes(self):
         # Zero area, bbox1 has x_min == x_max
@@ -73,16 +75,16 @@ class BBoxOverlapTest(tf.test.TestCase):
 
         # Negative area, bbox1 has x_min > x_max (only by one)
         iou = self._get_iou([[10, 0, 9, 10]], [[0, 0, 10, 10]])
-        self.assertAllEqual(iou, [[0.]])
+        self.assertAllEqual(iou, [[0.0]])
 
         # Negative area, bbox1 has x_min > x_max
         iou = self._get_iou([[10, 0, 7, 10]], [[0, 0, 10, 10]])
-        self.assertAllEqual(iou, [[0.]])
+        self.assertAllEqual(iou, [[0.0]])
 
         # Negative area in both cases, both boxes equal but negative
         iou = self._get_iou([[10, 0, 7, 10]], [[10, 0, 7, 10]])
-        self.assertAllEqual(iou, [[0.]])
+        self.assertAllEqual(iou, [[0.0]])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     tf.test.main()

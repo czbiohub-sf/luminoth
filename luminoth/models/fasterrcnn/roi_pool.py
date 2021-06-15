@@ -2,8 +2,8 @@ import sonnet as snt
 import tensorflow as tf
 
 # Types of RoI "pooling"
-CROP = 'crop'
-ROI_POOLING = 'roi_pooling'
+CROP = "crop"
+ROI_POOLING = "roi_pooling"
 
 
 class ROIPoolingLayer(snt.AbstractModule):
@@ -26,7 +26,8 @@ class ROIPoolingLayer(snt.AbstractModule):
     Since there isn't a std support implemenation of RoIPooling, we apply the
     easier but still proven alternatve way.
     """
-    def __init__(self, config, debug=False, name='roi_pooling'):
+
+    def __init__(self, config, debug=False, name="roi_pooling"):
         super(ROIPoolingLayer, self).__init__(name=name)
         self._pooling_mode = config.pooling_mode.lower()
         self._pooled_width = config.pooled_width
@@ -49,12 +50,10 @@ class ROIPoolingLayer(snt.AbstractModule):
             bboxes: A Tensor with normalized bounding boxes in TensorFlow's
                 format order. Its should is (total_proposals, 4).
         """
-        with tf.name_scope('get_bboxes'):
+        with tf.name_scope("get_bboxes"):
             im_shape = tf.cast(im_shape, tf.float32)
 
-            x1, y1, x2, y2 = tf.unstack(
-                roi_proposals, axis=1
-            )
+            x1, y1, x2, y2 = tf.unstack(roi_proposals, axis=1)
 
             x1 = x1 / im_shape[1]
             y1 = y1 / im_shape[0]
@@ -70,27 +69,32 @@ class ROIPoolingLayer(snt.AbstractModule):
         bboxes = self._get_bboxes(roi_proposals, im_shape)
         # Generate fake batch ids
         bboxes_shape = tf.shape(bboxes)
-        batch_ids = tf.zeros((bboxes_shape[0], ), dtype=tf.int32)
+        batch_ids = tf.zeros((bboxes_shape[0],), dtype=tf.int32)
         # Apply crop and resize with extracting a crop double the desired size.
         crops = tf.image.crop_and_resize(
-            conv_feature_map, bboxes, batch_ids,
-            [self._pooled_width * 2, self._pooled_height * 2], name="crops"
+            conv_feature_map,
+            bboxes,
+            batch_ids,
+            [self._pooled_width * 2, self._pooled_height * 2],
+            name="crops",
         )
 
         # Applies max pool with [2,2] kernel to reduce the crops to half the
         # size, and thus having the desired output.
         prediction_dict = {
-            'roi_pool': tf.nn.max_pool(
-                crops, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
-                padding=self._pooled_padding
+            "roi_pool": tf.nn.max_pool(
+                crops,
+                ksize=[1, 2, 2, 1],
+                strides=[1, 2, 2, 1],
+                padding=self._pooled_padding,
             ),
         }
 
         if self._debug:
-            prediction_dict['bboxes'] = bboxes
-            prediction_dict['crops'] = crops
-            prediction_dict['batch_ids'] = batch_ids
-            prediction_dict['conv_feature_map'] = conv_feature_map
+            prediction_dict["bboxes"] = bboxes
+            prediction_dict["crops"] = crops
+            prediction_dict["batch_ids"] = batch_ids
+            prediction_dict["conv_feature_map"] = conv_feature_map
 
         return prediction_dict
 
@@ -104,4 +108,5 @@ class ROIPoolingLayer(snt.AbstractModule):
             return self._roi_pooling(roi_proposals, conv_feature_map, im_shape)
         else:
             raise NotImplementedError(
-                'Pooling mode {} does not exist.'.format(self._pooling_mode))
+                "Pooling mode {} does not exist.".format(self._pooling_mode)
+            )

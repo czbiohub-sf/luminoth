@@ -3,20 +3,22 @@ import tensorflow as tf
 import gc
 
 from luminoth.models.base.truncated_base_network import (
-    TruncatedBaseNetwork, DEFAULT_ENDPOINTS
+    TruncatedBaseNetwork,
+    DEFAULT_ENDPOINTS,
 )
 
 
 class TruncatedBaseNetworkTest(tf.test.TestCase):
-
     def setUp(self):
-        self.config = easydict.EasyDict({
-            'architecture': None,
-            'endpoint': None,
-            'freeze_tail': False,
-            'use_tail': True,
-            'output_stride': 16,
-        })
+        self.config = easydict.EasyDict(
+            {
+                "architecture": None,
+                "endpoint": None,
+                "freeze_tail": False,
+                "use_tail": True,
+                "output_stride": 16,
+            }
+        )
         tf.reset_default_graph()
 
     def testAllArchitectures(self):
@@ -62,12 +64,14 @@ class TruncatedBaseNetworkTest(tf.test.TestCase):
         inputs = tf.placeholder(tf.float32, [1, 224, 224, 3])
 
         model = TruncatedBaseNetwork(
-            easydict.EasyDict({
-                'architecture': 'resnet_v1_50',
-                'endpoint': 'block4/unit_3/bottleneck_v1/conv2',
-                'freeze_tail': False,
-                'use_tail': True,
-            })
+            easydict.EasyDict(
+                {
+                    "architecture": "resnet_v1_50",
+                    "endpoint": "block4/unit_3/bottleneck_v1/conv2",
+                    "freeze_tail": False,
+                    "use_tail": True,
+                }
+            )
         )
         model(inputs)
         # Variables in ResNet-50:
@@ -90,18 +94,20 @@ class TruncatedBaseNetworkTest(tf.test.TestCase):
         self.assertEqual(len(trainable_vars), 156)
         self.assertEqual(
             trainable_vars[-3].name,
-            'truncated_base_network/resnet_v1_50/' +
-            'block4/unit_3/bottleneck_v1/conv2/weights:0'
+            "truncated_base_network/resnet_v1_50/"
+            + "block4/unit_3/bottleneck_v1/conv2/weights:0",
         )
 
         model = TruncatedBaseNetwork(
-            easydict.EasyDict({
-                'architecture': 'resnet_v1_50',
-                'endpoint': 'block4/unit_2/bottleneck_v1/conv2',
-                'fine_tune_from': 'block4/unit_2/bottleneck_v1/conv1',
-                'freeze_tail': False,
-                'use_tail': True,
-            })
+            easydict.EasyDict(
+                {
+                    "architecture": "resnet_v1_50",
+                    "endpoint": "block4/unit_2/bottleneck_v1/conv2",
+                    "fine_tune_from": "block4/unit_2/bottleneck_v1/conv1",
+                    "freeze_tail": False,
+                    "use_tail": True,
+                }
+            )
         )
         model(inputs)
         trainable_vars = model.get_trainable_vars()
@@ -121,11 +127,11 @@ class TruncatedBaseNetworkTest(tf.test.TestCase):
         model = TruncatedBaseNetwork(
             easydict.EasyDict(
                 {
-                    'architecture': 'resnet_v1_50',
-                    'endpoint': 'block4/unit_2/bottleneck_v1/conv1',
-                    'fine_tune_from': 'block4/unit_2/bottleneck_v1/conv2',
-                    'freeze_tail': True,
-                    'use_tail': True,
+                    "architecture": "resnet_v1_50",
+                    "endpoint": "block4/unit_2/bottleneck_v1/conv1",
+                    "fine_tune_from": "block4/unit_2/bottleneck_v1/conv2",
+                    "freeze_tail": True,
+                    "use_tail": True,
                 }
             )
         )
@@ -133,5 +139,5 @@ class TruncatedBaseNetworkTest(tf.test.TestCase):
         self.assertEqual(len(model.get_trainable_vars()), 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     tf.test.main()

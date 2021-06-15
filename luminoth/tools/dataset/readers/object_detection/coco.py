@@ -3,71 +3,68 @@ import os
 import tensorflow as tf
 
 from luminoth.tools.dataset.readers import InvalidDataDirectory
-from luminoth.tools.dataset.readers.object_detection import (
-    ObjectDetectionReader
-)
+from luminoth.tools.dataset.readers.object_detection import ObjectDetectionReader
 from luminoth.utils.dataset import read_image
 
 
-DEFAULT_YEAR = '2017'
+DEFAULT_YEAR = "2017"
 
 
 class COCOReader(ObjectDetectionReader):
-    def __init__(self, data_dir, split, year=DEFAULT_YEAR,
-                 use_supercategory=False, **kwargs):
+    def __init__(
+        self, data_dir, split, year=DEFAULT_YEAR, use_supercategory=False, **kwargs
+    ):
         super(COCOReader, self).__init__(**kwargs)
         self._data_dir = data_dir
         self._split = split
         self._year = year
 
         try:
-            if self._split == 'train':
-                tf.logging.debug('Loading annotation json (may take a while).')
+            if self._split == "train":
+                tf.logging.debug("Loading annotation json (may take a while).")
 
-            annotations_json = json.load(
-                tf.gfile.Open(self._get_annotations_path())
-            )
+            annotations_json = json.load(tf.gfile.Open(self._get_annotations_path()))
         except tf.errors.NotFoundError:
-            raise InvalidDataDirectory(
-                'Could not find COCO annotations in path'
-            )
+            raise InvalidDataDirectory("Could not find COCO annotations in path")
 
-        self._total_records = len(annotations_json['images'])
+        self._total_records = len(annotations_json["images"])
 
         category_to_name = {
-            c['id']: (c['supercategory'] if use_supercategory else c['name'])
-            for c in annotations_json['categories']
+            c["id"]: (c["supercategory"] if use_supercategory else c["name"])
+            for c in annotations_json["categories"]
         }
 
         self._total_classes = sorted(set(category_to_name.values()))
 
         self._image_to_bboxes = {}
-        for annotation in annotations_json['annotations']:
-            image_id = annotation['image_id']
-            x, y, width, height = annotation['bbox']
+        for annotation in annotations_json["annotations"]:
+            image_id = annotation["image_id"]
+            x, y, width, height = annotation["bbox"]
 
             # If the class is not in `classes`, it was filtered.
             try:
                 annotation_class = self.classes.index(
-                    category_to_name[annotation['category_id']]
+                    category_to_name[annotation["category_id"]]
                 )
             except ValueError:
                 continue
 
-            self._image_to_bboxes.setdefault(image_id, []).append({
-                'xmin': x,
-                'ymin': y,
-                'xmax': x + width,
-                'ymax': y + height,
-                'label': annotation_class,
-            })
+            self._image_to_bboxes.setdefault(image_id, []).append(
+                {
+                    "xmin": x,
+                    "ymin": y,
+                    "xmax": x + width,
+                    "ymax": y + height,
+                    "label": annotation_class,
+                }
+            )
 
         self._image_to_details = {}
-        for image in annotations_json['images']:
-            self._image_to_details[image['id']] = {
-                'file_name': image['file_name'],
-                'width': image['width'],
-                'height': image['height'],
+        for image in annotations_json["images"]:
+            self._image_to_details[image["id"]] = {
+                "file_name": image["file_name"],
+                "width": image["width"],
+                "height": image["height"],
             }
 
         del annotations_json
@@ -87,9 +84,9 @@ class COCOReader(ObjectDetectionReader):
             if self._stop_iteration():
                 return
 
-            filename = image_details['file_name']
-            width = image_details['width']
-            height = image_details['height']
+            filename = image_details["file_name"]
+            width = image_details["width"]
+            height = image_details["height"]
 
             gt_boxes = self._image_to_bboxes.get(image_id, [])
             if len(gt_boxes) == 0:
@@ -105,18 +102,18 @@ class COCOReader(ObjectDetectionReader):
                 image = read_image(image_path)
             except tf.errors.NotFoundError:
                 tf.logging.debug(
-                    'Error reading image or annotation for "{}".'.format(
-                        image_id))
+                    'Error reading image or annotation for "{}".'.format(image_id)
+                )
                 self.errors += 1
                 continue
 
             record = {
-                'width': width,
-                'height': height,
-                'depth': 3,
-                'filename': filename,
-                'image_raw': image,
-                'gt_boxes': gt_boxes,
+                "width": width,
+                "height": height,
+                "depth": 3,
+                "filename": filename,
+                "image_raw": image,
+                "gt_boxes": gt_boxes,
             }
             self._will_add_record(record)
             self.yielded_records += 1
@@ -124,16 +121,14 @@ class COCOReader(ObjectDetectionReader):
             yield record
 
     def _get_annotations_path(self):
-        filename = 'instances_{}{}.json'.format(self._split, self._year)
+        filename = "instances_{}{}.json".format(self._split, self._year)
         base_dir = os.path.join(self._data_dir, filename)
         if tf.gfile.Exists(base_dir):
             return base_dir
 
-        return os.path.join(self._data_dir, 'annotations', filename)
+        return os.path.join(self._data_dir, "annotations", filename)
 
     def _get_image_path(self, image):
         return os.path.join(
-            self._data_dir,
-            '{}{}'.format(self._split, self._year),
-            image
+            self._data_dir, "{}{}".format(self._split, self._year), image
         )

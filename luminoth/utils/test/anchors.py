@@ -35,26 +35,17 @@ def generate_anchors(anchors_reference, anchor_stride, feature_map_size):
     shift_x = shift_x.reshape([-1])
     shift_y = shift_y.reshape([-1])
 
-    shifts = np.stack(
-        [shift_x, shift_y, shift_x, shift_y],
-        axis=0
-    )
+    shifts = np.stack([shift_x, shift_y, shift_x, shift_y], axis=0)
 
     shifts = shifts.T
 
     num_anchors = anchors_reference.shape[0]
     num_anchor_points = shifts.shape[0]
 
-    all_anchors = (
-        anchors_reference.reshape((1, num_anchors, 4)) +
-        np.transpose(
-            shifts.reshape((1, num_anchor_points, 4)),
-            axes=(1, 0, 2)
-        )
+    all_anchors = anchors_reference.reshape((1, num_anchors, 4)) + np.transpose(
+        shifts.reshape((1, num_anchor_points, 4)), axes=(1, 0, 2)
     )
 
-    all_anchors = np.reshape(
-        all_anchors, (num_anchors * num_anchor_points, 4)
-    )
+    all_anchors = np.reshape(all_anchors, (num_anchors * num_anchor_points, 4))
 
     return all_anchors

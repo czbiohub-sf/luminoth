@@ -4,23 +4,28 @@ import numpy as np
 import tensorflow as tf
 
 from luminoth.models.base.base_network import (
-    BaseNetwork, _R_MEAN, _G_MEAN, _B_MEAN, VALID_ARCHITECTURES
+    BaseNetwork,
+    _R_MEAN,
+    _G_MEAN,
+    _B_MEAN,
+    VALID_ARCHITECTURES,
 )
 
 
 class BaseNetworkTest(tf.test.TestCase):
-
     def setUp(self):
-        self.config = easydict.EasyDict({
-            'architecture': 'vgg_16',
-        })
+        self.config = easydict.EasyDict(
+            {
+                "architecture": "vgg_16",
+            }
+        )
         tf.reset_default_graph()
 
     def testDefaultImageSize(self):
-        m = BaseNetwork(easydict.EasyDict({'architecture': 'vgg_16'}))
+        m = BaseNetwork(easydict.EasyDict({"architecture": "vgg_16"}))
         self.assertEqual(m.default_image_size, 224)
 
-        m = BaseNetwork(easydict.EasyDict({'architecture': 'resnet_v1_50'}))
+        m = BaseNetwork(easydict.EasyDict({"architecture": "resnet_v1_50"}))
         self.assertEqual(m.default_image_size, 224)
 
     def testSubtractChannels(self):
@@ -28,19 +33,19 @@ class BaseNetworkTest(tf.test.TestCase):
         inputs = tf.placeholder(tf.float32, [1, 2, 2, 3])
         subtracted_inputs = m._subtract_channels(inputs)
         # White image
-        r = 255. - _R_MEAN
-        g = 255. - _G_MEAN
-        b = 255. - _B_MEAN
+        r = 255.0 - _R_MEAN
+        g = 255.0 - _G_MEAN
+        b = 255.0 - _B_MEAN
         with self.test_session() as sess:
-            res = sess.run(subtracted_inputs, feed_dict={
-                inputs: np.ones([1, 2, 2, 3]) * 255
-            })
+            res = sess.run(
+                subtracted_inputs, feed_dict={inputs: np.ones([1, 2, 2, 3]) * 255}
+            )
             # Assert close and not equals because of floating point
             # differences between TF and numpy
             self.assertAllClose(
                 res,
                 # numpy broadcast multiplication
-                np.ones([1, 2, 2, 3]) * [r, g, b]
+                np.ones([1, 2, 2, 3]) * [r, g, b],
             )
 
     def testAllArchitectures(self):
@@ -57,7 +62,7 @@ class BaseNetworkTest(tf.test.TestCase):
     def testTrainableVariables(self):
         inputs = tf.placeholder(tf.float32, [1, 224, 224, 3])
 
-        model = BaseNetwork(easydict.EasyDict({'architecture': 'vgg_16'}))
+        model = BaseNetwork(easydict.EasyDict({"architecture": "vgg_16"}))
         model(inputs)
         # Variables in VGG16:
         #   0 conv1/conv1_1/weights:0
@@ -70,7 +75,7 @@ class BaseNetworkTest(tf.test.TestCase):
 
         model = BaseNetwork(
             easydict.EasyDict(
-                {'architecture': 'vgg_16', 'fine_tune_from': 'conv5/conv5_3'}
+                {"architecture": "vgg_16", "fine_tune_from": "conv5/conv5_3"}
             )
         )
         model(inputs)
@@ -90,7 +95,7 @@ class BaseNetworkTest(tf.test.TestCase):
         #
         model = BaseNetwork(
             easydict.EasyDict(
-                {'architecture': 'vgg_16', 'fine_tune_from': 'conv5/conv99'}
+                {"architecture": "vgg_16", "fine_tune_from": "conv5/conv99"}
             )
         )
         model(inputs)
@@ -98,5 +103,5 @@ class BaseNetworkTest(tf.test.TestCase):
             model.get_trainable_vars()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     tf.test.main()

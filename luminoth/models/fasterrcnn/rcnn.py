@@ -4,11 +4,12 @@ import tensorflow as tf
 from luminoth.models.fasterrcnn.rcnn_proposal import RCNNProposal
 from luminoth.models.fasterrcnn.rcnn_target import RCNNTarget
 from luminoth.models.fasterrcnn.roi_pool import ROIPoolingLayer
-from luminoth.utils.losses import (
-    smooth_l1_loss, focal_loss, CROSS_ENTROPY, FOCAL)
+from luminoth.utils.losses import smooth_l1_loss, focal_loss, CROSS_ENTROPY, FOCAL
 from luminoth.utils.vars import (
-    get_initializer, layer_summaries, variable_summaries,
-    get_activation_function
+    get_initializer,
+    layer_summaries,
+    variable_summaries,
+    get_activation_function,
 )
 
 
@@ -36,8 +37,7 @@ class RCNN(snt.AbstractModule):
     bounding boxes, with classes and probabilities assigned.
     """
 
-    def __init__(self, num_classes, config, debug=False, seed=None,
-                 name='rcnn'):
+    def __init__(self, num_classes, config, debug=False, seed=None, name="rcnn"):
         super(RCNN, self).__init__(name=name)
         self._num_classes = num_classes
         # List of the fully connected layer sizes used before classifying and
@@ -48,17 +48,12 @@ class RCNN(snt.AbstractModule):
         self._use_mean = config.use_mean
         self._variances = config.target_normalization_variances
 
-        self._rcnn_initializer = get_initializer(
-            config.rcnn_initializer, seed=seed
-        )
-        self._cls_initializer = get_initializer(
-            config.cls_initializer, seed=seed
-        )
-        self._bbox_initializer = get_initializer(
-            config.bbox_initializer, seed=seed
-        )
+        self._rcnn_initializer = get_initializer(config.rcnn_initializer, seed=seed)
+        self._cls_initializer = get_initializer(config.cls_initializer, seed=seed)
+        self._bbox_initializer = get_initializer(config.bbox_initializer, seed=seed)
         self.regularizer = tf.contrib.layers.l2_regularizer(
-            scale=config.l2_regularization_scale)
+            scale=config.l2_regularization_scale
+        )
         self._l1_sigma = config.l1_sigma
         loss_config = config.loss
         if loss_config.type == CROSS_ENTROPY:
@@ -69,9 +64,8 @@ class RCNN(snt.AbstractModule):
                 self.loss_weight = loss_config.weight
         elif loss_config.type == FOCAL:
             self.loss_type = FOCAL
-            self.focal_gamma = loss_config.get('focal_gamma')
-        tf.logging.info(
-            "Classification loss type in RCNN is {}".format(self.loss_type))
+            self.focal_gamma = loss_config.get("focal_gamma")
+        tf.logging.info("Classification loss type in RCNN is {}".format(self.loss_type))
         # Debug mode makes the module return more detailed Tensors which can be
         # useful for debugging.
         self._debug = debug
@@ -84,9 +78,9 @@ class RCNN(snt.AbstractModule):
         self._layers = [
             snt.Linear(
                 layer_size,
-                name='fc_{}'.format(i),
-                initializers={'w': self._rcnn_initializer},
-                regularizers={'w': self.regularizer},
+                name="fc_{}".format(i),
+                initializers={"w": self._rcnn_initializer},
+                regularizers={"w": self.regularizer},
             )
             for i, layer_size in enumerate(self._layer_sizes)
         ]
@@ -94,18 +88,20 @@ class RCNN(snt.AbstractModule):
         # since we want to be able to predict if the proposal is background as
         # well.
         self._classifier_layer = snt.Linear(
-            self._num_classes + 1, name='fc_classifier',
-            initializers={'w': self._cls_initializer},
-            regularizers={'w': self.regularizer},
+            self._num_classes + 1,
+            name="fc_classifier",
+            initializers={"w": self._cls_initializer},
+            regularizers={"w": self.regularizer},
         )
 
         # The bounding box adjustment layer has 4 times the number of classes
         # We choose which to use depending on the output of the classifier
         # layer
         self._bbox_layer = snt.Linear(
-            self._num_classes * 4, name='fc_bbox',
-            initializers={'w': self._bbox_initializer},
-            regularizers={'w': self.regularizer}
+            self._num_classes * 4,
+            name="fc_bbox",
+            initializers={"w": self._bbox_initializer},
+            regularizers={"w": self.regularizer},
         )
 
         # ROIPoolingLayer is used to extract the feature from the feature map
@@ -114,18 +110,26 @@ class RCNN(snt.AbstractModule):
         # RCNNTarget is used to define a minibatch and the correct values for
         # each of the proposals.
         self._rcnn_target = RCNNTarget(
-            self._num_classes, self._config.target, variances=self._variances,
-            seed=self._seed
+            self._num_classes,
+            self._config.target,
+            variances=self._variances,
+            seed=self._seed,
         )
         # RCNNProposal generates the final bounding boxes and tries to remove
         # duplicates.
         self._rcnn_proposal = RCNNProposal(
-            self._num_classes, self._config.proposals,
-            variances=self._variances
+            self._num_classes, self._config.proposals, variances=self._variances
         )
 
-    def _build(self, conv_feature_map, proposals, im_shape, base_network,
-               gt_boxes=None, is_training=False):
+    def _build(
+        self,
+        conv_feature_map,
+        proposals,
+        im_shape,
+        base_network,
+        gt_boxes=None,
+        is_training=False,
+    ):
         """
         Classifies & refines proposals based on the pooled feature map.
 
@@ -158,40 +162,40 @@ class RCNN(snt.AbstractModule):
         """
         self._instantiate_layers()
 
-        prediction_dict = {'_debug': {}}
+        prediction_dict = {"_debug": {}}
 
         if gt_boxes is not None:
             proposals_target, bbox_offsets_target = self._rcnn_target(
-                proposals, gt_boxes)
+                proposals, gt_boxes
+            )
 
             if is_training:
-                with tf.name_scope('prepare_batch'):
+                with tf.name_scope("prepare_batch"):
                     # We flatten to set shape, but it is already a flat Tensor.
                     in_batch_proposals = tf.reshape(
                         tf.greater_equal(proposals_target, 0), [-1]
                     )
-                    proposals = tf.boolean_mask(
-                        proposals, in_batch_proposals)
+                    proposals = tf.boolean_mask(proposals, in_batch_proposals)
                     bbox_offsets_target = tf.boolean_mask(
-                        bbox_offsets_target, in_batch_proposals)
+                        bbox_offsets_target, in_batch_proposals
+                    )
                     proposals_target = tf.boolean_mask(
-                        proposals_target, in_batch_proposals)
+                        proposals_target, in_batch_proposals
+                    )
 
-            prediction_dict['target'] = {
-                'cls': proposals_target,
-                'bbox_offsets': bbox_offsets_target,
+            prediction_dict["target"] = {
+                "cls": proposals_target,
+                "bbox_offsets": bbox_offsets_target,
             }
 
         roi_prediction = self._roi_pool(proposals, conv_feature_map, im_shape)
 
         if self._debug:
             # Save raw roi prediction in debug mode.
-            prediction_dict['_debug']['roi'] = roi_prediction
+            prediction_dict["_debug"]["roi"] = roi_prediction
 
-        pooled_features = roi_prediction['roi_pool']
-        features = base_network._build_tail(
-            pooled_features, is_training=is_training
-        )
+        pooled_features = roi_prediction["roi_pool"]
+        features = base_network._build_tail(pooled_features, is_training=is_training)
 
         if self._use_mean:
             # We avg our height and width dimensions for a more
@@ -207,7 +211,7 @@ class RCNN(snt.AbstractModule):
             net = tf.nn.dropout(net, keep_prob=self._dropout_keep_prob)
 
         if self._debug:
-            prediction_dict['_debug']['flatten_net'] = net
+            prediction_dict["_debug"]["flatten_net"] = net
 
         # After flattening we are left with a Tensor of shape
         # (num_proposals, pool_height * pool_width * 512).
@@ -217,14 +221,12 @@ class RCNN(snt.AbstractModule):
             net = layer(net)
 
             # Apply activation and dropout.
-            variable_summaries(
-                net, 'fc_{}_preactivationout'.format(i), 'reduced'
-            )
+            variable_summaries(net, "fc_{}_preactivationout".format(i), "reduced")
             net = self._activation(net)
             if self._debug:
-                prediction_dict['_debug']['layer_{}_out'.format(i)] = net
+                prediction_dict["_debug"]["layer_{}_out".format(i)] = net
 
-            variable_summaries(net, 'fc_{}_out'.format(i), 'reduced')
+            variable_summaries(net, "fc_{}_out".format(i), "reduced")
             if is_training:
                 net = tf.nn.dropout(net, keep_prob=self._dropout_keep_prob)
 
@@ -232,34 +234,35 @@ class RCNN(snt.AbstractModule):
         cls_prob = tf.nn.softmax(cls_score, axis=1)
         bbox_offsets = self._bbox_layer(net)
 
-        prediction_dict['rcnn'] = {
-            'cls_score': cls_score,
-            'cls_prob': cls_prob,
-            'bbox_offsets': bbox_offsets,
+        prediction_dict["rcnn"] = {
+            "cls_score": cls_score,
+            "cls_prob": cls_prob,
+            "bbox_offsets": bbox_offsets,
         }
 
         # Get final objects proposals based on the probabilty, the offsets and
         # the original proposals.
         proposals_pred = self._rcnn_proposal(
-            proposals, bbox_offsets, cls_prob, im_shape)
+            proposals, bbox_offsets, cls_prob, im_shape
+        )
 
         # objects, objects_labels, and objects_labels_prob are the only keys
         # that matter for drawing objects.
-        prediction_dict['objects'] = proposals_pred['objects']
-        prediction_dict['labels'] = proposals_pred['proposal_label']
-        prediction_dict['probs'] = proposals_pred['proposal_label_prob']
+        prediction_dict["objects"] = proposals_pred["objects"]
+        prediction_dict["labels"] = proposals_pred["proposal_label"]
+        prediction_dict["probs"] = proposals_pred["proposal_label_prob"]
 
         if self._debug:
-            prediction_dict['_debug']['proposal'] = proposals_pred
+            prediction_dict["_debug"]["proposal"] = proposals_pred
 
         # Calculate summaries for results
-        variable_summaries(cls_prob, 'cls_prob', 'reduced')
-        variable_summaries(bbox_offsets, 'bbox_offsets', 'reduced')
+        variable_summaries(cls_prob, "cls_prob", "reduced")
+        variable_summaries(bbox_offsets, "bbox_offsets", "reduced")
 
         if self._debug:
-            variable_summaries(pooled_features, 'pooled_features', 'full')
-            layer_summaries(self._classifier_layer, 'full')
-            layer_summaries(self._bbox_layer, 'full')
+            variable_summaries(pooled_features, "pooled_features", "full")
+            layer_summaries(self._classifier_layer, "full")
+            layer_summaries(self._bbox_layer, "full")
 
         return prediction_dict
 
@@ -302,37 +305,36 @@ class RCNN(snt.AbstractModule):
                     regression task to adjust correctly labeled boxes.
 
         """
-        with tf.name_scope('RCNNLoss'):
-            cls_score = prediction_dict['rcnn']['cls_score']
+        with tf.name_scope("RCNNLoss"):
+            cls_score = prediction_dict["rcnn"]["cls_score"]
             # cls_prob = prediction_dict['rcnn']['cls_prob']
             # Cast target explicitly as int32.
-            cls_target = tf.cast(
-                prediction_dict['target']['cls'], tf.int32
-            )
+            cls_target = tf.cast(prediction_dict["target"]["cls"], tf.int32)
 
             # First we need to calculate the log loss betweetn cls_prob and
             # cls_target
 
             # We only care for the targets that are >= 0
-            not_ignored = tf.reshape(tf.greater_equal(
-                cls_target, 0), [-1], name='not_ignored')
+            not_ignored = tf.reshape(
+                tf.greater_equal(cls_target, 0), [-1], name="not_ignored"
+            )
             # We apply boolean mask to score, prob and target.
             cls_score_labeled = tf.boolean_mask(
-                cls_score, not_ignored, name='cls_score_labeled')
+                cls_score, not_ignored, name="cls_score_labeled"
+            )
             # cls_prob_labeled = tf.boolean_mask(
             #    cls_prob, not_ignored, name='cls_prob_labeled')
             cls_target_labeled = tf.boolean_mask(
-                cls_target, not_ignored, name='cls_target_labeled')
-
-            tf.summary.scalar(
-                'batch_size',
-                tf.shape(cls_score_labeled)[0], ['rcnn']
+                cls_target, not_ignored, name="cls_target_labeled"
             )
+
+            tf.summary.scalar("batch_size", tf.shape(cls_score_labeled)[0], ["rcnn"])
 
             # Transform to one-hot vector
             cls_target_one_hot = tf.one_hot(
-                cls_target_labeled, depth=self._num_classes + 1,
-                name='cls_target_one_hot'
+                cls_target_labeled,
+                depth=self._num_classes + 1,
+                name="cls_target_one_hot",
             )
 
             if self.loss_type == CROSS_ENTROPY:
@@ -342,54 +344,48 @@ class RCNN(snt.AbstractModule):
                 onehot_labels = tf.stop_gradient(cls_target_one_hot)
                 # deduce weights for batch samples based on their true label
                 # compute your (unweighted) softmax cross entropy loss
-                cross_entropy_per_proposal = \
-                    tf.nn.softmax_cross_entropy_with_logits(
-                        labels=onehot_labels,
-                        logits=cls_score_labeled)
+                cross_entropy_per_proposal = tf.nn.softmax_cross_entropy_with_logits(
+                    labels=onehot_labels, logits=cls_score_labeled
+                )
                 if class_weights != 1:
-                    class_weights = tf.constant(
-                        [class_weights], dtype=tf.float32)
-                    weights = tf.reduce_sum(
-                        class_weights * onehot_labels, axis=1)
+                    class_weights = tf.constant([class_weights], dtype=tf.float32)
+                    weights = tf.reduce_sum(class_weights * onehot_labels, axis=1)
                     # apply the weights, relying on broadcasting
                     # of the multiplication
-                    cross_entropy_per_proposal = \
-                        cross_entropy_per_proposal * weights
+                    cross_entropy_per_proposal = cross_entropy_per_proposal * weights
             elif self.loss_type == FOCAL:
 
                 cross_entropy_per_proposal = focal_loss(
                     cls_score_labeled,
                     tf.stop_gradient(cls_target_one_hot),
-                    self.focal_gamma)
+                    self.focal_gamma,
+                )
 
             if self._debug:
-                prediction_dict['_debug']['losses'] = {}
+                prediction_dict["_debug"]["losses"] = {}
                 # Save the classification loss per proposal to be able to
                 # visualize proposals with high and low error.
-                prediction_dict['_debug']['losses'][
-                    'cross_entropy_per_proposal'
-                ] = (
-                    cross_entropy_per_proposal
-                )
+                prediction_dict["_debug"]["losses"][
+                    "cross_entropy_per_proposal"
+                ] = cross_entropy_per_proposal
 
             # Second we need to calculate the smooth l1 loss between
             # `bbox_offsets` and `bbox_offsets_target`.
-            bbox_offsets = prediction_dict['rcnn']['bbox_offsets']
-            bbox_offsets_target = (
-                prediction_dict['target']['bbox_offsets']
-            )
+            bbox_offsets = prediction_dict["rcnn"]["bbox_offsets"]
+            bbox_offsets_target = prediction_dict["target"]["bbox_offsets"]
 
             # We only want the non-background labels bounding boxes.
             not_ignored = tf.reshape(tf.greater(cls_target, 0), [-1])
             bbox_offsets_labeled = tf.boolean_mask(
-                bbox_offsets, not_ignored, name='bbox_offsets_labeled')
+                bbox_offsets, not_ignored, name="bbox_offsets_labeled"
+            )
             bbox_offsets_target_labeled = tf.boolean_mask(
-                bbox_offsets_target, not_ignored,
-                name='bbox_offsets_target_labeled'
+                bbox_offsets_target, not_ignored, name="bbox_offsets_target_labeled"
             )
 
             cls_target_labeled = tf.boolean_mask(
-                cls_target, not_ignored, name='cls_target_labeled')
+                cls_target, not_ignored, name="cls_target_labeled"
+            )
             # `cls_target_labeled` is based on `cls_target` which has
             # `num_classes` + 1 classes.
             # for making `one_hot` with depth `num_classes` to work we need
@@ -397,46 +393,43 @@ class RCNN(snt.AbstractModule):
             cls_target_labeled = cls_target_labeled - 1
 
             cls_target_one_hot = tf.one_hot(
-                cls_target_labeled, depth=self._num_classes,
-                name='cls_target_one_hot'
+                cls_target_labeled, depth=self._num_classes, name="cls_target_one_hot"
             )
 
             # cls_target now is (num_labeled, num_classes)
             bbox_flatten = tf.reshape(
-                bbox_offsets_labeled, [-1, 4], name='bbox_flatten')
+                bbox_offsets_labeled, [-1, 4], name="bbox_flatten"
+            )
 
             # We use the flatten cls_target_one_hot as boolean mask for the
             # bboxes.
-            cls_flatten = tf.cast(tf.reshape(
-                cls_target_one_hot, [-1]), tf.bool, 'cls_flatten_as_bool')
+            cls_flatten = tf.cast(
+                tf.reshape(cls_target_one_hot, [-1]), tf.bool, "cls_flatten_as_bool"
+            )
 
             bbox_offset_cleaned = tf.boolean_mask(
-                bbox_flatten, cls_flatten, 'bbox_offset_cleaned')
+                bbox_flatten, cls_flatten, "bbox_offset_cleaned"
+            )
 
             # Calculate the smooth l1 loss between the "cleaned" bboxes
             # offsets (that means, the useful results) and the labeled
             # targets.
             reg_loss_per_proposal = smooth_l1_loss(
-                bbox_offset_cleaned, bbox_offsets_target_labeled,
-                sigma=self._l1_sigma
+                bbox_offset_cleaned, bbox_offsets_target_labeled, sigma=self._l1_sigma
             )
 
             tf.summary.scalar(
-                'rcnn_foreground_samples',
-                tf.shape(bbox_offset_cleaned)[0], ['rcnn']
+                "rcnn_foreground_samples", tf.shape(bbox_offset_cleaned)[0], ["rcnn"]
             )
 
             if self._debug:
                 # Also save reg loss per proposals to be able to visualize
                 # good and bad proposals in debug mode.
-                prediction_dict['_debug']['losses'][
-                    'reg_loss_per_proposal'
-                ] = (
-                    reg_loss_per_proposal
-                )
+                prediction_dict["_debug"]["losses"][
+                    "reg_loss_per_proposal"
+                ] = reg_loss_per_proposal
 
             return {
-                'rcnn_cls_loss': tf.reduce_mean(
-                    cross_entropy_per_proposal),
-                'rcnn_reg_loss': tf.reduce_mean(reg_loss_per_proposal),
+                "rcnn_cls_loss": tf.reduce_mean(cross_entropy_per_proposal),
+                "rcnn_reg_loss": tf.reduce_mean(reg_loss_per_proposal),
             }

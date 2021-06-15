@@ -3,10 +3,7 @@ from luminoth.models.ssd import SSD
 
 
 # TODO: More models :)
-MODELS = {
-    'fasterrcnn': FasterRCNN,
-    'ssd': SSD
-}
+MODELS = {"fasterrcnn": FasterRCNN, "ssd": SSD}
 
 
 def get_model(model_type):

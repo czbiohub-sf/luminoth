@@ -19,7 +19,8 @@ class FasterRCNN(snt.AbstractModule):
     It is also responsible for building the anchor reference which is used in
     graph for generating the dynamic anchors.
     """
-    def __init__(self, config, name='fasterrcnn'):
+
+    def __init__(self, config, name="fasterrcnn"):
         super(FasterRCNN, self).__init__(name=name)
 
         # Main configuration object, it holds not only the necessary
@@ -62,7 +63,7 @@ class FasterRCNN(snt.AbstractModule):
 
         self._rcnn_cls_loss_weight = config.model.loss.rcnn_cls_loss_weight
         self._rcnn_reg_loss_weight = config.model.loss.rcnn_reg_loss_weights
-        self._losses_collections = ['fastercnn_losses']
+        self._losses_collections = ["fastercnn_losses"]
 
         # We want the pretrained model to be outside the FasterRCNN name scope.
         self.base_network = TruncatedBaseNetwork(config.model.base_network)
@@ -104,54 +105,62 @@ class FasterRCNN(snt.AbstractModule):
 
         # The RPN submodule which generates proposals of objects.
         self._rpn = RPN(
-            self._num_anchors, self._config.model.rpn,
-            debug=self._debug, seed=self._seed
+            self._num_anchors,
+            self._config.model.rpn,
+            debug=self._debug,
+            seed=self._seed,
         )
         if self._with_rcnn:
             # The RCNN submodule which classifies RPN's proposals and
             # classifies them as background or a specific class.
             self._rcnn = RCNN(
-                self._num_classes, self._config.model.rcnn,
-                debug=self._debug, seed=self._seed
+                self._num_classes,
+                self._config.model.rcnn,
+                debug=self._debug,
+                seed=self._seed,
             )
 
         image_shape = tf.shape(image)[0:2]
 
-        variable_summaries(
-            conv_feature_map, 'conv_feature_map', 'reduced'
-        )
+        variable_summaries(conv_feature_map, "conv_feature_map", "reduced")
 
         # Generate anchors for the image based on the anchor reference.
         all_anchors = self._generate_anchors(tf.shape(conv_feature_map))
         rpn_prediction = self._rpn(
-            conv_feature_map, image_shape, all_anchors,
-            gt_boxes=gt_boxes, is_training=is_training
+            conv_feature_map,
+            image_shape,
+            all_anchors,
+            gt_boxes=gt_boxes,
+            is_training=is_training,
         )
 
         prediction_dict = {
-            'rpn_prediction': rpn_prediction,
+            "rpn_prediction": rpn_prediction,
         }
 
         if self._debug:
-            prediction_dict['image'] = image
-            prediction_dict['image_shape'] = image_shape
-            prediction_dict['all_anchors'] = all_anchors
-            prediction_dict['anchor_reference'] = tf.convert_to_tensor(
+            prediction_dict["image"] = image
+            prediction_dict["image_shape"] = image_shape
+            prediction_dict["all_anchors"] = all_anchors
+            prediction_dict["anchor_reference"] = tf.convert_to_tensor(
                 self._anchor_reference
             )
             if gt_boxes is not None:
-                prediction_dict['gt_boxes'] = gt_boxes
-            prediction_dict['conv_feature_map'] = conv_feature_map
+                prediction_dict["gt_boxes"] = gt_boxes
+            prediction_dict["conv_feature_map"] = conv_feature_map
 
         if self._with_rcnn:
-            proposals = tf.stop_gradient(rpn_prediction['proposals'])
+            proposals = tf.stop_gradient(rpn_prediction["proposals"])
             classification_pred = self._rcnn(
-                conv_feature_map, proposals,
-                image_shape, self.base_network,
-                gt_boxes=gt_boxes, is_training=is_training
+                conv_feature_map,
+                proposals,
+                image_shape,
+                self.base_network,
+                gt_boxes=gt_boxes,
+                is_training=is_training,
             )
 
-            prediction_dict['classification_prediction'] = classification_pred
+            prediction_dict["classification_prediction"] = classification_pred
 
         return prediction_dict
 
@@ -173,45 +182,43 @@ class FasterRCNN(snt.AbstractModule):
             and total loss).
         """
 
-        with tf.name_scope('losses'):
-            rpn_loss_dict = self._rpn.loss(
-                prediction_dict['rpn_prediction']
-            )
+        with tf.name_scope("losses"):
+            rpn_loss_dict = self._rpn.loss(prediction_dict["rpn_prediction"])
 
             # Losses have a weight assigned, we multiply by them before saving
             # them.
-            rpn_loss_dict['rpn_cls_loss'] = (
-                rpn_loss_dict['rpn_cls_loss'] * self._rpn_cls_loss_weight)
-            rpn_loss_dict['rpn_reg_loss'] = (
-                rpn_loss_dict['rpn_reg_loss'] * self._rpn_reg_loss_weight)
+            rpn_loss_dict["rpn_cls_loss"] = (
+                rpn_loss_dict["rpn_cls_loss"] * self._rpn_cls_loss_weight
+            )
+            rpn_loss_dict["rpn_reg_loss"] = (
+                rpn_loss_dict["rpn_reg_loss"] * self._rpn_reg_loss_weight
+            )
 
-            prediction_dict['rpn_loss_dict'] = rpn_loss_dict
+            prediction_dict["rpn_loss_dict"] = rpn_loss_dict
 
             if self._with_rcnn:
                 rcnn_loss_dict = self._rcnn.loss(
-                    prediction_dict['classification_prediction']
+                    prediction_dict["classification_prediction"]
                 )
 
-                rcnn_loss_dict['rcnn_cls_loss'] = (
-                    rcnn_loss_dict['rcnn_cls_loss'] *
-                    self._rcnn_cls_loss_weight
+                rcnn_loss_dict["rcnn_cls_loss"] = (
+                    rcnn_loss_dict["rcnn_cls_loss"] * self._rcnn_cls_loss_weight
                 )
-                rcnn_loss_dict['rcnn_reg_loss'] = (
-                    rcnn_loss_dict['rcnn_reg_loss'] *
-                    self._rcnn_reg_loss_weight
+                rcnn_loss_dict["rcnn_reg_loss"] = (
+                    rcnn_loss_dict["rcnn_reg_loss"] * self._rcnn_reg_loss_weight
                 )
 
-                prediction_dict['rcnn_loss_dict'] = rcnn_loss_dict
+                prediction_dict["rcnn_loss_dict"] = rcnn_loss_dict
             else:
                 rcnn_loss_dict = {}
 
-            all_losses_items = (
-                list(rpn_loss_dict.items()) + list(rcnn_loss_dict.items()))
+            all_losses_items = list(rpn_loss_dict.items()) + list(
+                rcnn_loss_dict.items()
+            )
 
             for loss_name, loss_tensor in all_losses_items:
                 tf.summary.scalar(
-                    loss_name, loss_tensor,
-                    collections=self._losses_collections
+                    loss_name, loss_tensor, collections=self._losses_collections
                 )
                 # We add losses to the losses collection instead of manually
                 # summing them just in case somebody wants to use it in another
@@ -222,29 +229,26 @@ class FasterRCNN(snt.AbstractModule):
             # it differently so we can visualize it independently.
             regularization_loss = tf.losses.get_regularization_loss()
             # Total loss without regularization
-            no_reg_loss = tf.losses.get_total_loss(
-                add_regularization_losses=False
-            )
+            no_reg_loss = tf.losses.get_total_loss(add_regularization_losses=False)
             total_loss = tf.losses.get_total_loss()
 
             tf.summary.scalar(
-                'total_loss', total_loss,
-                collections=self._losses_collections
+                "total_loss", total_loss, collections=self._losses_collections
             )
             tf.summary.scalar(
-                'no_reg_loss', no_reg_loss,
-                collections=self._losses_collections
+                "no_reg_loss", no_reg_loss, collections=self._losses_collections
             )
             tf.summary.scalar(
-                'regularization_loss', regularization_loss,
-                collections=self._losses_collections
+                "regularization_loss",
+                regularization_loss,
+                collections=self._losses_collections,
             )
 
             if return_all:
                 loss_dict = {
-                    'total_loss': total_loss,
-                    'no_reg_loss': no_reg_loss,
-                    'regularization_loss': regularization_loss,
+                    "total_loss": total_loss,
+                    "no_reg_loss": no_reg_loss,
+                    "regularization_loss": regularization_loss,
                 }
 
                 for loss_name, loss_tensor in all_losses_items:
@@ -277,7 +281,7 @@ class FasterRCNN(snt.AbstractModule):
                 `(num_anchors_per_points * feature_width * feature_height, 4)`
                 using the (x1, y1, x2, y2) convention.
         """
-        with tf.variable_scope('generate_anchors'):
+        with tf.variable_scope("generate_anchors"):
             grid_width = feature_map_shape[2]  # width
             grid_height = feature_map_shape[1]  # height
             shift_x = tf.range(grid_width) * self._anchor_stride
@@ -287,24 +291,18 @@ class FasterRCNN(snt.AbstractModule):
             shift_x = tf.reshape(shift_x, [-1])
             shift_y = tf.reshape(shift_y, [-1])
 
-            shifts = tf.stack(
-                [shift_x, shift_y, shift_x, shift_y],
-                axis=0
-            )
+            shifts = tf.stack([shift_x, shift_y, shift_x, shift_y], axis=0)
 
             shifts = tf.transpose(shifts)
             # Shifts now is a (H x W, 4) Tensor
 
             # Expand dims to use broadcasting sum.
-            all_anchors = (
-                np.expand_dims(self._anchor_reference, axis=0) +
-                tf.expand_dims(shifts, axis=1)
-            )
+            all_anchors = np.expand_dims(
+                self._anchor_reference, axis=0
+            ) + tf.expand_dims(shifts, axis=1)
 
             # Flatten
-            all_anchors = tf.reshape(
-                all_anchors, (-1, 4)
-            )
+            all_anchors = tf.reshape(all_anchors, (-1, 4))
             return all_anchors
 
     @property
@@ -314,15 +312,13 @@ class FasterRCNN(snt.AbstractModule):
         Faster R-CNN network.
         """
         summaries = [
-            tf.summary.merge_all(key='rpn'),
+            tf.summary.merge_all(key="rpn"),
         ]
 
-        summaries.append(
-            tf.summary.merge_all(key=self._losses_collections[0])
-        )
+        summaries.append(tf.summary.merge_all(key=self._losses_collections[0]))
 
         if self._with_rcnn:
-            summaries.append(tf.summary.merge_all(key='rcnn'))
+            summaries.append(tf.summary.merge_all(key="rcnn"))
 
         return tf.summary.merge(summaries)
 
@@ -335,14 +331,13 @@ class FasterRCNN(snt.AbstractModule):
         }
 
     def get_trainable_vars(self):
-        """Get trainable vars included in the module.
-        """
+        """Get trainable vars included in the module."""
         trainable_vars = snt.get_variables_in_module(self)
         if self._config.model.base_network.trainable:
             pretrained_trainable_vars = self.base_network.get_trainable_vars()
             if len(pretrained_trainable_vars):
                 tf.logging.info(
-                    'Training {} vars from pretrained module; '
+                    "Training {} vars from pretrained module; "
                     'from "{}" to "{}".'.format(
                         len(pretrained_trainable_vars),
                         pretrained_trainable_vars[0].name,
@@ -350,10 +345,10 @@ class FasterRCNN(snt.AbstractModule):
                     )
                 )
             else:
-                tf.logging.info('No vars from pretrained module to train.')
+                tf.logging.info("No vars from pretrained module to train.")
             trainable_vars += pretrained_trainable_vars
         else:
-            tf.logging.info('Not training variables from pretrained module')
+            tf.logging.info("Not training variables from pretrained module")
 
         return trainable_vars
 

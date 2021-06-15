@@ -4,10 +4,12 @@ import tensorflow as tf
 
 
 @click.command()
-@click.argument('src', nargs=-1)
-@click.argument('dst', nargs=1)
-@click.option('--type', type=str, default="tf", help='Type of datasets to merge.') # noqa
-@click.option('--debug', is_flag=True, help='Set level logging to DEBUG.')
+@click.argument("src", nargs=-1)
+@click.argument("dst", nargs=1)
+@click.option(
+    "--type", type=str, default="tf", help="Type of datasets to merge."
+)  # noqa
+@click.option("--debug", is_flag=True, help="Set level logging to DEBUG.")
 def merge(src, dst, type, debug):
     """
     Merges existing datasets into a single one.
@@ -32,8 +34,9 @@ def merge(src, dst, type, debug):
                 total_src_records += 1
                 total_records += 1
 
-            tf.logging.info('Saved {} records from "{}"'.format(
-                total_src_records, src_file))
+            tf.logging.info(
+                'Saved {} records from "{}"'.format(total_src_records, src_file)
+            )
 
         tf.logging.info('Saved {} to "{}"'.format(total_records, dst))
 
@@ -45,8 +48,9 @@ def merge(src, dst, type, debug):
         for src_file in src:
             df = pd.read_csv(src_file, sep=",")
             total_src_records = len(df)
-            tf.logging.info('Saved {} csv records from "{}"'.format(
-                total_src_records, src_file))
+            tf.logging.info(
+                'Saved {} csv records from "{}"'.format(total_src_records, src_file)
+            )
             total_records += total_src_records
             dfs.append(df)
 

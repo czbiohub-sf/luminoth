@@ -70,9 +70,9 @@ def resize_image(image, bboxes=None, min_size=None, max_size=None):
         # In case of being big enough the scale factor is 1. (no change)
         min_size = tf.to_float(min_size)
         min_dimension = tf.minimum(height, width)
-        upscale_factor = tf.maximum(min_size / min_dimension, 1.)
+        upscale_factor = tf.maximum(min_size / min_dimension, 1.0)
     else:
-        upscale_factor = tf.constant(1.)
+        upscale_factor = tf.constant(1.0)
 
     if max_size is not None:
         # We do the same calculating the downscale factor, to end up with an
@@ -80,9 +80,9 @@ def resize_image(image, bboxes=None, min_size=None, max_size=None):
         # When the image is small enough the scale factor is 1. (no change)
         max_size = tf.to_float(max_size)
         max_dimension = tf.maximum(height, width)
-        downscale_factor = tf.minimum(max_size / max_dimension, 1.)
+        downscale_factor = tf.minimum(max_size / max_dimension, 1.0)
     else:
-        downscale_factor = tf.constant(1.)
+        downscale_factor = tf.constant(1.0)
 
     scale_factor = upscale_factor * downscale_factor
 
@@ -92,25 +92,28 @@ def resize_image(image, bboxes=None, min_size=None, max_size=None):
 
     # Resize image using TensorFlow's own `resize_image` utility.
     image = tf.image.resize_images(
-        image, tf.stack(tf.to_int32([new_height, new_width])),
-        method=tf.image.ResizeMethod.BILINEAR
+        image,
+        tf.stack(tf.to_int32([new_height, new_width])),
+        method=tf.image.ResizeMethod.BILINEAR,
     )
 
     if bboxes is not None:
         bboxes = adjust_bboxes(
             bboxes,
-            old_height=height, old_width=width,
-            new_height=new_height, new_width=new_width
+            old_height=height,
+            old_width=width,
+            new_height=new_height,
+            new_width=new_width,
         )
         return {
-            'image': image,
-            'bboxes': bboxes,
-            'scale_factor': scale_factor,
+            "image": image,
+            "bboxes": bboxes,
+            "scale_factor": scale_factor,
         }
 
     return {
-        'image': image,
-        'scale_factor': scale_factor,
+        "image": image,
+        "scale_factor": scale_factor,
     }
 
 
@@ -125,30 +128,39 @@ def resize_image_fixed(image, new_height, new_width, bboxes=None):
 
     # Resize image using TensorFlow's own `resize_image` utility.
     image = tf.image.resize_images(
-        image, tf.stack(tf.to_int32([new_height, new_width])),
-        method=tf.image.ResizeMethod.BILINEAR
+        image,
+        tf.stack(tf.to_int32([new_height, new_width])),
+        method=tf.image.ResizeMethod.BILINEAR,
     )
 
     if bboxes is not None:
         bboxes = adjust_bboxes(
             bboxes,
-            old_height=height, old_width=width,
-            new_height=new_height, new_width=new_width
+            old_height=height,
+            old_width=width,
+            new_height=new_height,
+            new_width=new_width,
         )
         return {
-            'image': image,
-            'bboxes': bboxes,
-            'scale_factor': (scale_factor_height, scale_factor_width),
+            "image": image,
+            "bboxes": bboxes,
+            "scale_factor": (scale_factor_height, scale_factor_width),
         }
 
     return {
-        'image': image,
-        'scale_factor': (scale_factor_height, scale_factor_width),
+        "image": image,
+        "scale_factor": (scale_factor_height, scale_factor_width),
     }
 
 
-def patch_image(image, bboxes=None, offset_height=0, offset_width=0,
-                target_height=None, target_width=None):
+def patch_image(
+    image,
+    bboxes=None,
+    offset_height=0,
+    offset_width=0,
+    target_height=None,
+    target_width=None,
+):
     """Gets a patch using tf.image.crop_to_bounding_box and adjusts bboxes
 
     If patching would leave us with zero bboxes, we return the image and bboxes
@@ -178,14 +190,16 @@ def patch_image(image, bboxes=None, offset_height=0, offset_width=0,
     # the arguments are legal.
     im_shape = tf.shape(image)
     if target_height is None:
-        target_height = (im_shape[0] - offset_height - 1)
+        target_height = im_shape[0] - offset_height - 1
     if target_width is None:
-        target_width = (im_shape[1] - offset_width - 1)
+        target_width = im_shape[1] - offset_width - 1
 
     new_image = tf.image.crop_to_bounding_box(
         image,
-        offset_height=offset_height, offset_width=offset_width,
-        target_height=target_height, target_width=target_width
+        offset_height=offset_height,
+        offset_width=offset_width,
+        target_height=target_height,
+        target_width=target_width,
     )
     patch_shape = tf.shape(new_image)
 
@@ -194,10 +208,9 @@ def patch_image(image, bboxes=None, offset_height=0, offset_width=0,
         # Resize the patch to the original image's size. This is to make sure
         # we respect restrictions in image size in the models.
         new_image_resized = tf.image.resize_images(
-            new_image, im_shape[:2],
-            method=tf.image.ResizeMethod.BILINEAR
+            new_image, im_shape[:2], method=tf.image.ResizeMethod.BILINEAR
         )
-        return_dict = {'image': new_image_resized}
+        return_dict = {"image": new_image_resized}
         return return_dict
 
     # Now we will remove all bboxes whose centers are not inside the cropped
@@ -211,48 +224,26 @@ def patch_image(image, bboxes=None, offset_height=0, offset_width=0,
                 # bboxes[:, 0] gets a Tensor with shape (20,).
                 # We do this to get a Tensor with shape (20, 1).
                 bboxes[:, 0:1],
-                bboxes[:, 2:3]
+                bboxes[:, 2:3],
             ],
-            axis=1
+            axis=1,
         )
     )
     bboxes_center_y = tf.reduce_mean(
-        tf.concat(
-            [
-                bboxes[:, 1:2],
-                bboxes[:, 3:4]
-            ],
-            axis=1
-        ),
-        axis=1
+        tf.concat([bboxes[:, 1:2], bboxes[:, 3:4]], axis=1), axis=1
     )
 
     # Now we get a boolean tensor holding for each of the bboxes' centers
     # wheter they are inside the patch.
     center_x_is_inside = tf.logical_and(
-        tf.greater(
-            bboxes_center_x,
-            offset_width
-        ),
-        tf.less(
-            bboxes_center_x,
-            tf.add(target_width, offset_width)
-        )
+        tf.greater(bboxes_center_x, offset_width),
+        tf.less(bboxes_center_x, tf.add(target_width, offset_width)),
     )
     center_y_is_inside = tf.logical_and(
-        tf.greater(
-            bboxes_center_y,
-            offset_height
-        ),
-        tf.less(
-            bboxes_center_y,
-            tf.add(target_height, offset_height)
-        )
+        tf.greater(bboxes_center_y, offset_height),
+        tf.less(bboxes_center_y, tf.add(target_height, offset_height)),
     )
-    center_is_inside = tf.logical_and(
-        center_x_is_inside,
-        center_y_is_inside
-    )
+    center_is_inside = tf.logical_and(center_x_is_inside, center_y_is_inside)
 
     # Now we mask the bboxes, removing all those whose centers are outside
     # the patch.
@@ -272,19 +263,15 @@ def patch_image(image, bboxes=None, offset_height=0, offset_width=0,
     new_bboxes = tf.concat(
         [
             tf.to_int32(
-                clip_boxes(
-                    new_bboxes_unclipped,
-                    imshape=patch_shape[:2]
-                ),
+                clip_boxes(new_bboxes_unclipped, imshape=patch_shape[:2]),
             ),
-            masked_bboxes[:, 4:]
+            masked_bboxes[:, 4:],
         ],
-        axis=1
+        axis=1,
     )
     # Now resize the image to the original size and adjust bboxes accordingly
     new_image_resized = tf.image.resize_images(
-        new_image, im_shape[:2],
-        method=tf.image.ResizeMethod.BILINEAR
+        new_image, im_shape[:2], method=tf.image.ResizeMethod.BILINEAR
     )
     # adjust_bboxes requires height and width values with dtype=float32
     new_bboxes_resized = adjust_bboxes(
@@ -292,25 +279,18 @@ def patch_image(image, bboxes=None, offset_height=0, offset_width=0,
         old_height=tf.to_float(patch_shape[0]),
         old_width=tf.to_float(patch_shape[1]),
         new_height=tf.to_float(im_shape[0]),
-        new_width=tf.to_float(im_shape[1])
+        new_width=tf.to_float(im_shape[1]),
     )
 
     # Finally, set up the return dict, but only update the image and bboxes if
     # our patch has at least one bbox in it.
-    update_condition = tf.greater_equal(
-        tf.shape(new_bboxes_resized)[0],
-        1
-    )
+    update_condition = tf.greater_equal(tf.shape(new_bboxes_resized)[0], 1)
     return_dict = {}
-    return_dict['image'] = tf.cond(
-        update_condition,
-        lambda: new_image_resized,
-        lambda: image
+    return_dict["image"] = tf.cond(
+        update_condition, lambda: new_image_resized, lambda: image
     )
-    return_dict['bboxes'] = tf.cond(
-        update_condition,
-        lambda: new_bboxes_resized,
-        lambda: bboxes
+    return_dict["bboxes"] = tf.cond(
+        update_condition, lambda: new_bboxes_resized, lambda: bboxes
     )
     return return_dict
 
@@ -363,15 +343,14 @@ def flip_image(image, bboxes=None, left_right=True, up_down=False):
                 [new_x_min, new_y_min, new_x_max, new_y_max, label], axis=1
             )
 
-    return_dict = {'image': image}
+    return_dict = {"image": image}
     if bboxes is not None:
-        return_dict['bboxes'] = bboxes
+        return_dict["bboxes"] = bboxes
 
     return return_dict
 
 
-def random_patch(image, bboxes=None, min_height=600, min_width=600,
-                 seed=None):
+def random_patch(image, bboxes=None, min_height=600, min_width=600, seed=None):
     """Gets a random patch from an image.
 
     min_height and min_width values will be normalized if they are not possible
@@ -405,52 +384,42 @@ def random_patch(image, bboxes=None, min_height=600, min_width=600,
     offset_width = tf.random_uniform(
         shape=[],
         minval=0,
-        maxval=tf.subtract(
-            im_shape[1],
-            min_width
-        ),
+        maxval=tf.subtract(im_shape[1], min_width),
         dtype=tf.int32,
-        seed=seed
+        seed=seed,
     )
     offset_height = tf.random_uniform(
         shape=[],
         minval=0,
-        maxval=tf.subtract(
-            im_shape[0],
-            min_height
-        ),
+        maxval=tf.subtract(im_shape[0], min_height),
         dtype=tf.int32,
-        seed=seed
+        seed=seed,
     )
     target_width = tf.random_uniform(
         shape=[],
         minval=min_width,
-        maxval=tf.subtract(
-            im_shape[1],
-            offset_width
-        ),
+        maxval=tf.subtract(im_shape[1], offset_width),
         dtype=tf.int32,
-        seed=seed
+        seed=seed,
     )
     target_height = tf.random_uniform(
         shape=[],
         minval=min_height,
-        maxval=tf.subtract(
-            im_shape[0],
-            offset_height
-        ),
+        maxval=tf.subtract(im_shape[0], offset_height),
         dtype=tf.int32,
-        seed=seed
+        seed=seed,
     )
     return patch_image(
-        image, bboxes=bboxes,
-        offset_height=offset_height, offset_width=offset_width,
-        target_height=target_height, target_width=target_width
+        image,
+        bboxes=bboxes,
+        offset_height=offset_height,
+        offset_width=offset_width,
+        target_height=target_height,
+        target_width=target_width,
     )
 
 
-def random_resize(image, bboxes=None, min_size=600, max_size=980,
-                  seed=None):
+def random_resize(image, bboxes=None, min_size=600, max_size=980, seed=None):
     """Randomly resizes an image within limits.
 
     Args:
@@ -477,8 +446,7 @@ def random_resize(image, bboxes=None, min_size=600, max_size=980,
         seed=seed,
     )
     image = tf.image.resize_images(
-        image, new_size,
-        method=tf.image.ResizeMethod.BILINEAR
+        image, new_size, method=tf.image.ResizeMethod.BILINEAR
     )
     # Our returned dict needs to have a fixed size. So we can't
     # return the scale_factor that resize_image returns.
@@ -486,20 +454,26 @@ def random_resize(image, bboxes=None, min_size=600, max_size=980,
         new_size = tf.to_float(new_size)
         bboxes = adjust_bboxes(
             bboxes,
-            old_height=im_shape[0], old_width=im_shape[1],
-            new_height=new_size[0], new_width=new_size[1]
+            old_height=im_shape[0],
+            old_width=im_shape[1],
+            new_height=new_size[0],
+            new_width=new_size[1],
         )
-        return_dict = {
-            'image': image,
-            'bboxes': bboxes
-        }
+        return_dict = {"image": image, "bboxes": bboxes}
     else:
-        return_dict = {'image': image}
+        return_dict = {"image": image}
     return return_dict
 
 
-def random_distortion(image, bboxes=None, brightness=None, contrast=None,
-                      hue=None, saturation=None, seed=None):
+def random_distortion(
+    image,
+    bboxes=None,
+    brightness=None,
+    contrast=None,
+    hue=None,
+    saturation=None,
+    seed=None,
+):
     """Photometrically distorts an image.
 
     This includes changing the brightness, contrast and hue.
@@ -525,7 +499,7 @@ def random_distortion(image, bboxes=None, brightness=None, contrast=None,
     # Following Andrew Howard (2013). "Some improvements on deep convolutional
     # neural network based image classification."
     if brightness is not None:
-        if 'max_delta' not in brightness:
+        if "max_delta" not in brightness:
             brightness.max_delta = 0.3
         image = tf.image.random_brightness(
             image, max_delta=brightness.max_delta, seed=seed
@@ -533,35 +507,31 @@ def random_distortion(image, bboxes=None, brightness=None, contrast=None,
     # Changing contrast, even with parameters close to 1, can lead to
     # excessively distorted images. Use with care.
     if contrast is not None:
-        if 'lower' not in contrast:
+        if "lower" not in contrast:
             contrast.lower = 0.8
-        if 'upper' not in contrast:
+        if "upper" not in contrast:
             contrast.upper = 1.2
         image = tf.image.random_contrast(
-            image, lower=contrast.lower, upper=contrast.upper,
-            seed=seed
+            image, lower=contrast.lower, upper=contrast.upper, seed=seed
         )
     if hue is not None:
-        if 'max_delta' not in hue:
+        if "max_delta" not in hue:
             hue.max_delta = 0.2
-        image = tf.image.random_hue(
-            image, max_delta=hue.max_delta, seed=seed
-        )
+        image = tf.image.random_hue(image, max_delta=hue.max_delta, seed=seed)
     if saturation is not None:
-        if 'lower' not in saturation:
+        if "lower" not in saturation:
             saturation.lower = 0.8
-        if 'upper' not in saturation:
+        if "upper" not in saturation:
             saturation.upper = 1.2
         image = tf.image.random_saturation(
-            image, lower=saturation.lower, upper=saturation.upper,
-            seed=seed
+            image, lower=saturation.lower, upper=saturation.upper, seed=seed
         )
     if bboxes is None:
-        return_dict = {'image': image}
+        return_dict = {"image": image}
     else:
         return_dict = {
-            'image': image,
-            'bboxes': bboxes,
+            "image": image,
+            "bboxes": bboxes,
         }
     return return_dict
 
@@ -588,23 +558,26 @@ def expand(image, bboxes=None, fill=0, min_ratio=1, max_ratio=4, seed=None):
     image_shape = tf.to_float(tf.shape(image))
     height = image_shape[0]
     width = image_shape[1]
-    size_multiplier = tf.random_uniform([1], minval=min_ratio,
-                                        maxval=max_ratio, seed=seed)
+    size_multiplier = tf.random_uniform(
+        [1], minval=min_ratio, maxval=max_ratio, seed=seed
+    )
 
     # Expand image
     new_height = height * size_multiplier
     new_width = width * size_multiplier
-    pad_left = tf.random_uniform([1], minval=0,
-                                 maxval=new_width - width, seed=seed)
+    pad_left = tf.random_uniform([1], minval=0, maxval=new_width - width, seed=seed)
     pad_right = new_width - width - pad_left
-    pad_top = tf.random_uniform([1], minval=0,
-                                maxval=new_height - height, seed=seed)
+    pad_top = tf.random_uniform([1], minval=0, maxval=new_height - height, seed=seed)
     pad_bottom = new_height - height - pad_top
 
     # TODO: use mean instead of 0 for filling the paddings
-    paddings = tf.stack([tf.concat([pad_top, pad_bottom], axis=0),
-                         tf.concat([pad_left, pad_right], axis=0),
-                         tf.constant([0., 0.])])
+    paddings = tf.stack(
+        [
+            tf.concat([pad_top, pad_bottom], axis=0),
+            tf.concat([pad_left, pad_right], axis=0),
+            tf.constant([0.0, 0.0]),
+        ]
+    )
     expanded_image = tf.pad(image, tf.to_int32(paddings), constant_values=fill)
 
     # Adjust bboxes
@@ -614,9 +587,9 @@ def expand(image, bboxes=None, fill=0, min_ratio=1, max_ratio=4, seed=None):
     bbox_adjusted = tf.concat([bbox_adjusted_coords, bbox_labels], axis=1)
 
     # Return results
-    return_dict = {'image': expanded_image}
+    return_dict = {"image": expanded_image}
     if bboxes is not None:
-        return_dict['bboxes'] = bbox_adjusted
+        return_dict["bboxes"] = bbox_adjusted
     return return_dict
 
 
@@ -639,19 +612,12 @@ def _rot90_boxes(boxes, image_shape):
     normalized_x_max = x_max / width
     normalized_y_max = y_max / height
 
-    new_x_min = (tf.round(normalized_y_min * height))
-    new_y_min = (tf.round((tf.subtract(1.0, normalized_x_max)) * width))
-    new_x_max = (tf.round(normalized_y_max * height))
-    new_y_max = (tf.round((tf.subtract(1.0, normalized_x_min)) * width))
+    new_x_min = tf.round(normalized_y_min * height)
+    new_y_min = tf.round((tf.subtract(1.0, normalized_x_max)) * width)
+    new_x_max = tf.round(normalized_y_max * height)
+    new_y_max = tf.round((tf.subtract(1.0, normalized_x_min)) * width)
 
-    bboxes = tf.stack(
-        [new_x_min,
-         new_y_min,
-         new_x_max,
-         new_y_max,
-         label],
-        axis=1
-    )
+    bboxes = tf.stack([new_x_min, new_y_min, new_x_max, new_y_max, label], axis=1)
     return bboxes
 
 
@@ -674,20 +640,22 @@ def rot90(image, bboxes=None):
         rotated_bboxes = _rot90_boxes(bboxes, image_shape)
         rotated_bboxes = tf.cast(rotated_bboxes, original_bboxes_dtype)
 
-    return_dict = {'image': image}
+    return_dict = {"image": image}
     if bboxes is not None:
-        return_dict['bboxes'] = rotated_bboxes
+        return_dict["bboxes"] = rotated_bboxes
 
     return return_dict
 
 
-def random_patch_gaussian(image,
-                          bboxes=None,
-                          min_height=600,
-                          min_width=600,
-                          min_gaussian_stddev=0.0,
-                          max_gaussian_stddev=1.0,
-                          seed=None):
+def random_patch_gaussian(
+    image,
+    bboxes=None,
+    min_height=600,
+    min_width=600,
+    min_gaussian_stddev=0.0,
+    max_gaussian_stddev=1.0,
+    seed=None,
+):
     """Randomly applies gaussian noise to a random patch on the image.
     The gaussian noise is applied to the image with values scaled to the range
     [0.0, 1.0]. The result of applying gaussian noise to the scaled image is
@@ -726,50 +694,43 @@ def random_patch_gaussian(image,
         minval=min_gaussian_stddev,
         maxval=max_gaussian_stddev,
         dtype=tf.float32,
-        seed=seed)
+        seed=seed,
+    )
     offset_width = tf.random_uniform(
         shape=[],
         minval=0,
-        maxval=tf.subtract(
-            image_shape[1],
-            min_width
-        ),
+        maxval=tf.subtract(image_shape[1], min_width),
         dtype=tf.int32,
-        seed=seed
+        seed=seed,
     )
     offset_height = tf.random_uniform(
         shape=[],
         minval=0,
-        maxval=tf.subtract(
-            image_shape[0],
-            min_height
-        ),
+        maxval=tf.subtract(image_shape[0], min_height),
         dtype=tf.int32,
-        seed=seed
+        seed=seed,
     )
     gaussian = tf.random.normal(
-        image_shape,
-        stddev=gaussian_stddev,
-        dtype=tf.float32,
-        seed=seed)
+        image_shape, stddev=gaussian_stddev, dtype=tf.float32, seed=seed
+    )
 
     scaled_image = image / 255.0
-    image_plus_gaussian = tf.clip_by_value(
-        scaled_image + gaussian, 0.0, 1.0)
+    image_plus_gaussian = tf.clip_by_value(scaled_image + gaussian, 0.0, 1.0)
     patch_mask = patch_image(
         tf.ones_like(image),
         bboxes=None,
         offset_height=offset_height,
         offset_width=offset_width,
         target_height=None,
-        target_width=None)['image']
+        target_width=None,
+    )["image"]
 
     patch_mask = tf.cast(patch_mask, tf.bool)
     patched_image = tf.where(patch_mask, image_plus_gaussian, scaled_image)
     gaussian_patched_image = patched_image * 255.0
     # Return results
     image = tf.cast(gaussian_patched_image, original_dtype)
-    return_dict = {'image': image}
+    return_dict = {"image": image}
     if bboxes is not None:
-        return_dict['bboxes'] = bboxes
+        return_dict["bboxes"] = bboxes
     return return_dict

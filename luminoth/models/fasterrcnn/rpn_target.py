@@ -49,7 +49,8 @@ class RPNTarget(snt.AbstractModule):
         labels: label for each anchor
         bbox_targets: bbox regresion values for each anchor
     """
-    def __init__(self, num_anchors, config, seed=None, name='anchor_target'):
+
+    def __init__(self, num_anchors, config, seed=None, name="anchor_target"):
         super(RPNTarget, self).__init__(name=name)
         self._num_anchors = num_anchors
 
@@ -108,29 +109,29 @@ class RPNTarget(snt.AbstractModule):
         all_anchors = all_anchors[:, :4]
 
         # Only keep anchors inside the image
-        (x_min_anchor, y_min_anchor,
-         x_max_anchor, y_max_anchor) = tf.unstack(all_anchors, axis=1)
+        (x_min_anchor, y_min_anchor, x_max_anchor, y_max_anchor) = tf.unstack(
+            all_anchors, axis=1
+        )
 
         anchor_filter = tf.logical_and(
             tf.logical_and(
                 tf.greater_equal(x_min_anchor, -self._allowed_border),
-                tf.greater_equal(y_min_anchor, -self._allowed_border)
+                tf.greater_equal(y_min_anchor, -self._allowed_border),
             ),
             tf.logical_and(
                 tf.less(x_max_anchor, im_shape[1] + self._allowed_border),
-                tf.less(y_max_anchor, im_shape[0] + self._allowed_border)
-            )
+                tf.less(y_max_anchor, im_shape[0] + self._allowed_border),
+            ),
         )
 
         # We (force) reshape the filter so that we can use it as a boolean mask
         anchor_filter = tf.reshape(anchor_filter, [-1])
         # Filter anchors.
-        anchors = tf.boolean_mask(
-            all_anchors, anchor_filter, name='filter_anchors')
+        anchors = tf.boolean_mask(all_anchors, anchor_filter, name="filter_anchors")
 
         # Generate array with the labels for all_anchors.
         labels = tf.fill((tf.gather(tf.shape(all_anchors), [0])), -1)
-        labels = tf.boolean_mask(labels, anchor_filter, name='filter_labels')
+        labels = tf.boolean_mask(labels, anchor_filter, name="filter_labels")
 
         # Intersection over union (IoU) overlap between the anchors and the
         # ground truth boxes.
@@ -143,13 +144,13 @@ class RPNTarget(snt.AbstractModule):
             # Assign bg labels first so that positive labels can clobber them.
             # First we get an array with True where IoU is less than
             # self._negative_overlap
-            negative_overlap_nonzero = tf.less(
-                max_overlaps, self._negative_overlap)
+            negative_overlap_nonzero = tf.less(max_overlaps, self._negative_overlap)
 
             # Finally we set 0 at True indices
             labels = tf.where(
                 condition=negative_overlap_nonzero,
-                x=tf.zeros(tf.shape(labels)), y=tf.to_float(labels)
+                x=tf.zeros(tf.shape(labels)),
+                y=tf.to_float(labels),
             )
         # Get the value of the max IoU for the closest anchor for each gt.
         gt_max_overlaps = tf.reduce_max(overlaps, axis=0)
@@ -161,43 +162,45 @@ class RPNTarget(snt.AbstractModule):
         gt_argmax_overlaps, _ = tf.unique(gt_argmax_overlaps)
         # Order the indices for sparse_to_dense compatibility
         gt_argmax_overlaps, _ = tf.nn.top_k(
-            gt_argmax_overlaps, k=tf.shape(gt_argmax_overlaps)[-1])
+            gt_argmax_overlaps, k=tf.shape(gt_argmax_overlaps)[-1]
+        )
         gt_argmax_overlaps = tf.reverse(gt_argmax_overlaps, [0])
 
         # Foreground label: for each ground-truth, anchor with highest overlap.
         # When the argmax is many items we use all of them (for consistency).
         # We set 1 at gt_argmax_overlaps_cond indices
         gt_argmax_overlaps_cond = tf.sparse_to_dense(
-            gt_argmax_overlaps, tf.shape(labels, out_type=tf.int64),
-            True, default_value=False
+            gt_argmax_overlaps,
+            tf.shape(labels, out_type=tf.int64),
+            True,
+            default_value=False,
         )
 
         labels = tf.where(
             condition=gt_argmax_overlaps_cond,
-            x=tf.ones(tf.shape(labels)), y=tf.to_float(labels)
+            x=tf.ones(tf.shape(labels)),
+            y=tf.to_float(labels),
         )
 
         # Foreground label: above threshold Intersection over Union (IoU)
         # First we get an array with True where IoU is greater or equal than
         # self._positive_overlap
-        positive_overlap_inds = tf.greater_equal(
-            max_overlaps, self._positive_overlap)
+        positive_overlap_inds = tf.greater_equal(max_overlaps, self._positive_overlap)
         # Finally we set 1 at True indices
         labels = tf.where(
-            condition=positive_overlap_inds,
-            x=tf.ones(tf.shape(labels)), y=labels
+            condition=positive_overlap_inds, x=tf.ones(tf.shape(labels)), y=labels
         )
 
         if self._clobber_positives:
             # Assign background labels last so that negative labels can clobber
             # positives. First we get an array with True where IoU is less than
             # self._negative_overlap
-            negative_overlap_nonzero = tf.less(
-                max_overlaps, self._negative_overlap)
+            negative_overlap_nonzero = tf.less(max_overlaps, self._negative_overlap)
             # Finally we set 0 at True indices
             labels = tf.where(
                 condition=negative_overlap_nonzero,
-                x=tf.zeros(tf.shape(labels)), y=labels
+                x=tf.zeros(tf.shape(labels)),
+                y=labels,
             )
 
         # Subsample positive labels if we have too many
@@ -207,20 +210,24 @@ class RPNTarget(snt.AbstractModule):
             # Select the indices that we have to ignore, this is
             # `tf.shape(fg_inds)[0] - num_fg` because we want to get only
             # `num_fg` foreground labels.
-            disable_place = (tf.shape(fg_inds)[0] - num_fg)
+            disable_place = tf.shape(fg_inds)[0] - num_fg
             disable_fg_inds = disable_fg_inds[:disable_place]
             # Order the indices for sparse_to_dense compatibility
             disable_fg_inds, _ = tf.nn.top_k(
-                disable_fg_inds, k=tf.shape(disable_fg_inds)[-1])
+                disable_fg_inds, k=tf.shape(disable_fg_inds)[-1]
+            )
             disable_fg_inds = tf.reverse(disable_fg_inds, [0])
             disable_fg_inds = tf.sparse_to_dense(
-                disable_fg_inds, tf.shape(labels, out_type=tf.int64),
-                True, default_value=False
+                disable_fg_inds,
+                tf.shape(labels, out_type=tf.int64),
+                True,
+                default_value=False,
             )
             # Put -1 to ignore the anchors in the selected indices
             return tf.where(
                 condition=tf.squeeze(disable_fg_inds),
-                x=tf.to_float(tf.fill(tf.shape(labels), -1)), y=labels
+                x=tf.to_float(tf.fill(tf.shape(labels), -1)),
+                y=labels,
             )
 
         num_fg = tf.to_int32(self._foreground_fraction * self._minibatch_size)
@@ -233,8 +240,7 @@ class RPNTarget(snt.AbstractModule):
         subsample_positive_cond = fg_inds_size > num_fg
         # Check the condition and subsample positive labels.
         labels = tf.cond(
-            subsample_positive_cond,
-            true_fn=subsample_positive, false_fn=lambda: labels
+            subsample_positive_cond, true_fn=subsample_positive, false_fn=lambda: labels
         )
 
         # Subsample negative labels if we have too many
@@ -245,20 +251,24 @@ class RPNTarget(snt.AbstractModule):
             # Select the indices that we have to ignore, this is
             # `tf.shape(bg_inds)[0] - num_bg` because we want to get only
             # `num_bg` background labels.
-            disable_place = (tf.shape(bg_inds)[0] - num_bg)
+            disable_place = tf.shape(bg_inds)[0] - num_bg
             disable_bg_inds = disable_bg_inds[:disable_place]
             # Order the indices for sparse_to_dense compatibility
             disable_bg_inds, _ = tf.nn.top_k(
-                disable_bg_inds, k=tf.shape(disable_bg_inds)[-1])
+                disable_bg_inds, k=tf.shape(disable_bg_inds)[-1]
+            )
             disable_bg_inds = tf.reverse(disable_bg_inds, [0])
             disable_bg_inds = tf.sparse_to_dense(
-                disable_bg_inds, tf.shape(labels, out_type=tf.int64),
-                True, default_value=False
+                disable_bg_inds,
+                tf.shape(labels, out_type=tf.int64),
+                True,
+                default_value=False,
             )
             # Put -1 to ignore the anchors in the selected indices
             return tf.where(
                 condition=tf.squeeze(disable_bg_inds),
-                x=tf.to_float(tf.fill(tf.shape(labels), -1)), y=labels
+                x=tf.to_float(tf.fill(tf.shape(labels), -1)),
+                y=labels,
             )
 
         # Recalculate the foreground indices after (maybe) disable some of them
@@ -279,8 +289,7 @@ class RPNTarget(snt.AbstractModule):
         subsample_negative_cond = bg_inds_size > num_bg
         # Check the condition and subsample positive labels.
         labels = tf.cond(
-            subsample_negative_cond,
-            true_fn=subsample_negative, false_fn=lambda: labels
+            subsample_negative_cond, true_fn=subsample_negative, false_fn=lambda: labels
         )
 
         # Return bbox targets with shape (anchors.shape[0], 4).
@@ -300,7 +309,8 @@ class RPNTarget(snt.AbstractModule):
         anchor_foreground_filter = tf.equal(labels, 1)
         bbox_targets = tf.where(
             condition=anchor_foreground_filter,
-            x=bbox_targets, y=tf.zeros_like(bbox_targets)
+            x=bbox_targets,
+            y=tf.zeros_like(bbox_targets),
         )
 
         # We unroll "inside anchors" value for all anchors (for shape
@@ -311,25 +321,26 @@ class RPNTarget(snt.AbstractModule):
         bbox_targets = tf.scatter_nd(
             indices=tf.to_int32(anchor_filter_inds),
             updates=bbox_targets,
-            shape=tf.shape(all_anchors)
+            shape=tf.shape(all_anchors),
         )
 
         labels_scatter = tf.scatter_nd(
             indices=tf.to_int32(anchor_filter_inds),
             updates=labels,
-            shape=[tf.shape(all_anchors)[0]]
+            shape=[tf.shape(all_anchors)[0]],
         )
         # We have to put -1 to ignore the indices with 0 generated by
         # scatter_nd, otherwise it will be considered as background.
         labels = tf.where(
-            condition=anchor_filter, x=labels_scatter,
-            y=tf.to_float(tf.fill(tf.shape(labels_scatter), -1))
+            condition=anchor_filter,
+            x=labels_scatter,
+            y=tf.to_float(tf.fill(tf.shape(labels_scatter), -1)),
         )
 
         max_overlaps = tf.scatter_nd(
             indices=tf.to_int32(anchor_filter_inds),
             updates=max_overlaps,
-            shape=[tf.shape(all_anchors)[0]]
+            shape=[tf.shape(all_anchors)[0]],
         )
 
         return labels, bbox_targets, max_overlaps

@@ -50,7 +50,7 @@ Groundtruth [    1]   0.000   0.000   0.500
             [    2]   0.000   0.000   1.000 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-""" # noqa
+"""  # noqa
 
 
 def get_valid_match_iou(i, j, gt_boxes, predicted_boxes, iou_threshold):
@@ -75,21 +75,22 @@ def get_valid_match_iou(i, j, gt_boxes, predicted_boxes, iou_threshold):
         list: [index_gt, index_predicted, iou] or None
     """
     iou = bbox_overlap(
-        np.array(gt_boxes[i]).reshape(1, 4),
-        np.array(predicted_boxes[j]).reshape(1, 4))[0][0]
+        np.array(gt_boxes[i]).reshape(1, 4), np.array(predicted_boxes[j]).reshape(1, 4)
+    )[0][0]
     if iou >= iou_threshold:
         return [i, j, iou]
 
 
 def get_matched_gt_predict_per_image(
-        im_path,
-        input_image_format,
-        df_gt,
-        df_predicted,
-        labels,
-        iou_threshold,
-        confidence_threshold,
-        num_cpus):
+    im_path,
+    input_image_format,
+    df_gt,
+    df_predicted,
+    labels,
+    iou_threshold,
+    confidence_threshold,
+    num_cpus,
+):
     """
     Returns all groundtruth classes, predicted classes, matched groundtruth
     classes, matched predicted classes with iou greater than iou_threshold,
@@ -152,18 +153,11 @@ def get_matched_gt_predict_per_image(
             predicted_scores.append(row.prob)
 
     # Find IOU Matches
-    iterator = itertools.product(
-        range(len(gt_boxes)), range(len(predicted_boxes)))
-    matches = Parallel(
-        n_jobs=num_cpus)(
-        delayed(
-            get_valid_match_iou)(
-            i,
-            j,
-            gt_boxes,
-            predicted_boxes,
-            iou_threshold) for i,
-        j in iterator)
+    iterator = itertools.product(range(len(gt_boxes)), range(len(predicted_boxes)))
+    matches = Parallel(n_jobs=num_cpus)(
+        delayed(get_valid_match_iou)(i, j, gt_boxes, predicted_boxes, iou_threshold)
+        for i, j in iterator
+    )
     matches_before = list(filter(None, matches))
 
     # Remove redundant IOU matches with different labels
@@ -172,14 +166,14 @@ def get_matched_gt_predict_per_image(
         # Sort list of matches by descending IOU
         # so we can remove duplicate detections
         # while keeping the highest IOU entry.
-        matches = matches[matches[:, 2].argsort()[::-1][:len(matches)]]
+        matches = matches[matches[:, 2].argsort()[::-1][: len(matches)]]
         # Remove duplicate predictions for the same bbox from the list.
         matches = matches[np.unique(matches[:, 1], return_index=True)[1]]
 
         # Sort the list again by descending IOU.
         # Removing duplicates doesn't preserve
         # our previous sort.
-        matches = matches[matches[:, 2].argsort()[::-1][:len(matches)]]
+        matches = matches[matches[:, 2].argsort()[::-1][: len(matches)]]
 
         # Remove duplicate groundtruths from the list.
         matches = matches[np.unique(matches[:, 0], return_index=True)[1]]
@@ -187,26 +181,28 @@ def get_matched_gt_predict_per_image(
     matches_list = matches.tolist()
 
     # Get the list of gt classses that matched with prediction
-    gt_matched_classes = [
-        gt_classes[int(match[0])] for match in matches_list]
+    gt_matched_classes = [gt_classes[int(match[0])] for match in matches_list]
     # Get the list of predicted classses that matched with ground truth
     predicted_matched_classes = [
-        predicted_classes[int(match[1])] for match in matches_list]
+        predicted_classes[int(match[1])] for match in matches_list
+    ]
     return [
         gt_classes,
         predicted_classes,
         gt_matched_classes,
-        predicted_matched_classes]
+        predicted_matched_classes,
+    ]
 
 
 def get_matched_gt_predict(
-        gt_csv,
-        predicted_csv,
-        labels,
-        iou_threshold,
-        confidence_threshold,
-        input_image_format,
-        num_cpus):
+    gt_csv,
+    predicted_csv,
+    labels,
+    iou_threshold,
+    confidence_threshold,
+    input_image_format,
+    num_cpus,
+):
     """
     Returns all groundtruth classes, predicted classes, matched groundtruth
     classes, matched predicted classes with iou greater than iou_threshold,
@@ -247,13 +243,11 @@ def get_matched_gt_predict(
     # Collect the bboxes, labels in 2 lists for ground truth
     gt_df = add_base_path(gt_csv, input_image_format)
     predicted_df = add_base_path(predicted_csv, input_image_format)
-    unique_image_paths = gt_df['base_path'].unique().tolist()
+    unique_image_paths = gt_df["base_path"].unique().tolist()
 
     # Parallely process different images per
-    result = Parallel(
-        n_jobs=num_cpus)(
-        delayed(
-            get_matched_gt_predict_per_image)(
+    result = Parallel(n_jobs=num_cpus)(
+        delayed(get_matched_gt_predict_per_image)(
             im_path,
             input_image_format,
             gt_df,
@@ -261,7 +255,10 @@ def get_matched_gt_predict(
             labels,
             iou_threshold,
             confidence_threshold,
-            num_cpus) for im_path in unique_image_paths)
+            num_cpus,
+        )
+        for im_path in unique_image_paths
+    )
     gt_classes = []
     gt_matched_classes = []
     predicted_classes = []
@@ -283,16 +280,18 @@ def get_matched_gt_predict(
         gt_classes,
         predicted_classes,
         gt_matched_classes,
-        predicted_matched_classes)
+        predicted_matched_classes,
+    )
 
 
 def append_unmatched_gt_predict(
-        confusion_matrix,
-        labels,
-        gt_matched_classes,
-        predicted_matched_classes,
-        gt_classes,
-        predicted_classes):
+    confusion_matrix,
+    labels,
+    gt_matched_classes,
+    predicted_matched_classes,
+    gt_classes,
+    predicted_classes,
+):
     """
     Returns confusion matrix of shape (len(labels) + 2, len(labels) + 2)
 
@@ -320,9 +319,9 @@ def append_unmatched_gt_predict(
     # Allocate & set first labels-1,labels-1 row, colums as confusion matrix
     number_classes = len(labels)
     complete_confusion_matrix = np.zeros(
-        (number_classes + 2, number_classes + 2), dtype=np.uint64)
-    complete_confusion_matrix[
-        :number_classes, :number_classes] = confusion_matrix
+        (number_classes + 2, number_classes + 2), dtype=np.uint64
+    )
+    complete_confusion_matrix[:number_classes, :number_classes] = confusion_matrix
 
     # Set labels,labels + 1 rows,columns in the confusion matrix for each class
     for i, label in enumerate(sorted(labels)):
@@ -333,11 +332,13 @@ def append_unmatched_gt_predict(
         matched_gts_per_label = gt_matched_classes.count(label)
 
         # Number of unmatched groundtruth objects are set at labels row
-        complete_confusion_matrix[i, number_classes] = \
+        complete_confusion_matrix[i, number_classes] = (
             gts_per_label - matched_gts_per_label
+        )
         # Number of unmatched predicted objects are set at labels column
-        complete_confusion_matrix[number_classes, i] = \
+        complete_confusion_matrix[number_classes, i] = (
             predicteds_per_label - matched_predicteds_per_label
+        )
 
         # Number of total groundtruth objects are set at labels + 1 row
         complete_confusion_matrix[i, number_classes + 1] = gts_per_label
@@ -347,13 +348,14 @@ def append_unmatched_gt_predict(
 
 
 def get_confusion_matrix(
-        gt_csv,
-        predicted_csv,
-        labels,
-        iou_threshold,
-        confidence_threshold,
-        input_image_format,
-        num_cpus):
+    gt_csv,
+    predicted_csv,
+    labels,
+    iou_threshold,
+    confidence_threshold,
+    input_image_format,
+    num_cpus,
+):
     """
     Returns confusion matrix of shape (len(labels) + 2, len(labels) + 2)
 
@@ -386,35 +388,39 @@ def get_confusion_matrix(
         in the last row - 1, column - 1 respectively. Look at the text in the
         beginning of the program to understand by example
     """
-    (gt_classes,
-     predicted_classes,
-     gt_matched_classes,
-     predicted_matched_classes) = get_matched_gt_predict(
+    (
+        gt_classes,
+        predicted_classes,
+        gt_matched_classes,
+        predicted_matched_classes,
+    ) = get_matched_gt_predict(
         gt_csv,
         predicted_csv,
         labels,
         iou_threshold,
         confidence_threshold,
         input_image_format,
-        num_cpus)
+        num_cpus,
+    )
 
     confusion_matrix = np.zeros((len(labels), len(labels)), dtype=np.uint64)
     if gt_matched_classes != [] and predicted_matched_classes != []:
         confusion_matrix = sklearn.metrics.confusion_matrix(
-            gt_matched_classes, predicted_matched_classes, labels=labels)
+            gt_matched_classes, predicted_matched_classes, labels=labels
+        )
         unique_classes = sorted(np.unique(gt_matched_classes))
         total_gt = len(gt_matched_classes)
         total_predicted = len(predicted_matched_classes)
         sample_composition_error = {}
         for i in unique_classes:
             sample_gt_percent = gt_matched_classes.count(i) / total_gt
-            sample_predicted_percent = predicted_matched_classes.count(
-                i) / total_predicted
+            sample_predicted_percent = (
+                predicted_matched_classes.count(i) / total_predicted
+            )
             error = sample_gt_percent - sample_predicted_percent
             sample_composition_error[i] = error
 
-        print(
-            "Overall composition error {}\n".format(sample_composition_error))
+        print("Overall composition error {}\n".format(sample_composition_error))
     df_predicted = pd.read_csv(predicted_csv)
     predicted_classes = []
     for index, row in df_predicted.iterrows():
@@ -427,7 +433,8 @@ def get_confusion_matrix(
         gt_matched_classes,
         predicted_matched_classes,
         gt_classes,
-        predicted_classes)
+        predicted_classes,
+    )
     return complete_confusion_matrix
 
 
@@ -451,13 +458,14 @@ def print_cm(confusion_matrix, labels, confidence_threshold):
     data_type = confusion_matrix.dtype
     length_name = max([len(str(s)) for s in labels] + [5])
     spacing = "- " * max(
-        (int(7 + ((length_name + 3) * (num_classes + 3)) / 2)),
-        length_name + 33)
+        (int(7 + ((length_name + 3) * (num_classes + 3)) / 2)), length_name + 33
+    )
     print(spacing)
     print(("confidence_threshold: %f" % confidence_threshold).rstrip("0"))
     print(
         "Where Unmatched in Groundtruth means "
-        "False Positive and Unmatched in Prediction means False Negative.")
+        "False Positive and Unmatched in Prediction means False Negative."
+    )
     content = " " * (length_name + 3 + 12)
     for j in range(num_classes):
         content += "[%*s] " % (length_name, labels[j])
@@ -465,8 +473,7 @@ def print_cm(confusion_matrix, labels, confidence_threshold):
     print(content)
 
     for i in range(num_classes):
-        content = "Groundtruth " if i == int(
-            (num_classes) / 2) else " " * 12
+        content = "Groundtruth " if i == int((num_classes) / 2) else " " * 12
         content += "[%*s] " % (length_name, labels[i])
         for j in range(num_classes):
             if data_type == np.dtype(float).type:
@@ -502,25 +509,24 @@ def normalize_confusion_matrix(confusion_matrix):
     total_gt = total_gt.astype(np.float64)
     normalized_confusion_matrix = confusion_matrix / total_gt
     normalized_confusion_matrix = np.nan_to_num(normalized_confusion_matrix)
-    assert all(
-        i <= 1.0 for i in normalized_confusion_matrix.flatten().tolist()
-    ) is True
+    assert all(i <= 1.0 for i in normalized_confusion_matrix.flatten().tolist()) is True
     return normalized_confusion_matrix
 
 
 def display(
-        gt_csv,
-        predicted_csv,
-        labels,
-        iou_threshold,
-        confidence_threshold,
-        output_path,
-        output_fig,
-        input_image_format,
-        num_cpus,
-        keep_unmatched,
-        binary_classes,
-        fontsize):
+    gt_csv,
+    predicted_csv,
+    labels,
+    iou_threshold,
+    confidence_threshold,
+    output_path,
+    output_fig,
+    input_image_format,
+    num_cpus,
+    keep_unmatched,
+    binary_classes,
+    fontsize,
+):
     """
     Save and display confusion matrix, precision, recall scores of each of
     the unique labels
@@ -578,7 +584,8 @@ def display(
         iou_threshold,
         confidence_threshold,
         input_image_format,
-        num_cpus)
+        num_cpus,
+    )
 
     print("Confusion matrix before normalization\n")
     inclusive_labels = labels + ["Unmatched", "Total"]
@@ -586,10 +593,10 @@ def display(
 
     print("Confusion matrix after normalization\n")
     print(
-        "Note: Normalized by number of elements in each class in all " +
-        "groundtruth, includes both matched and unmatched")
-    normalized_confusion_matrix = normalize_confusion_matrix(
-        confusion_matrix)
+        "Note: Normalized by number of elements in each class in all "
+        + "groundtruth, includes both matched and unmatched"
+    )
+    normalized_confusion_matrix = normalize_confusion_matrix(confusion_matrix)
     print_cm(normalized_confusion_matrix, labels, confidence_threshold)
 
     # set total at the last element to the sum of all predicted elements(tp+fp)
@@ -611,15 +618,14 @@ def display(
         binary_labels = binary_classes["binary_labels"]
         if "Unmatched" in labels:
             labels.remove("Unmatched")
-        binary_confusion_matrix = binarize(
-            confusion_matrix, labels, labels_0, labels_1)
-        binary_confusion_matrix[-1, -1] = np.sum(
-            binary_confusion_matrix[-1, :])
+        binary_confusion_matrix = binarize(confusion_matrix, labels, labels_0, labels_1)
+        binary_confusion_matrix[-1, -1] = np.sum(binary_confusion_matrix[-1, :])
         # Plot confusion matrix binary
         plot_cm(
             binary_confusion_matrix,
             binary_labels,
-            output_fig.replace("." + format, "_binary." + format))
+            output_fig.replace("." + format, "_binary." + format),
+        )
     # Close STDOUT and reset
     sys.stdout.close()
     sys.stdout = stdout_origin
@@ -630,19 +636,21 @@ def binarize(confusion_matrix, labels, labels_0, labels_1):
     for zero_class_row in labels_0:
         zero_class_row = labels.index(zero_class_row)
         binary_confusion_matrix[0, 0] += confusion_matrix[
-            zero_class_row, zero_class_row]
-        binary_confusion_matrix[0, 1] += confusion_matrix[
-            zero_class_row, -1] - confusion_matrix[
-                zero_class_row, zero_class_row]
+            zero_class_row, zero_class_row
+        ]
+        binary_confusion_matrix[0, 1] += (
+            confusion_matrix[zero_class_row, -1]
+            - confusion_matrix[zero_class_row, zero_class_row]
+        )
         binary_confusion_matrix[0, 2] += confusion_matrix[zero_class_row, -1]
         binary_confusion_matrix[2, 0] += confusion_matrix[-1, zero_class_row]
     for one_class_row in labels_1:
         one_class_row = labels.index(one_class_row)
-        binary_confusion_matrix[1, 1] += confusion_matrix[
-            one_class_row, one_class_row]
-        binary_confusion_matrix[1, 0] += confusion_matrix[
-            one_class_row, -1] - confusion_matrix[
-                one_class_row, one_class_row]
+        binary_confusion_matrix[1, 1] += confusion_matrix[one_class_row, one_class_row]
+        binary_confusion_matrix[1, 0] += (
+            confusion_matrix[one_class_row, -1]
+            - confusion_matrix[one_class_row, one_class_row]
+        )
         binary_confusion_matrix[2, 1] += confusion_matrix[-1, one_class_row]
         binary_confusion_matrix[1, 2] += confusion_matrix[one_class_row, -1]
     return binary_confusion_matrix
@@ -686,45 +694,49 @@ def format_element_to_matlab_confusion_matrix(row, col, confusion_matrix):
     cm_length = confusion_matrix.shape[0]
 
     # for totals calculate percentage accuracy and percentage error
-    if(col == (cm_length - 1)) or (row == (cm_length - 1)):
+    if (col == (cm_length - 1)) or (row == (cm_length - 1)):
         # totals and percents
-        if(current_element != 0):
-            if(col == cm_length - 1) and (row == cm_length - 1):
+        if current_element != 0:
+            if (col == cm_length - 1) and (row == cm_length - 1):
                 total_correct = 0
                 for i in range(confusion_matrix.shape[0] - 1):
                     total_correct += confusion_matrix[i][i]
                 percentage_correct_classifications = (
-                    float(total_correct) / current_element) * 100
-            elif(col == cm_length - 1):
+                    float(total_correct) / current_element
+                ) * 100
+            elif col == cm_length - 1:
                 true_positives_for_label = confusion_matrix[row][row]
                 true_predicted_per_class = current_element
                 percentage_correct_classifications = (
                     float(true_positives_for_label) / true_predicted_per_class
                 ) * 100
-            elif(row == cm_length - 1):
+            elif row == cm_length - 1:
                 true_positives_for_label = confusion_matrix[col][col]
                 true_groundtruth_per_class = current_element
                 percentage_correct_classifications = (
-                    float(
-                        true_positives_for_label) / true_groundtruth_per_class
+                    float(true_positives_for_label) / true_groundtruth_per_class
                 ) * 100
-            percentage_incorrect_classifications = \
+            percentage_incorrect_classifications = (
                 100 - percentage_correct_classifications
+            )
         else:
-            percentage_correct_classifications = \
-                percentage_incorrect_classifications = 0
+            percentage_correct_classifications = (
+                percentage_incorrect_classifications
+            ) = 0
 
         percentage_correct_classifications_s = [
-            '%.2f%%' % (percentage_correct_classifications), '100%'][
-            percentage_correct_classifications == 100]
-        txt = '%s\n%.2f%%' % (
+            "%.2f%%" % (percentage_correct_classifications),
+            "100%",
+        ][percentage_correct_classifications == 100]
+        txt = "%s\n%.2f%%" % (
             percentage_correct_classifications_s,
-            percentage_incorrect_classifications)
+            percentage_incorrect_classifications,
+        )
     else:
-        if(percentage_total > 0):
-            txt = '%s\n%.2f%%' % (current_element, percentage_total)
+        if percentage_total > 0:
+            txt = "%s\n%.2f%%" % (current_element, percentage_total)
         else:
-            txt = '0\n0.0%'
+            txt = "0\n0.0%"
     return txt
 
 
@@ -787,24 +799,28 @@ def plot_cm(confusion_matrix, labels, output_fig, fontsize=8):
     for row in range(cm_length):
         for col in range(cm_length):
             text = ax.text(
-                row, col,
-                format_element_to_matlab_confusion_matrix(
-                    row, col, confusion_matrix),
-                ha="center", va="center", color="black", fontsize=fontsize)
+                row,
+                col,
+                format_element_to_matlab_confusion_matrix(row, col, confusion_matrix),
+                ha="center",
+                va="center",
+                color="black",
+                fontsize=fontsize,
+            )
 
     # Turn spines off and create black grid.
     for edge, spine in ax.spines.items():
         spine.set_visible(False)
-    ax.set_xticks(np.arange(confusion_matrix.shape[1] + 1) - .5, minor=True)
-    ax.set_yticks(np.arange(confusion_matrix.shape[0] + 1) - .5, minor=True)
-    ax.grid(which="minor", color="w", linestyle='-', linewidth=3)
-    ax.grid(which="minor", color="black", linestyle='-', linewidth=2)
+    ax.set_xticks(np.arange(confusion_matrix.shape[1] + 1) - 0.5, minor=True)
+    ax.set_yticks(np.arange(confusion_matrix.shape[0] + 1) - 0.5, minor=True)
+    ax.grid(which="minor", color="w", linestyle="-", linewidth=3)
+    ax.grid(which="minor", color="black", linestyle="-", linewidth=2)
     ax.tick_params(which="minor", bottom=False, left=False)
 
     # Titles and labels
-    ax.set_title('Confusion matrix', fontweight='bold')
-    ax.set_xlabel('Output Class', fontweight='bold')
-    ax.set_ylabel('Target Class', fontweight='bold')
+    ax.set_title("Confusion matrix", fontweight="bold")
+    ax.set_xlabel("Output Class", fontweight="bold")
+    ax.set_ylabel("Target Class", fontweight="bold")
 
     # Save figure
     plt.tight_layout()
@@ -812,32 +828,98 @@ def plot_cm(confusion_matrix, labels, output_fig, fontsize=8):
     del im, text
 
 
-@click.command(help="Save or print confusion matrix per class after comparing ground truth and prediced bounding boxes")  # noqa
-@click.option("--groundtruth_csv", help="Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label and several rows corresponding to the groundtruth bounding box objects", required=True, type=str) # noqa
-@click.option("--predicted_csv", help="Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label,prob and several rows corresponding to the predicted bounding box objects", required=True, type=str) # noqa
-@click.option("--input_image_format", help="Format of images in image_id column in the csvs", required=False, type=str, default=".jpg") # noqa
-@click.option("--output_txt", help="output txt file containing confusion matrix, precision, recall per class", type=str) # noqa
-@click.option("--output_fig", help="output fig file (format can be png, eps, pdf, svg) containing confusion matrix, precision, recall per class", type=str) # noqa
-@click.option('--iou_threshold', type=float, required=False, default=0.5, help='IOU threshold below which the bounding box is invalid')  # noqa
-@click.option('--confidence_threshold', type=float, required=False, default=0.5, help='Confidence score threshold below which bounding box detection is of low confidence and is ignored while considering true positives')  # noqa
-@click.option('--classes_json', required=True, help='path to a json file containing list of class label for the objects, labels are alphabetically sorted')  # noqa
-@click.option('--binary_classes', required=False, default="", help='path to a json file containing a dictionary with 2 keys and values as the classes that belongs to each of the 2 classes,ex:{"0": [healthy],"1": ["schizont", "ring", "troph"],"binary_labels": ["healthy", "unhealthy"]}')  # noqa
-@click.option('--num_cpus', required=False, default=NUM_CPUS, type=int, help='number of cpus to run comparison between groundtruth and predicted to obtain matched classses')  # noqa
-@click.option('--fontsize', required=False, default=8, type=int, help='fontsize of the contents inside confusion matrix')  # noqa
-@click.option('--keep_unmatched', type=bool, required=False, default=True, help='if true, keeps unmatched classes percentage in the confusion matrix plot')  # noqa
+@click.command(
+    help="Save or print confusion matrix per class after comparing ground truth and prediced bounding boxes"
+)  # noqa
+@click.option(
+    "--groundtruth_csv",
+    help="Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label and several rows corresponding to the groundtruth bounding box objects",
+    required=True,
+    type=str,
+)  # noqa
+@click.option(
+    "--predicted_csv",
+    help="Absolute path to csv containing image_id,xmin,ymin,xmax,ymax,label,prob and several rows corresponding to the predicted bounding box objects",
+    required=True,
+    type=str,
+)  # noqa
+@click.option(
+    "--input_image_format",
+    help="Format of images in image_id column in the csvs",
+    required=False,
+    type=str,
+    default=".jpg",
+)  # noqa
+@click.option(
+    "--output_txt",
+    help="output txt file containing confusion matrix, precision, recall per class",
+    type=str,
+)  # noqa
+@click.option(
+    "--output_fig",
+    help="output fig file (format can be png, eps, pdf, svg) containing confusion matrix, precision, recall per class",
+    type=str,
+)  # noqa
+@click.option(
+    "--iou_threshold",
+    type=float,
+    required=False,
+    default=0.5,
+    help="IOU threshold below which the bounding box is invalid",
+)  # noqa
+@click.option(
+    "--confidence_threshold",
+    type=float,
+    required=False,
+    default=0.5,
+    help="Confidence score threshold below which bounding box detection is of low confidence and is ignored while considering true positives",
+)  # noqa
+@click.option(
+    "--classes_json",
+    required=True,
+    help="path to a json file containing list of class label for the objects, labels are alphabetically sorted",
+)  # noqa
+@click.option(
+    "--binary_classes",
+    required=False,
+    default="",
+    help='path to a json file containing a dictionary with 2 keys and values as the classes that belongs to each of the 2 classes,ex:{"0": [healthy],"1": ["schizont", "ring", "troph"],"binary_labels": ["healthy", "unhealthy"]}',
+)  # noqa
+@click.option(
+    "--num_cpus",
+    required=False,
+    default=NUM_CPUS,
+    type=int,
+    help="number of cpus to run comparison between groundtruth and predicted to obtain matched classses",
+)  # noqa
+@click.option(
+    "--fontsize",
+    required=False,
+    default=8,
+    type=int,
+    help="fontsize of the contents inside confusion matrix",
+)  # noqa
+@click.option(
+    "--keep_unmatched",
+    type=bool,
+    required=False,
+    default=True,
+    help="if true, keeps unmatched classes percentage in the confusion matrix plot",
+)  # noqa
 def confusion_matrix(
-        groundtruth_csv,
-        predicted_csv,
-        output_txt,
-        output_fig,
-        iou_threshold,
-        confidence_threshold,
-        classes_json,
-        binary_classes,
-        num_cpus,
-        input_image_format,
-        keep_unmatched,
-        fontsize):
+    groundtruth_csv,
+    predicted_csv,
+    output_txt,
+    output_fig,
+    iou_threshold,
+    confidence_threshold,
+    classes_json,
+    binary_classes,
+    num_cpus,
+    input_image_format,
+    keep_unmatched,
+    fontsize,
+):
     # Read class labels as a list
     with open(classes_json, "r") as f:
         class_labels = json.load(f)
@@ -853,9 +935,9 @@ def confusion_matrix(
         num_cpus,
         keep_unmatched,
         binary_classes,
-        fontsize
+        fontsize,
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     confusion_matrix()

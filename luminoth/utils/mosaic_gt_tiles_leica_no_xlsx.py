@@ -21,17 +21,14 @@ HOME = os.path.expanduser("~")
 DATA_DIR = os.path.join("/data/uv_microscopy_data/", "human_sorted")
 CLASSES = ["healthy", "ring", "schizont", "troph"]
 
-LUMI_CSV_COLUMNS = ['imageId', 'HumanLabels']
+LUMI_CSV_COLUMNS = ["imageId", "HumanLabels"]
 df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
 for label in CLASSES:
-    images = natsort.natsorted(
-        glob.glob(os.path.join(DATA_DIR, label, "*.tif")))
+    images = natsort.natsorted(glob.glob(os.path.join(DATA_DIR, label, "*.tif")))
     print(os.path.join(DATA_DIR, label, "*.tif"))
     print(len(images))
     for image in images:
-        df = df.append({'imageId': image,
-                        'HumanLabels': label},
-                       ignore_index=True)
+        df = df.append({"imageId": image, "HumanLabels": label}, ignore_index=True)
 
 # Remove 47000 healthy rows - Specific observation for the groundtruth
 # data in excel sheet above to correct for class imbalancing
@@ -66,7 +63,7 @@ indices = list(itertools.product(range(x_tiles), range(y_tiles)))
 
 
 # make a csv as required by lumi with only required columns
-LUMI_CSV_COLUMNS = ['image_id', 'xmin', 'xmax', 'ymin', 'ymax', 'label']
+LUMI_CSV_COLUMNS = ["image_id", "xmin", "xmax", "ymin", "ymax", "label"]
 output_random_df = pd.DataFrame(columns=LUMI_CSV_COLUMNS)
 image_count = 0
 # List of indices, already copied to the csv file and rbc cells in the row
@@ -80,28 +77,28 @@ while len(df) > 50:
     # Iterate throw each row containing annotations for rbc cell tile
     kernel = np.ones((5, 5), np.uint8)
     for index, row in df.iterrows():
-        image = cv2.imread(
-            row["imageId"], cv2.IMREAD_GRAYSCALE)
+        image = cv2.imread(row["imageId"], cv2.IMREAD_GRAYSCALE)
         # save the image one with tiles randomly placed,
         # doesn't create the directory if it doesn't exist
         saved_random_image_path = os.path.join(
-            DATA_DIR, "random_mosaic_1", "{}.tif".format(image_count))
+            DATA_DIR, "random_mosaic_1", "{}.tif".format(image_count)
+        )
         # First image, create arrays to place the randomized cells and a mask
         # to set the already occupied cell locations to 255
         if count == 0:
-            mosaiced_im = np.ones(
-                IMAGE_SHAPE, dtype=np.uint8) * BACKGROUND_COLOR
-            random_mosaiced_im = np.ones(
-                (IMAGE_SHAPE), dtype=np.uint8) * BACKGROUND_COLOR
-            masked_random = np.ones(
-                (IMAGE_SHAPE), dtype=np.uint8)
+            mosaiced_im = np.ones(IMAGE_SHAPE, dtype=np.uint8) * BACKGROUND_COLOR
+            random_mosaiced_im = (
+                np.ones((IMAGE_SHAPE), dtype=np.uint8) * BACKGROUND_COLOR
+            )
+            masked_random = np.ones((IMAGE_SHAPE), dtype=np.uint8)
 
             # Set the cell at the x, y tile location
             x, y = indices[count]
             image[image == 255] = BACKGROUND_COLOR
             mosaiced_im[
-                x * TILE_SIZE_X: TILE_SIZE_X * (x + 1),
-                y * TILE_SIZE_Y: TILE_SIZE_Y * (y + 1)] = image
+                x * TILE_SIZE_X : TILE_SIZE_X * (x + 1),
+                y * TILE_SIZE_Y : TILE_SIZE_Y * (y + 1),
+            ] = image
             # Binarize the array
             threshold = np.zeros_like(mosaiced_im)
             threshold[mosaiced_im == BACKGROUND_COLOR] = 0
@@ -110,7 +107,8 @@ while len(df) > 50:
 
             # Find the contours for the mosaic image to find the bounding box
             ctrs, _ = cv2.findContours(
-                threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+            )
             assert len(ctrs) == 1
             x, y, w, h = cv2.boundingRect(ctrs[0])
 
@@ -120,26 +118,27 @@ while len(df) > 50:
 
             # Get the subset of the randomized extent & test if its already
             # filled
-            subset = masked_random[
-                random_y: random_y + h, random_x: random_x + w]
+            subset = masked_random[random_y : random_y + h, random_x : random_x + w]
 
             # If the subset is not filled
             if subset.sum() == subset.size:
                 # Ser the randomized location to the tile
                 random_mosaiced_im[
-                    random_y: random_y + h, random_x: random_x + w
-                ] = mosaiced_im[y: y + h, x: x + w]
+                    random_y : random_y + h, random_x : random_x + w
+                ] = mosaiced_im[y : y + h, x : x + w]
                 # Set the filled subset of the array to zero
-                masked_random[
-                    random_y: random_y + h, random_x: random_x + w] = 0
+                masked_random[random_y : random_y + h, random_x : random_x + w] = 0
                 # Save the location and label in csv file
                 dicts.append(
-                    {'image_id': saved_random_image_path,
-                        'xmin': random_x,
-                        'xmax': random_x + w,
-                        'ymin': random_y,
-                        'ymax': random_y + h,
-                        'label': row["HumanLabels"]})
+                    {
+                        "image_id": saved_random_image_path,
+                        "xmin": random_x,
+                        "xmax": random_x + w,
+                        "ymin": random_y,
+                        "ymax": random_y + h,
+                        "label": row["HumanLabels"],
+                    }
+                )
                 indices_seen.append(index)
             else:
                 # Try to get a unoccupied subset of random location
@@ -148,29 +147,33 @@ while len(df) > 50:
                     random_x = random.randint(0, IMAGE_SHAPE[1] - w)
                     random_y = random.randint(0, IMAGE_SHAPE[0] - h)
                     subset = masked_random[
-                        random_y: random_y + h, random_x: random_x + w]
+                        random_y : random_y + h, random_x : random_x + w
+                    ]
                     if subset.sum() == subset.size:
                         trial_count += 1
                         break
                 assert trial_count <= 1, "trial_count {}, {}".format(
-                    trial_count, saved_random_image_path)
+                    trial_count, saved_random_image_path
+                )
                 # If the subset is not filled
                 if subset.sum() == subset.size:
                     # Ser the randomized location to the tile
                     random_mosaiced_im[
-                        random_y: random_y + h, random_x: random_x + w
-                    ] = mosaiced_im[y: y + h, x: x + w]
+                        random_y : random_y + h, random_x : random_x + w
+                    ] = mosaiced_im[y : y + h, x : x + w]
                     # Set the filled subset of the array to zero
-                    masked_random[
-                        random_y: random_y + h, random_x: random_x + w] = 0
+                    masked_random[random_y : random_y + h, random_x : random_x + w] = 0
                     # Save the location and label in csv file
                     dicts.append(
-                        {'image_id': saved_random_image_path,
-                            'xmin': random_x,
-                            'xmax': random_x + w,
-                            'ymin': random_y,
-                            'ymax': random_y + h,
-                            'label': row["HumanLabels"]})
+                        {
+                            "image_id": saved_random_image_path,
+                            "xmin": random_x,
+                            "xmax": random_x + w,
+                            "ymin": random_y,
+                            "ymax": random_y + h,
+                            "label": row["HumanLabels"],
+                        }
+                    )
                     indices_seen.append(index)
             count += 1
         elif count < 600:
@@ -178,42 +181,46 @@ while len(df) > 50:
             x, y = indices[count]
             image[image == 255] = BACKGROUND_COLOR
             mosaiced_im[
-                x * TILE_SIZE_X: TILE_SIZE_X * (x + 1),
-                y * TILE_SIZE_Y: TILE_SIZE_Y * (y + 1)] = image
+                x * TILE_SIZE_X : TILE_SIZE_X * (x + 1),
+                y * TILE_SIZE_Y : TILE_SIZE_Y * (y + 1),
+            ] = image
 
             # Get a mask for the only current cell tile
-            mosaiced_im_current = np.ones(
-                IMAGE_SHAPE, dtype=np.uint8) * BACKGROUND_COLOR
+            mosaiced_im_current = (
+                np.ones(IMAGE_SHAPE, dtype=np.uint8) * BACKGROUND_COLOR
+            )
             mosaiced_im_current[
-                x * TILE_SIZE_X: TILE_SIZE_X * (x + 1),
-                y * TILE_SIZE_Y: TILE_SIZE_Y * (y + 1)] = image
+                x * TILE_SIZE_X : TILE_SIZE_X * (x + 1),
+                y * TILE_SIZE_Y : TILE_SIZE_Y * (y + 1),
+            ] = image
             threshold = np.zeros_like(mosaiced_im_current)
             threshold[mosaiced_im_current == BACKGROUND_COLOR] = 0
             threshold[mosaiced_im_current != BACKGROUND_COLOR] = 255
             threshold = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, kernel)
             ctrs, _ = cv2.findContours(
-                threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+            )
             assert len(ctrs) == 1
             x, y, w, h = cv2.boundingRect(ctrs[0])
 
             random_x = random.randint(0, IMAGE_SHAPE[1] - w)
             random_y = random.randint(0, IMAGE_SHAPE[0] - h)
-            subset = masked_random[
-                random_y: random_y + h, random_x: random_x + w]
+            subset = masked_random[random_y : random_y + h, random_x : random_x + w]
             if subset.sum() == subset.size:
                 random_mosaiced_im[
-                    random_y: random_y + h, random_x: random_x + w
-                ] = mosaiced_im[
-                    y: y + h, x: x + w]
-                masked_random[
-                    random_y: random_y + h, random_x: random_x + w] = 0
+                    random_y : random_y + h, random_x : random_x + w
+                ] = mosaiced_im[y : y + h, x : x + w]
+                masked_random[random_y : random_y + h, random_x : random_x + w] = 0
                 dicts.append(
-                    {'image_id': saved_random_image_path,
-                        'xmin': random_x,
-                        'xmax': random_x + w,
-                        'ymin': random_y,
-                        'ymax': random_y + h,
-                        'label': row["HumanLabels"]})
+                    {
+                        "image_id": saved_random_image_path,
+                        "xmin": random_x,
+                        "xmax": random_x + w,
+                        "ymin": random_y,
+                        "ymax": random_y + h,
+                        "label": row["HumanLabels"],
+                    }
+                )
                 indices_seen.append(index)
             else:
                 trial_count = 0
@@ -221,26 +228,29 @@ while len(df) > 50:
                     random_x = random.randint(0, IMAGE_SHAPE[1] - w)
                     random_y = random.randint(0, IMAGE_SHAPE[0] - h)
                     subset = masked_random[
-                        random_y: random_y + h, random_x: random_x + w]
+                        random_y : random_y + h, random_x : random_x + w
+                    ]
                     if subset.sum() == subset.size:
                         trial_count += 1
                         break
                 assert trial_count <= 1, "trial_count {}, {}".format(
-                    trial_count, saved_random_image_path)
+                    trial_count, saved_random_image_path
+                )
                 if subset.sum() == subset.size:
                     random_mosaiced_im[
-                        random_y: random_y + h, random_x: random_x + w
-                    ] = mosaiced_im[
-                        y: y + h, x: x + w]
-                    masked_random[
-                        random_y: random_y + h, random_x: random_x + w] = 0
+                        random_y : random_y + h, random_x : random_x + w
+                    ] = mosaiced_im[y : y + h, x : x + w]
+                    masked_random[random_y : random_y + h, random_x : random_x + w] = 0
                     dicts.append(
-                        {'image_id': saved_random_image_path,
-                            'xmin': random_x,
-                            'xmax': random_x + w,
-                            'ymin': random_y,
-                            'ymax': random_y + h,
-                            'label': row["HumanLabels"]})
+                        {
+                            "image_id": saved_random_image_path,
+                            "xmin": random_x,
+                            "xmax": random_x + w,
+                            "ymin": random_y,
+                            "ymax": random_y + h,
+                            "label": row["HumanLabels"],
+                        }
+                    )
                     indices_seen.append(index)
 
             count += 1
@@ -249,15 +259,14 @@ while len(df) > 50:
             count = 0
             cv2.imwrite(saved_random_image_path, random_mosaiced_im)
             for d in dicts:
-                output_random_df = output_random_df.append(
-                    d, ignore_index=True)
+                output_random_df = output_random_df.append(d, ignore_index=True)
             image_count += 1
             dicts = []
     # Remove the bounding boxes that couldn't form an image because of going
     # through the dataframe
     if count != 0:
-        indices_seen = indices_seen[0:len(indices_seen) - count]
-        dicts = dicts[0:len(dicts) - count]
+        indices_seen = indices_seen[0 : len(indices_seen) - count]
+        dicts = dicts[0 : len(dicts) - count]
 
     # Note: Drop the rows already seen and re-run the above code again
     for index, row in df.iterrows():
@@ -268,5 +277,6 @@ while len(df) > 50:
 # contours per 512 512 image, this might be the last few rows from each time
 # running the above code, check for that
 print(len(output_random_df))
-output_random_df.to_csv(os.path.join(
-    DATA_DIR, "random_mosaic_1/output_random_df_montage_2.csv"))
+output_random_df.to_csv(
+    os.path.join(DATA_DIR, "random_mosaic_1/output_random_df_montage_2.csv")
+)

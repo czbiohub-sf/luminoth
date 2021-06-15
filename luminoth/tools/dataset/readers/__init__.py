@@ -1,18 +1,23 @@
 from .base_reader import BaseReader, InvalidDataDirectory  # noqa
 from .object_detection import ObjectDetectionReader  # noqa
 from .object_detection import (
-    COCOReader, CSVReader, FlatReader, ImageNetReader, OpenImagesReader,
-    PascalVOCReader, TaggerineReader
+    COCOReader,
+    CSVReader,
+    FlatReader,
+    ImageNetReader,
+    OpenImagesReader,
+    PascalVOCReader,
+    TaggerineReader,
 )
 
 READERS = {
-    'coco': COCOReader,
-    'csv': CSVReader,
-    'flat': FlatReader,
-    'imagenet': ImageNetReader,
-    'openimages': OpenImagesReader,
-    'pascal': PascalVOCReader,
-    'taggerine': TaggerineReader,
+    "coco": COCOReader,
+    "csv": CSVReader,
+    "flat": FlatReader,
+    "imagenet": ImageNetReader,
+    "openimages": OpenImagesReader,
+    "pascal": PascalVOCReader,
+    "taggerine": TaggerineReader,
 }
 
 

@@ -24,8 +24,10 @@ class RCNNTarget(snt.AbstractModule):
     which proposals and corresponding targets are included in the minibatch and
     which ones are completely ignored.
     """
-    def __init__(self, num_classes, config, seed=None, variances=None,
-                 name='rcnn_proposal'):
+
+    def __init__(
+        self, num_classes, config, seed=None, variances=None, name="rcnn_proposal"
+    ):
         """
         Args:
             num_classes: Number of possible classes.
@@ -71,10 +73,7 @@ class RCNNTarget(snt.AbstractModule):
         # `gt_boxes`. Start by filling the labels with -1, marking them as
         # ignored.
         proposals_label_shape = tf.gather(tf.shape(proposals), [0])
-        proposals_label = tf.fill(
-            dims=proposals_label_shape,
-            value=-1.
-        )
+        proposals_label = tf.fill(dims=proposals_label_shape, value=-1.0)
         # For each overlap there is three possible outcomes for labelling:
         #  if max(iou) < config.background_threshold_low then we ignore.
         #  elif max(iou) <= config.background_threshold_high then we label
@@ -98,7 +97,7 @@ class RCNNTarget(snt.AbstractModule):
         proposals_label = tf.where(
             condition=bg_condition,
             x=tf.zeros_like(proposals_label, dtype=tf.float32),
-            y=proposals_label
+            y=proposals_label,
         )
 
         # Get the index of the best gt_box for each proposal.
@@ -107,12 +106,9 @@ class RCNNTarget(snt.AbstractModule):
         # the label for each gt box and sum it one because 0 is used for
         # background.
         best_fg_labels_for_proposals = tf.add(
-            tf.gather(gt_boxes[:, 4], overlaps_best_gt_idxs),
-            1.
+            tf.gather(gt_boxes[:, 4], overlaps_best_gt_idxs), 1.0
         )
-        iou_is_fg = tf.greater_equal(
-            max_overlaps, self._foreground_threshold
-        )
+        iou_is_fg = tf.greater_equal(max_overlaps, self._foreground_threshold)
         best_proposals_idxs = tf.argmax(overlaps, axis=0)
 
         # Set the indices in best_proposals_idxs to True, and the rest to
@@ -123,16 +119,15 @@ class RCNNTarget(snt.AbstractModule):
         # tf.sparse_to_dense.
         is_best_box = tf.sparse_to_dense(
             sparse_indices=tf.reshape(best_proposals_idxs, [-1]),
-            sparse_values=True, default_value=False,
+            sparse_values=True,
+            default_value=False,
             output_shape=tf.cast(proposals_label_shape, tf.int64),
-            validate_indices=False
+            validate_indices=False,
         )
         # We update proposals_label with the value in
         # best_fg_labels_for_proposals only when the box is foreground.
         proposals_label = tf.where(
-            condition=iou_is_fg,
-            x=best_fg_labels_for_proposals,
-            y=proposals_label
+            condition=iou_is_fg, x=best_fg_labels_for_proposals, y=proposals_label
         )
         # Now we need to find the proposals that are the best for each of the
         # gt_boxes. We overwrite the previous proposals_label with this
@@ -140,16 +135,16 @@ class RCNNTarget(snt.AbstractModule):
         best_proposals_gt_labels = tf.sparse_to_dense(
             sparse_indices=tf.reshape(best_proposals_idxs, [-1]),
             sparse_values=gt_boxes[:, 4] + 1,
-            default_value=0.,
+            default_value=0.0,
             output_shape=tf.cast(proposals_label_shape, tf.int64),
             validate_indices=False,
-            name="get_right_labels_for_bestboxes"
+            name="get_right_labels_for_bestboxes",
         )
         proposals_label = tf.where(
             condition=is_best_box,
             x=best_proposals_gt_labels,
             y=proposals_label,
-            name="update_labels_for_bestbox_proposals"
+            name="update_labels_for_bestbox_proposals",
         )
 
         # proposals_label now has a value in [0, num_classes + 1] for
@@ -157,12 +152,8 @@ class RCNNTarget(snt.AbstractModule):
         # But we still need to make sure we don't have a number of proposals
         # higher than minibatch_size * foreground_fraction.
         max_fg = int(self._foreground_fraction * self._minibatch_size)
-        fg_condition = tf.logical_or(
-            iou_is_fg, is_best_box
-        )
-        fg_inds = tf.where(
-            condition=fg_condition
-        )
+        fg_condition = tf.logical_or(iou_is_fg, is_best_box)
+        fg_inds = tf.where(condition=fg_condition)
 
         def disable_some_fgs():
             # We want to delete a randomly-selected subset of fg_inds of
@@ -170,39 +161,38 @@ class RCNNTarget(snt.AbstractModule):
             # We shuffle along the dimension 0 and then we get the first
             # num_fg_inds - max_fg indices and we disable them.
             shuffled_inds = tf.random_shuffle(fg_inds, seed=self._seed)
-            disable_place = (tf.shape(fg_inds)[0] - max_fg)
+            disable_place = tf.shape(fg_inds)[0] - max_fg
             # This function should never run if num_fg_inds <= max_fg, so we
             # add an assertion to catch the wrong behaviour if it happens.
             integrity_assertion = tf.assert_positive(
-                disable_place,
-                message="disable_place in disable_some_fgs is negative."
+                disable_place, message="disable_place in disable_some_fgs is negative."
             )
             with tf.control_dependencies([integrity_assertion]):
                 disable_inds = shuffled_inds[:disable_place]
             is_disabled = tf.sparse_to_dense(
                 sparse_indices=disable_inds,
-                sparse_values=True, default_value=False,
+                sparse_values=True,
+                default_value=False,
                 output_shape=tf.cast(proposals_label_shape, tf.int64),
                 # We are shuffling the indices, so they may not be ordered.
-                validate_indices=False
+                validate_indices=False,
             )
             return tf.where(
                 condition=is_disabled,
                 # We set it to -label for debugging purposes.
                 x=tf.negative(proposals_label),
-                y=proposals_label
+                y=proposals_label,
             )
+
         # Disable some fgs if we have too many foregrounds.
         proposals_label = tf.cond(
             tf.greater(tf.shape(fg_inds)[0], max_fg),
             true_fn=disable_some_fgs,
-            false_fn=lambda: proposals_label
+            false_fn=lambda: proposals_label,
         )
 
         total_fg_in_batch = tf.shape(
-            tf.where(
-                condition=tf.greater(proposals_label, 0)
-            )
+            tf.where(condition=tf.greater(proposals_label, 0))
         )[0]
 
         # Now we want to do the same for backgrounds.
@@ -221,32 +211,29 @@ class RCNNTarget(snt.AbstractModule):
         def disable_some_bgs():
             # Mutatis mutandis, all comments from disable_some_fgs apply.
             shuffled_inds = tf.random_shuffle(bg_inds, seed=self._seed)
-            disable_place = (tf.shape(bg_inds)[0] - max_bg)
+            disable_place = tf.shape(bg_inds)[0] - max_bg
             integrity_assertion = tf.assert_non_negative(
-                disable_place,
-                message="disable_place in disable_some_bgs is negative."
+                disable_place, message="disable_place in disable_some_bgs is negative."
             )
             with tf.control_dependencies([integrity_assertion]):
                 disable_inds = shuffled_inds[:disable_place]
             is_disabled = tf.sparse_to_dense(
                 sparse_indices=disable_inds,
-                sparse_values=True, default_value=False,
+                sparse_values=True,
+                default_value=False,
                 output_shape=tf.cast(proposals_label_shape, tf.int64),
-                validate_indices=False
+                validate_indices=False,
             )
             return tf.where(
                 condition=is_disabled,
-                x=tf.fill(
-                    dims=proposals_label_shape,
-                    value=-1.
-                ),
-                y=proposals_label
+                x=tf.fill(dims=proposals_label_shape, value=-1.0),
+                y=proposals_label,
             )
 
         proposals_label = tf.cond(
             tf.greater_equal(tf.shape(bg_inds)[0], max_bg),
             true_fn=disable_some_bgs,
-            false_fn=lambda: proposals_label
+            false_fn=lambda: proposals_label,
         )
 
         """
@@ -257,27 +244,15 @@ class RCNNTarget(snt.AbstractModule):
         """
 
         # Get the ids of the proposals that matter for bbox_target comparisson.
-        is_proposal_with_target = tf.greater(
-            proposals_label, 0
-        )
-        proposals_with_target_idx = tf.where(
-            condition=is_proposal_with_target
-        )
+        is_proposal_with_target = tf.greater(proposals_label, 0)
+        proposals_with_target_idx = tf.where(condition=is_proposal_with_target)
         # Get the corresponding ground truth box only for the proposals with
         # target.
-        gt_boxes_idxs = tf.gather(
-            overlaps_best_gt_idxs,
-            proposals_with_target_idx
-        )
+        gt_boxes_idxs = tf.gather(overlaps_best_gt_idxs, proposals_with_target_idx)
         # Get the values of the ground truth boxes.
-        proposals_gt_boxes = tf.gather_nd(
-            gt_boxes[:, :4], gt_boxes_idxs
-        )
+        proposals_gt_boxes = tf.gather_nd(gt_boxes[:, :4], gt_boxes_idxs)
         # We create the same array but with the proposals
-        proposals_with_target = tf.gather_nd(
-            proposals,
-            proposals_with_target_idx
-        )
+        proposals_with_target = tf.gather_nd(proposals, proposals_with_target_idx)
         # We create our targets with bbox_transform.
         bbox_targets_nonzero = encode(
             proposals_with_target,
@@ -290,7 +265,7 @@ class RCNNTarget(snt.AbstractModule):
         bbox_targets = tf.scatter_nd(
             indices=proposals_with_target_idx,
             updates=bbox_targets_nonzero,
-            shape=tf.cast(tf.shape(proposals), tf.int64)
+            shape=tf.cast(tf.shape(proposals), tf.int64),
         )
 
         proposals_label = proposals_label

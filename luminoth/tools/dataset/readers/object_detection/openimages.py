@@ -10,17 +10,15 @@ from six.moves import queue
 from PIL import Image
 
 from luminoth.tools.dataset.readers import InvalidDataDirectory
-from luminoth.tools.dataset.readers.object_detection import (
-    ObjectDetectionReader
-)
+from luminoth.tools.dataset.readers.object_detection import ObjectDetectionReader
 from luminoth.utils.dataset import read_image
 
 # Compatible with OpenImages V4
 # Files available at: https://storage.googleapis.com/openimages/web/index.html
-CLASSES_TRAINABLE = '{split}-annotations-human-imagelabels-boxable.csv'
-ANNOTATIONS_FILENAME = '{split}-annotations-bbox.csv'
-CLASSES_DESC = 'class-descriptions-boxable.csv'
-IMAGES_LOCATION = 's3://open-images-dataset'
+CLASSES_TRAINABLE = "{split}-annotations-human-imagelabels-boxable.csv"
+ANNOTATIONS_FILENAME = "{split}-annotations-bbox.csv"
+CLASSES_DESC = "class-descriptions-boxable.csv"
+IMAGES_LOCATION = "s3://open-images-dataset"
 
 
 class OpenImagesReader(ObjectDetectionReader):
@@ -30,6 +28,7 @@ class OpenImagesReader(ObjectDetectionReader):
     Before using it you have to request and configure access following the
     instructions here: https://github.com/cvdfoundation/open-images-dataset
     """
+
     def __init__(self, data_dir, split, download_threads=25, **kwargs):
         """
         Args:
@@ -65,9 +64,9 @@ class OpenImagesReader(ObjectDetectionReader):
         We expect this file to be located in a directory corresponding to the
         split, ie. "train", "validation", "test".
         """
-        return os.path.join(
-            self._data_dir, self._split, CLASSES_TRAINABLE
-        ).format(split=self._split)
+        return os.path.join(self._data_dir, self._split, CLASSES_TRAINABLE).format(
+            split=self._split
+        )
 
     def _get_annotations_path(self):
         """
@@ -77,13 +76,13 @@ class OpenImagesReader(ObjectDetectionReader):
         We expect this file to be located in a directory corresponding to the
         split, ie. "train", "validation", "test".
         """
-        return os.path.join(
-            self._data_dir, self._split, ANNOTATIONS_FILENAME
-        ).format(split=self._split)
+        return os.path.join(self._data_dir, self._split, ANNOTATIONS_FILENAME).format(
+            split=self._split
+        )
 
     def _get_image_path(self, image_id):
         return os.path.join(
-            IMAGES_LOCATION, self._split, '{}.jpg'.format(image_id)
+            IMAGES_LOCATION, self._split, "{}.jpg".format(image_id)
         ).format(split=self._split)
 
     def get_classes(self):
@@ -99,7 +98,7 @@ class OpenImagesReader(ObjectDetectionReader):
         except tf.errors.NotFoundError:
             raise InvalidDataDirectory(
                 'The label file "{}" must be in the root data '
-                'directory: {}'.format(
+                "directory: {}".format(
                     os.path.split(trainable_labels_file)[1], self._data_dir
                 )
             )
@@ -118,13 +117,13 @@ class OpenImagesReader(ObjectDetectionReader):
         except tf.errors.NotFoundError:
             raise InvalidDataDirectory(
                 'Missing label description file "{}" from root data '
-                'directory: {}'.format(CLASSES_DESC, self._data_dir)
+                "directory: {}".format(CLASSES_DESC, self._data_dir)
             )
 
         return self.trainable_labels
 
     def pretty_name(self, label):
-        return '{} ({})'.format(self.desc_by_label[label], label)
+        return "{} ({})".format(self.desc_by_label[label], label)
 
     def get_total(self):
         return len(self.image_ids)
@@ -137,14 +136,13 @@ class OpenImagesReader(ObjectDetectionReader):
                 reader = csv.DictReader(af)
                 image_ids = set()
                 for read in reader:
-                    image_ids.add(read['ImageID'])
+                    image_ids.add(read["ImageID"])
             self._image_ids = image_ids
         return self._image_ids
 
     def _queue_record(self, queue, record):
-        if not record['gt_boxes']:
-            tf.logging.debug(
-                'Dropping record {} without gt_boxes.'.format(record))
+        if not record["gt_boxes"]:
+            tf.logging.debug("Dropping record {} without gt_boxes.".format(record))
             return
 
         # If asking for a limited number per class, only yield if the current
@@ -153,20 +151,24 @@ class OpenImagesReader(ObjectDetectionReader):
         # image containing only instances of "Person" will not be yielded,
         # while an image containing both "Person" and "Bus" instances will.
         if self._class_examples:
-            labels_in_image = set([
-                self.classes[bbox['label']] for bbox in record['gt_boxes']
-            ])
+            labels_in_image = set(
+                [self.classes[bbox["label"]] for bbox in record["gt_boxes"]]
+            )
             not_maxed_out = labels_in_image - self._maxed_out_classes
 
             if not not_maxed_out:
                 tf.logging.debug(
-                    'Dropping record {} with maxed-out labels: {}'.format(
-                        record['filename'], labels_in_image))
+                    "Dropping record {} with maxed-out labels: {}".format(
+                        record["filename"], labels_in_image
+                    )
+                )
                 return
 
             tf.logging.debug(
-                'Queuing record {} with labels: {}'.format(
-                    record['filename'], labels_in_image))
+                "Queuing record {} with labels: {}".format(
+                    record["filename"], labels_in_image
+                )
+            )
 
         self._will_add_record(record)
         queue.put(record)
@@ -204,60 +206,53 @@ class OpenImagesReader(ObjectDetectionReader):
                 if self._all_maxed_out():
                     break
 
-                if self._should_skip(line['ImageID']):
+                if self._should_skip(line["ImageID"]):
                     continue
 
                 # Filter group annotations (we only want single instances)
-                if line['IsGroupOf'] == '1':
+                if line["IsGroupOf"] == "1":
                     continue
 
                 # Append annotation to current record.
                 try:
                     # LabelName may not exist because not all labels are
                     # trainable
-                    label = self.trainable_labels.index(line['LabelName'])
+                    label = self.trainable_labels.index(line["LabelName"])
                 except ValueError:
                     continue
 
-                if line['ImageID'] != current_image_id:
+                if line["ImageID"] != current_image_id:
                     # Yield if image changes and we have current image.
                     if current_image_id is not None:
                         num_queued_records += 1
-                        self._queue_record(
-                            partial_records_queue,
-                            partial_record
-                        )
+                        self._queue_record(partial_records_queue, partial_record)
 
                     # Start new record.
-                    current_image_id = line['ImageID']
-                    partial_record = {
-                        'filename': current_image_id,
-                        'gt_boxes': []
-                    }
+                    current_image_id = line["ImageID"]
+                    partial_record = {"filename": current_image_id, "gt_boxes": []}
 
-                partial_record['gt_boxes'].append({
-                    'xmin': float(line['XMin']),
-                    'ymin': float(line['YMin']),
-                    'xmax': float(line['XMax']),
-                    'ymax': float(line['YMax']),
-                    'label': label,
-                })
+                partial_record["gt_boxes"].append(
+                    {
+                        "xmin": float(line["XMin"]),
+                        "ymin": float(line["YMin"]),
+                        "xmax": float(line["XMax"]),
+                        "ymax": float(line["YMax"]),
+                        "label": label,
+                    }
+                )
 
             else:
                 # No data we care about in dataset -- nothing to queue
                 if partial_record:
                     num_queued_records += 1
-                    self._queue_record(
-                        partial_records_queue,
-                        partial_record
-                    )
+                    self._queue_record(partial_records_queue, partial_record)
 
-        tf.logging.debug('Stopped queuing records.')
+        tf.logging.debug("Stopped queuing records.")
 
         # Wait for all records to be consumed by the threads that complete them
         partial_records_queue.join()
 
-        tf.logging.debug('All records consumed!')
+        tf.logging.debug("All records consumed!")
 
         # Signal the main thread that we have finished producing and every
         # record in the the queues has been consumed.
@@ -276,25 +271,24 @@ class OpenImagesReader(ObjectDetectionReader):
             try:
                 partial_record = input_queue.get()
 
-                image_id = partial_record['filename']
+                image_id = partial_record["filename"]
                 image_raw = read_image(self._get_image_path(image_id))
                 image = Image.open(six.BytesIO(image_raw))
 
-                for gt_box in partial_record['gt_boxes']:
-                    gt_box['xmin'] *= image.width
-                    gt_box['ymin'] *= image.height
-                    gt_box['xmax'] *= image.width
-                    gt_box['ymax'] *= image.height
+                for gt_box in partial_record["gt_boxes"]:
+                    gt_box["xmin"] *= image.width
+                    gt_box["ymin"] *= image.height
+                    gt_box["xmax"] *= image.width
+                    gt_box["ymax"] *= image.height
 
-                partial_record['width'] = image.width
-                partial_record['height'] = image.height
-                partial_record['depth'] = 3 if image.mode == 'RGB' else 1
-                partial_record['image_raw'] = image_raw
+                partial_record["width"] = image.width
+                partial_record["height"] = image.height
+                partial_record["depth"] = 3 if image.mode == "RGB" else 1
+                partial_record["image_raw"] = image_raw
 
                 output_queue.put(partial_record)
             except Exception as e:
-                tf.logging.error(
-                    'Error processing record: {}'.format(partial_record))
+                tf.logging.error("Error processing record: {}".format(partial_record))
                 tf.logging.error(e)
                 self.errors += 1
             finally:
@@ -318,14 +312,14 @@ class OpenImagesReader(ObjectDetectionReader):
 
         generator = threading.Thread(
             target=self._queue_partial_records,
-            args=(partial_records_queue, records_queue)
+            args=(partial_records_queue, records_queue),
         )
         generator.start()
 
         for _ in range(self._download_threads):
             t = threading.Thread(
                 target=self._complete_records,
-                args=(partial_records_queue, records_queue)
+                args=(partial_records_queue, records_queue),
             )
             t.daemon = True
             t.start()

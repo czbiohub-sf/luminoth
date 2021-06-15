@@ -16,28 +16,20 @@ class BaseDataset(snt.AbstractModule):
         self._seed = config.train.seed
 
         self._fixed_resize = (
-            'fixed_height' in config.dataset.image_preprocessing and
-            'fixed_width' in config.dataset.image_preprocessing
+            "fixed_height" in config.dataset.image_preprocessing
+            and "fixed_width" in config.dataset.image_preprocessing
         )
         if self._fixed_resize:
-            self._image_fixed_height = (
-                config.dataset.image_preprocessing.fixed_height
-            )
-            self._image_fixed_width = (
-                config.dataset.image_preprocessing.fixed_width
-            )
+            self._image_fixed_height = config.dataset.image_preprocessing.fixed_height
+            self._image_fixed_width = config.dataset.image_preprocessing.fixed_width
 
         self._total_queue_ops = 20
 
     def _build(self):
         # Find split file from which we are going to read.
-        split_path = os.path.join(
-            self._dataset_dir, '{}.tfrecords'.format(self._split)
-        )
+        split_path = os.path.join(self._dataset_dir, "{}.tfrecords".format(self._split))
         if not tf.gfile.Exists(split_path):
-            raise InvalidDataDirectory(
-                '"{}" does not exist.'.format(split_path)
-            )
+            raise InvalidDataDirectory('"{}" does not exist.'.format(split_path))
         # String input producer allows for a variable number of files to read
         # from. We just know we have a single file.
         filename_queue = tf.train.string_input_producer(
@@ -56,15 +48,12 @@ class BaseDataset(snt.AbstractModule):
                 min_after_dequeue=0,
                 dtypes=dtypes,
                 names=names,
-                name='tfrecord_random_queue',
-                seed=self._seed
+                name="tfrecord_random_queue",
+                seed=self._seed,
             )
         else:
             queue = tf.FIFOQueue(
-                capacity=100,
-                dtypes=dtypes,
-                names=names,
-                name='tfrecord_fifo_queue'
+                capacity=100, dtypes=dtypes, names=names, name="tfrecord_fifo_queue"
             )
 
         # Generate queueing ops for QueueRunner.

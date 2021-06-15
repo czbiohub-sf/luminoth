@@ -23,7 +23,8 @@ class SSDProposal(snt.AbstractModule):
     and in general. These values are easily modifiable in the configuration
     files.
     """
-    def __init__(self, num_classes, config, variances, name='proposal_layer'):
+
+    def __init__(self, num_classes, config, variances, name="proposal_layer"):
         super(SSDProposal, self).__init__(name=name)
         self._num_classes = num_classes
 
@@ -73,8 +74,7 @@ class SSDProposal(snt.AbstractModule):
             class_cls_prob = cls_prob[:, class_id + 1]
 
             # Filter by min_prob_threshold
-            min_prob_filter = tf.greater_equal(
-                class_cls_prob, self._min_prob_threshold)
+            min_prob_filter = tf.greater_equal(class_cls_prob, self._min_prob_threshold)
             class_cls_prob = tf.boolean_mask(class_cls_prob, min_prob_filter)
             class_loc_pred = tf.boolean_mask(loc_pred, min_prob_filter)
             anchors = tf.boolean_mask(all_anchors, min_prob_filter)
@@ -85,33 +85,27 @@ class SSDProposal(snt.AbstractModule):
             clipped_proposals = clip_boxes(raw_proposals, im_shape)
 
             # Filter proposals that have an non-valid area.
-            (x_min, y_min, x_max, y_max) = tf.unstack(
-                clipped_proposals, axis=1)
+            (x_min, y_min, x_max, y_max) = tf.unstack(clipped_proposals, axis=1)
             proposal_filter = tf.greater(
-                tf.maximum(x_max - x_min, 0.) * tf.maximum(y_max - y_min, 0.),
-                0.
+                tf.maximum(x_max - x_min, 0.0) * tf.maximum(y_max - y_min, 0.0), 0.0
             )
-            class_proposals = tf.boolean_mask(
-                clipped_proposals, proposal_filter)
-            class_loc_pred = tf.boolean_mask(
-                class_loc_pred, proposal_filter)
-            class_cls_prob = tf.boolean_mask(
-                class_cls_prob, proposal_filter)
-            proposal_anchors = tf.boolean_mask(
-                anchors, proposal_filter)
+            class_proposals = tf.boolean_mask(clipped_proposals, proposal_filter)
+            class_loc_pred = tf.boolean_mask(class_loc_pred, proposal_filter)
+            class_cls_prob = tf.boolean_mask(class_cls_prob, proposal_filter)
+            proposal_anchors = tf.boolean_mask(anchors, proposal_filter)
 
             # Log results of filtering non-valid area proposals
             total_anchors = tf.shape(all_anchors)[0]
             total_proposals = tf.shape(class_proposals)[0]
             total_raw_proposals = tf.shape(raw_proposals)[0]
             tf.summary.scalar(
-                'invalid_proposals',
-                total_proposals - total_raw_proposals, ['ssd']
+                "invalid_proposals", total_proposals - total_raw_proposals, ["ssd"]
             )
             tf.summary.scalar(
-                'valid_proposals_ratio',
-                tf.cast(total_anchors, tf.float32) /
-                tf.cast(total_proposals, tf.float32), ['ssd']
+                "valid_proposals_ratio",
+                tf.cast(total_anchors, tf.float32)
+                / tf.cast(total_proposals, tf.float32),
+                ["ssd"],
             )
 
             # We have to use the TensorFlow's bounding box convention to use
@@ -121,13 +115,14 @@ class SSDProposal(snt.AbstractModule):
 
             # Apply class NMS.
             class_selected_idx = tf.image.non_max_suppression(
-                class_proposal_tf, class_cls_prob, self._class_max_detections,
-                iou_threshold=self._class_nms_threshold
+                class_proposal_tf,
+                class_cls_prob,
+                self._class_max_detections,
+                iou_threshold=self._class_nms_threshold,
             )
 
             # Using NMS resulting indices, gather values from Tensors.
-            class_proposal_tf = tf.gather(
-                class_proposal_tf, class_selected_idx)
+            class_proposal_tf = tf.gather(class_proposal_tf, class_selected_idx)
             class_cls_prob = tf.gather(class_cls_prob, class_selected_idx)
 
             # We append values to a regular list which will later be
@@ -152,10 +147,7 @@ class SSDProposal(snt.AbstractModule):
         proposal_anchors = tf.concat(selected_anchors, axis=0)
 
         # Get topK detections of all classes.
-        k = tf.minimum(
-            self._total_max_detections,
-            tf.shape(proposal_label_prob)[0]
-        )
+        k = tf.minimum(self._total_max_detections, tf.shape(proposal_label_prob)[0])
         top_k = tf.nn.top_k(proposal_label_prob, k=k)
         top_k_proposal_label_prob = top_k.values
         top_k_proposals = tf.gather(proposals, top_k.indices)
@@ -163,9 +155,9 @@ class SSDProposal(snt.AbstractModule):
         top_k_proposal_anchors = tf.gather(proposal_anchors, top_k.indices)
 
         return {
-            'objects': top_k_proposals,
-            'labels': top_k_proposal_label,
-            'probs': top_k_proposal_label_prob,
-            'raw_proposals': raw_proposals,
-            'anchors': top_k_proposal_anchors,
+            "objects": top_k_proposals,
+            "labels": top_k_proposal_label,
+            "probs": top_k_proposal_label_prob,
+            "raw_proposals": raw_proposals,
+            "anchors": top_k_proposal_anchors,
         }

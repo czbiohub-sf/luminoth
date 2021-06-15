@@ -8,14 +8,12 @@ import tensorflow as tf
 from PIL import Image
 
 from luminoth.tools.dataset.readers import InvalidDataDirectory
-from luminoth.tools.dataset.readers.object_detection import (
-    ObjectDetectionReader
-)
+from luminoth.tools.dataset.readers.object_detection import ObjectDetectionReader
 from luminoth.utils.dataset import read_image
 
 VALID_KEYS = [
-    ('x', 'y', 'width', 'height', 'label'),
-    ('x_min', 'y_min', 'x_max', 'y_max', 'label')
+    ("x", "y", "width", "height", "label"),
+    ("x_min", "y_min", "x_max", "y_max", "label"),
 ]
 
 
@@ -24,6 +22,7 @@ class TaggerineReader(ObjectDetectionReader):
     Object detection reader for data tagged using Taggerine:
     https://github.com/tryolabs/taggerine/
     """
+
     def __init__(self, data_dir, split, default_class=0, **kwargs):
         super(TaggerineReader, self).__init__(**kwargs)
         self._data_dir = data_dir
@@ -39,18 +38,20 @@ class TaggerineReader(ObjectDetectionReader):
         self.yielded_records = 0
 
     def get_total(self):
-        """Returns the number of files annotated.
-        """
+        """Returns the number of files annotated."""
         return len(self.annotations)
 
     def get_classes(self):
-        """Returns the sorted list of possible labels.
-        """
-        return sorted(set([
-            b.get('label', self._default_class)
-            for r in self.annotations
-            for b in r.get('gt_boxes')
-        ]))
+        """Returns the sorted list of possible labels."""
+        return sorted(
+            set(
+                [
+                    b.get("label", self._default_class)
+                    for r in self.annotations
+                    for b in r.get("gt_boxes")
+                ]
+            )
+        )
 
     def _read_annotations(self, directory):
         """
@@ -60,20 +61,20 @@ class TaggerineReader(ObjectDetectionReader):
             all_files = tf.gfile.ListDirectory(self._split_path)
         except tf.errors.NotFoundError:
             raise InvalidDataDirectory(
-                'Directory for split "{}" does not exist'.format(
-                    self._split))
+                'Directory for split "{}" does not exist'.format(self._split)
+            )
 
         annotation_file_candidates = []
         for filename in all_files:
-            if filename.lower().endswith('.json'):
+            if filename.lower().endswith(".json"):
                 annotation_file_candidates.append(filename)
 
         if len(annotation_file_candidates) == 0:
             raise InvalidDataDirectory(
-                'Could not find any annotations in {}.'.format(
-                    self._split_path) +
-                'Check that there is a .json file with Taggerine\'s ' +
-                'annotations.')
+                "Could not find any annotations in {}.".format(self._split_path)
+                + "Check that there is a .json file with Taggerine's "
+                + "annotations."
+            )
 
         self.annotations = []
         # Open, validate and extract label information.
@@ -112,12 +113,14 @@ class TaggerineReader(ObjectDetectionReader):
                     break
 
                 # Save annotations.
-                file_annotations.append({
-                    'image_id': os.path.basename(image_filename),
-                    'filename': image_filename,
-                    'path': os.path.join(self._split_path, image_filename),
-                    'gt_boxes': labels,
-                })
+                file_annotations.append(
+                    {
+                        "image_id": os.path.basename(image_filename),
+                        "filename": image_filename,
+                        "path": os.path.join(self._split_path, image_filename),
+                        "gt_boxes": labels,
+                    }
+                )
 
             if invalid_label:
                 # Ignore file that have invalid labels.
@@ -132,17 +135,17 @@ class TaggerineReader(ObjectDetectionReader):
             if self._stop_iteration():
                 return
 
-            image_id = annotation['image_id']
+            image_id = annotation["image_id"]
 
             if self._should_skip(image_id):
                 continue
 
             try:
-                image = read_image(annotation['path'])
+                image = read_image(annotation["path"])
             except tf.errors.NotFoundError:
                 tf.logging.debug(
-                    'Error reading image or annotation for "{}".'.format(
-                        image_id))
+                    'Error reading image or annotation for "{}".'.format(image_id)
+                )
                 self.errors += 1
                 continue
 
@@ -152,44 +155,45 @@ class TaggerineReader(ObjectDetectionReader):
             img_height = image_pil.height
 
             gt_boxes = []
-            for b in annotation['gt_boxes']:
+            for b in annotation["gt_boxes"]:
                 try:
-                    label_id = self.classes.index(
-                        b.get('label', self._default_class)
-                    )
+                    label_id = self.classes.index(b.get("label", self._default_class))
                 except ValueError:
                     continue
 
-                if 'height' in b and 'width' in b and 'x' in b and 'y' in b:
-                    gt_boxes.append({
-                        'label': label_id,
-                        'xmin': b['x'] * img_width,
-                        'ymin': b['y'] * img_height,
-                        'xmax': b['x'] * img_width + b['width'] * img_width,
-                        'ymax': b['y'] * img_height + b['height'] * img_height,
-                    })
+                if "height" in b and "width" in b and "x" in b and "y" in b:
+                    gt_boxes.append(
+                        {
+                            "label": label_id,
+                            "xmin": b["x"] * img_width,
+                            "ymin": b["y"] * img_height,
+                            "xmax": b["x"] * img_width + b["width"] * img_width,
+                            "ymax": b["y"] * img_height + b["height"] * img_height,
+                        }
+                    )
                 else:
-                    gt_boxes.append({
-                        'label': label_id,
-                        'xmin': b['x_min'] * img_width,
-                        'ymin': b['y_min'] * img_height,
-                        'xmax': b['x_max'] * img_width,
-                        'ymax': b['y_max'] * img_height,
-                    })
+                    gt_boxes.append(
+                        {
+                            "label": label_id,
+                            "xmin": b["x_min"] * img_width,
+                            "ymin": b["y_min"] * img_height,
+                            "xmax": b["x_max"] * img_width,
+                            "ymax": b["y_max"] * img_height,
+                        }
+                    )
 
             if len(gt_boxes) == 0:
-                tf.logging.debug('Image "{}" has zero valid gt_boxes.'.format(
-                    image_id))
+                tf.logging.debug('Image "{}" has zero valid gt_boxes.'.format(image_id))
                 self.errors += 1
                 continue
 
             record = {
-                'width': img_width,
-                'height': img_height,
-                'depth': 3,
-                'filename': image_id,
-                'image_raw': image,
-                'gt_boxes': gt_boxes,
+                "width": img_width,
+                "height": img_height,
+                "depth": 3,
+                "filename": image_id,
+                "image_raw": image,
+                "gt_boxes": gt_boxes,
             }
 
             self._will_add_record(record)

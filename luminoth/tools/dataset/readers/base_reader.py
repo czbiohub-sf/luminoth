@@ -8,18 +8,16 @@ class InvalidDataDirectory(Exception):
 
 
 class BaseReader(object):
-    """Base reader for reading different types of data
-    """
+    """Base reader for reading different types of data"""
+
     def __init__(self, **kwargs):
         super(BaseReader, self).__init__()
 
     @property
     @abc.abstractproperty
     def total(self):
-        """Returns the total amount of records in the dataset.
-        """
+        """Returns the total amount of records in the dataset."""
 
     @abc.abstractmethod
     def iterate(self):
-        """Iterates over the records in the dataset.
-        """
+        """Iterates over the records in the dataset."""

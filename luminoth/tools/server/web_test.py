@@ -12,13 +12,15 @@ class WebTest(tf.test.TestCase):
     # environment with more memory all works fine.
     def setUp(self):
         tf.reset_default_graph()
-        model_class = get_model('fasterrcnn')
+        model_class = get_model("fasterrcnn")
         base_config = get_base_config(model_class)
         image_resize = base_config.dataset.image_preprocessing
-        self.config = EasyDict({
-            'image_resize_min': image_resize.min_size,
-            'image_resize_max': image_resize.max_size
-        })
+        self.config = EasyDict(
+            {
+                "image_resize_min": image_resize.min_size,
+                "image_resize_max": image_resize.max_size,
+            }
+        )
 
     # # This test fails with Travis' build environment
     # def testWithoutResize(self):
@@ -71,5 +73,5 @@ class WebTest(tf.test.TestCase):
     #     self.assertIsNotNone(results['objects_labels_prob'])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     tf.test.main()
