@@ -18,5 +18,5 @@ jobs:
       - name: Run tests with coverage
         shell: bash -l {0}
         run: |
-          pip install tox-travis
+          pip install tox-travis coverage
           tox
