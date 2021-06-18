@@ -49,7 +49,7 @@ INSTALL_REQUIRES = [
     "scikit-learn==0.19.2",
     "scikit-video==1.1.10",
     "Flask>=0.12",
-    "PyYAML>=3.12,<4",
+    "PyYAML==5.4",
     "click>=6.7,<7",
     "matplotlib",
     "natsort==6.2.0",
