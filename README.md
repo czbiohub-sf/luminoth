@@ -2,8 +2,8 @@
 
 ---
 
-[![Build Status](https://travis-ci.com/czbiohub/luminoth-uv-imaging.svg)
-[![codecov](https://codecov.io/gh/czbiohub/luminoth-uv-imaging/branch/master/graph/badge.svg)](https://codecov.io/gh/czbiohub/luminoth-uv-imaging)
+[![Build Status](https://travis-ci.com/czbiohub/luminoth.svg)
+[![codecov](https://codecov.io/gh/czbiohub/luminoth/branch/master/graph/badge.svg)](https://codecov.io/gh/czbiohub/luminoth-uv-imaging)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 Luminoth is an open source toolkit for **computer vision**. Currently, we support object detection, but we are aiming for much more. It is built in Python, using [TensorFlow](https://www.tensorflow.org/) and [Sonnet](https://github.com/deepmind/sonnet).
@@ -47,7 +47,7 @@ Currently, we support the following models:
 
 We also provide **pre-trained checkpoints** for the above models trained on popular datasets such as [COCO](http://cocodataset.org/) and [Pascal](http://host.robots.ox.ac.uk/pascal/VOC/).
 
-We also provide **pre-trained checkpoints** for the Faster R-CNN trained on RBC cell detection/parasite stage classification are available in release https://github.com/czbiohub/luminoth-uv-imaging/releases/tag/v0.4.0
+We also provide **pre-trained checkpoints** for the Faster R-CNN trained on RBC cell detection/parasite stage classification are available in release https://github.com/czbiohub/luminoth/releases/tag/v0.4.0
 1a0f3002f674 - Faster R-CNN with customized UV microscope dataset to detect healthy/ring/schizont/normal RBC
 1fbb5e928fd5 - Faster R-CNN with Leica commercial microscope dataset to detect healthy/ring/schizont/normal RBC
 
@@ -81,7 +81,7 @@ tensorboard --logdir path/to/jobs
 
 ### Docker
 
-It is recommended that you run luminoth-uv0imaging inside a Docker container, especially if you're using shared resources like a GPU server. 
+It is recommended that you run luminoth inside a Docker container, especially if you're using shared resources like a GPU server. 
 you can do so:
 ```buildoutcfg
 docker build -t imaging_docker:gpu_py36_cu90 -f Dockerfile .
@@ -90,7 +90,7 @@ Now you want to start a Docker container from your image, which is the virtual e
 ```buildoutcfg
 nvidia-docker run -it -p <your port>:<exposed port> -v <your dir>:/<dirname inside docker> imaging_docker:gpu_py36_cu90 bash
 ```
-Once docker is run from cloned luminoth-uv-imaging folder run the below command, make sure you have tensorflow-gpu and not tensorflow
+Once docker is run from cloned luminoth folder run the below command, make sure you have tensorflow-gpu and not tensorflow
 ```
 python setup.py install
 ```
