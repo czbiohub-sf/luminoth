@@ -50,7 +50,6 @@ INSTALL_REQUIRES = [
     "scikit-video==1.1.10",
     "Flask>=0.12",
     "PyYAML==5.4",
-    "tensorflow==1.13.2",
     "click>=6.7,<7",
     "matplotlib",
     "natsort==6.2.0",
