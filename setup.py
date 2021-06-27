@@ -46,7 +46,7 @@ INSTALL_REQUIRES = [
     'pandas>=0.19.2;python_version>="3.5"',
     'pandas<0.21;python_version<"3.5"',
     "numpy>=1.14.5",
-    "scikit-learn==0.19.2",
+    "scikit-learn",
     "scikit-video==1.1.10",
     "Flask>=0.12",
     "PyYAML==5.4",
