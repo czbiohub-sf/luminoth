@@ -38,7 +38,7 @@ CLASSIFIERS = [
 ]
 
 INSTALL_REQUIRES = [
-    "pillow==7.2.0",
+    "Pillow>=8.1.2",
     "lxml==4.3.5",
     "requests==2.18.4",
     # pandas errors for versions less than python 3.4
