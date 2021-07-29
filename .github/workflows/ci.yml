@@ -30,5 +30,4 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
 
       - name: Coverage
-        shell: bash -l {0}
         uses: codecov/codecov-action@v1
