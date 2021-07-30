@@ -10,7 +10,7 @@ dependencies:
   - lxml==4.4.1
   - matplotlib==3.0.3
   - numpy==1.16.4
-  - opencv-python==4.1.0.25
+  - opencv-python
   - pandas==0.24.2
   - Pillow>=8.1.2
   - PyYAML==5.4
