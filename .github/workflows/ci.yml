@@ -18,7 +18,6 @@ jobs:
           sudo snap install libxslt
           pip install -r requirements.txt
           pip install setuptools tox tox-gh-actions
-          python setup.py install
           tox
       - name: Send coverage to codecov.io
         shell: bash -l {0}
