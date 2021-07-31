@@ -29,22 +29,16 @@ CLASSIFIERS = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Libraries",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 2",
-    "Programming Language :: Python :: 2.7",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.4",
-    "Programming Language :: Python :: 3.5",
     "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
 ]
 
 INSTALL_REQUIRES = [
     "Pillow>=8.1.2",
     "lxml==4.3.5",
     "requests==2.18.4",
-    # pandas errors for versions less than python 3.4
-    # https://github.com/pandas-dev/pandas/issues/20723
-    'pandas>=0.19.2;python_version>="3.5"',
-    'pandas<0.21;python_version<"3.5"',
+    "pandas>=8.1.2",
     "numpy>=1.14.5",
     "scikit-learn",
     "scikit-video==1.1.10",
@@ -124,11 +118,10 @@ setup(
             # See https://github.com/tryolabs/luminoth/issues/147
             "pyasn1>=0.4.2",
         ],
-        ':python_version <= "2.7"': ["enum34"],
     },
     entry_points="""
         [console_scripts]
         lumi=luminoth:cli
     """,
-    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*",
+    python_requires="==3.6, ==3.7",
 )
