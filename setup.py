@@ -123,5 +123,5 @@ setup(
         [console_scripts]
         lumi=luminoth:cli
     """,
-    python_requires="==3.6, ==3.7",
+    python_requires="==3.6.*, ==3.7.*",
 )
