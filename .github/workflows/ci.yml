@@ -15,9 +15,7 @@ jobs:
       - name: Run tests with coverage
         shell: bash -l {0}
         run: |
-          sudo snap install libxslt
-          pip install -r requirements.txt
-          pip install setuptools tox tox-gh-actions
+          pip install tox tox-gh-actions
           tox
       - name: Send coverage to codecov.io
         shell: bash -l {0}
