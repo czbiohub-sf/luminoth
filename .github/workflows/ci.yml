@@ -12,16 +12,10 @@ jobs:
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
     steps:
       - uses: actions/checkout@v2
-      - name: Install Dependencies with Python ${{ matrix.python-version }}
-        shell: bash -l {0}
-        run: |
-          sudo snap install libxslt
-          sudo apt-get install -y libxslt1-dev libxml2 libxslt libxml2-dev python-dev
-          pip install .
       - name: Run tests with coverage
         shell: bash -l {0}
         run: |
-          conda activate luminoth
+          sudo snap install libxslt
           pip install -r requirements.txt
           python setup.py install
           pip install tox
