@@ -18,6 +18,19 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      # Installing lxml dependencies
+      - name: Install Linux libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y libxml2-dev libxslt1-dev python-dev python-lxml
+      # Installing lxml dependencies
+      - name: Install MacOS libraries
+        if: runner.os == 'MacOS'
+        run: |
+          brew install libxml2
+          brew install libxslt
+          brew link libxml2 --force
+          brew link libxslt --force
       - name: Run tests with coverage
         shell: bash -l {0}
         run: |
