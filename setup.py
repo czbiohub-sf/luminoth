@@ -122,6 +122,5 @@ setup(
     entry_points="""
         [console_scripts]
         lumi=luminoth:cli
-    """,
-    python_requires="==3.6.*, ==3.7.*",
+    """
 )
