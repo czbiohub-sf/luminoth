@@ -21,7 +21,7 @@ jobs:
       - name: Run tests with coverage
         shell: bash -l {0}
         run: |
-          pip install tox tox-gh-actions
+          pip3 install tox tox-gh-actions
           tox
         env:
           PLATFORM: ${{ matrix.platform }}
