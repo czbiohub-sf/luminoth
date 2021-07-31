@@ -23,6 +23,9 @@ jobs:
         run: |
           pip install tox tox-gh-actions
           tox
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          PYTHON-VERSION: ${{ matrix.python-version }}
       - name: Send coverage to codecov.io
         shell: bash -l {0}
         run: |
