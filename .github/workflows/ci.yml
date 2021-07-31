@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   test:
     name: ${{ matrix.platform }} py${{ matrix.python-version }}
-    runs-on: ${{ matrix.platform }}
+    runs-on: ${{ matrix.platform }} py${{ matrix.python-version }}
     strategy:
       matrix:
         # Nextflow versions: check pipeline minimum and current latest
@@ -25,7 +25,7 @@ jobs:
           tox
         env:
           PLATFORM: ${{ matrix.platform }}
-          PYTHON-VERSION: ${{ matrix.python-version }}
+          PYTHON-VERSION: py${{ matrix.python-version }}
       - name: Send coverage to codecov.io
         shell: bash -l {0}
         run: |
