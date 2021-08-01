@@ -42,5 +42,8 @@ jobs:
       - name: Send coverage to codecov.io
         shell: bash -l {0}
         run: |
-          pip install codecov
+          pip3 install codecov
           bash <(curl -s https://codecov.io/bash)
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          PYTHON-VERSION: py${{ matrix.python-version }}
