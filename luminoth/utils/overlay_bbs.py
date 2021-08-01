@@ -96,12 +96,12 @@ def overlay_bb_labels(
 
         assert int(xmax) > int(xmin), "row is {}".format(row)
         assert int(ymax) > int(ymin), "row is {}".format(row)
-        assert (
-            int(xmin) >= 0 and int(xmax) < shape[0]
-        ), "row {}, shape {}".format(row, shape)
-        assert (
-            int(ymin) >= 0 and int(ymax) < shape[1]
-        ), "row {}, shape {}".format(row, shape)
+        assert int(xmin) >= 0 and int(xmax) < shape[0], "row {}, shape {}".format(
+            row, shape
+        )
+        assert int(ymin) >= 0 and int(ymax) < shape[1], "row {}, shape {}".format(
+            row, shape
+        )
 
         cv2.rectangle(
             im_rgb,
