@@ -91,16 +91,16 @@ def overlay_bb_labels(
         xmin, xmax, ymin, ymax = out_of_bounds(
             row.xmin, row.xmax, row.ymin, row.ymax, shape[0], shape[1]
         )
-        left_corner_of_text = (int(row.xmin), int(row.ymin))
-        right_bottom_corner = (int(row.xmax), int(row.ymax))
+        left_corner_of_text = (int(xmin), int(ymin))
+        right_bottom_corner = (int(xmax), int(ymax))
 
-        assert int(row.xmax) > int(row.xmin), "row is {}".format(row)
-        assert int(row.ymax) > int(row.ymin), "row is {}".format(row)
+        assert int(xmax) > int(xmin), "row is {}".format(row)
+        assert int(ymax) > int(ymin), "row is {}".format(row)
         assert (
-            int(row.xmin) >= 0 and int(row.xmax) < shape[0]
+            int(xmin) >= 0 and int(xmax) < shape[0]
         ), "row {}, shape {}".format(row, shape)
         assert (
-            int(row.ymin) >= 0 and int(row.ymax) < shape[1]
+            int(ymin) >= 0 and int(ymax) < shape[1]
         ), "row {}, shape {}".format(row, shape)
 
         cv2.rectangle(
@@ -110,7 +110,7 @@ def overlay_bb_labels(
             bb_color,
             bb_line_width,
         )
-        bbox = [row.xmin, row.ymin, row.xmax, row.ymax]
+        bbox = [xmin, ymin, xmax, ymax]
         if "prob" in row:
             im_rgb = draw_label(
                 im_rgb, bbox, row["label"], row["prob"], font_color, font_scale
