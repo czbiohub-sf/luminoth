@@ -7,6 +7,27 @@ import pandas as pd
 from .vis import draw_label, FONT_COLOR, FONT_SCALE, BB_COLOR, BB_LINE_WIDTH
 
 
+def out_of_bounds(xmin, xmax, ymin, ymax, org_width, org_height):
+    if xmin >= org_width:
+        xmin = org_width - 1
+
+    if xmin < 0:
+        xmin = 0
+
+    if xmax >= org_width:
+        xmax = org_width - 1
+
+    if ymin >= org_height:
+        ymin = org_height - 1
+
+    if ymin < 0:
+        ymin = 0
+
+    if ymax >= org_height:
+        ymax = org_height - 1
+    return xmin, xmax, ymin, ymax
+
+
 def add_base_path(csv_path, input_image_format):
     """
     Returns a dataframe with all the bounding boxes & labels
@@ -67,16 +88,19 @@ def overlay_bb_labels(
 
     # Plot bounding boxes, annotation label
     for index, row in tmp_df.iterrows():
+        xmin, xmax, ymin, ymax = out_of_bounds(
+            row.xmin, row.xmax, row.ymin, row.ymax, shape[0], shape[1]
+        )
         left_corner_of_text = (int(row.xmin), int(row.ymin))
         right_bottom_corner = (int(row.xmax), int(row.ymax))
 
         assert int(row.xmax) > int(row.xmin), "row is {}".format(row)
         assert int(row.ymax) > int(row.ymin), "row is {}".format(row)
         assert (
-            int(row.xmin) >= 0 and int(row.xmax) < shape[1]
+            int(row.xmin) >= 0 and int(row.xmax) < shape[0]
         ), "row {}, shape {}".format(row, shape)
         assert (
-            int(row.ymin) >= 0 and int(row.ymax) < shape[0]
+            int(row.ymin) >= 0 and int(row.ymax) < shape[1]
         ), "row {}, shape {}".format(row, shape)
 
         cv2.rectangle(
