@@ -13,11 +13,12 @@ jobs:
         platform: ['ubuntu-latest', 'macos-latest', 'windows-latest']
     steps:
       - uses: actions/checkout@v2
-
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
       # Installing lxml dependencies
       - name: Install Linux libraries
         if: runner.os == 'Linux'
@@ -38,7 +39,6 @@ jobs:
           tox
         env:
           PLATFORM: ${{ matrix.platform }}
-          PYTHON-VERSION: py${{ matrix.python-version }}
       - name: Send coverage to codecov.io
         shell: bash -l {0}
         run: |
@@ -46,4 +46,3 @@ jobs:
           bash <(curl -s https://codecov.io/bash)
         env:
           PLATFORM: ${{ matrix.platform }}
-          PYTHON-VERSION: py${{ matrix.python-version }}
