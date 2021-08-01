@@ -44,7 +44,7 @@ INSTALL_REQUIRES = [
     "scikit-video==1.1.10",
     "Flask>=0.12",
     "PyYAML==5.4",
-    "click>=6.7,<7",
+    "click>=6.7",
     "matplotlib",
     "natsort==6.2.0",
     "opencv-python==3.4.10.37",
