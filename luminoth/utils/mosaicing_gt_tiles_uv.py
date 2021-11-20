@@ -6,13 +6,7 @@ import pandas as pd
 import random
 
 """
-This program is used to preprocess the 20g8 x 2048 leica commerical microscope
-images, each image consisting of about 9000 cells. The human annotated data is
-for only random subset of the cells on each image. The dataset folder
-CrossTrain-2019-12-02-15-17-48 consists of two folders SCP-2019-10-24 Malaria,
-SCP-2019-11-12 Malaria and the human annotated labels, bounding box locations
-for the random rbc cell instances and their names under FileName and they
-are stored in RBC Instances/405 nm 40x/sl1
+This program is used to augment uv data by taking only the sick cells and create a mosaic of them and augmenting them
 """
 # Constants
 HOME = os.path.expanduser("~")
