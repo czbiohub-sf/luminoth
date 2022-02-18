@@ -88,9 +88,10 @@ def overlay_bb_labels(
 
     # Plot bounding boxes, annotation label
     for index, row in tmp_df.iterrows():
-        xmin, xmax, ymin, ymax = out_of_bounds(
-            row.xmin, row.xmax, row.ymin, row.ymax, shape[0], shape[1]
-        )
+        xmin, xmax, ymin, ymax = row.xmin, row.xmax, row.ymin, row.ymax
+        # xmin, xmax, ymin, ymax = out_of_bounds(
+        #     row.xmin, row.xmax, row.ymin, row.ymax, shape[0], shape[1]
+        # )
         left_corner_of_text = (int(xmin), int(ymin))
         right_bottom_corner = (int(xmax), int(ymax))
 
